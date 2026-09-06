@@ -1,0 +1,16 @@
+<?php
+session_start();
+		unset($_SESSION['staffLast_login']);
+		unset($_SESSION['staffName']);
+		unset($_SESSION['staffId']);
+		unset($_SESSION['staffEmail']);
+		unset($_SESSION['staffLoggedIn']);
+		unset($_SESSION['staffLoggedIn']);
+		unset($_SESSION['pages']);
+		unset($_SESSION['setNext']);
+		unset($_SESSION['IdOfTestToSelect']);
+		unset($_SESSION['tableName']);
+		unset($_SESSION['testName']);
+		unset($_SESSION['testeesTableName']);
+		header('location:../index.php');
+?>

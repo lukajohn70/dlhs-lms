@@ -1,0 +1,544 @@
+{
+    "title": "1779267538_0_2NDRAIBASIC8WEEK2.pptx",
+    "slides": [
+        {
+            "slideNumber": 1,
+            "elements": []
+        },
+        {
+            "slideNumber": 2,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 10"
+                },
+                {
+                    "type": "text",
+                    "text": "02",
+                    "name": "TextBox 14"
+                },
+                {
+                    "type": "text",
+                    "text": "What is Object in",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "JavaScript?",
+                    "name": "TextBox 21"
+                },
+                {
+                    "type": "text",
+                    "text": "An object is a standalone entity that stores key-value pairs. \nObjects are used to represent real-world entities or organise data logically by grouping related data (called properties) and functions (called methods) together.",
+                    "name": "TextBox 22"
+                }
+            ]
+        },
+        {
+            "slideNumber": 3,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "03",
+                    "name": "TextBox 13"
+                },
+                {
+                    "type": "text",
+                    "text": "01",
+                    "name": "TextBox 22"
+                },
+                {
+                    "type": "text",
+                    "text": "02",
+                    "name": "TextBox 23"
+                },
+                {
+                    "type": "text",
+                    "text": "The structure of",
+                    "name": "TextBox 24"
+                },
+                {
+                    "type": "text",
+                    "text": "An Object",
+                    "name": "TextBox 25"
+                },
+                {
+                    "type": "text",
+                    "text": "A JavaScript object is defined using curly braces { }. \nThe keys are property names, and the values can be of any data type, including strings, numbers, arrays, other objects, or functions.",
+                    "name": "TextBox 26"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 27"
+                }
+            ]
+        },
+        {
+            "slideNumber": 4,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "04",
+                    "name": "TextBox 13"
+                },
+                {
+                    "type": "text",
+                    "text": "The Syntax of",
+                    "name": "TextBox 19"
+                },
+                {
+                    "type": "text",
+                    "text": "An Object",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "let objectName = { \n   key1: value1, // Property 1: key-value pair\n   key2: value2, // Property 2: key-value pair\n   key3: function() { \n             // Method (function as a value) \n     } \n};",
+                    "name": "TextBox 21"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 22"
+                }
+            ]
+        },
+        {
+            "slideNumber": 5,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 15"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 16"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 17"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 18"
+                },
+                {
+                    "type": "text",
+                    "text": "05",
+                    "name": "TextBox 19"
+                },
+                {
+                    "type": "text",
+                    "text": "EXAMPLE OF",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "OBJECT",
+                    "name": "TextBox 21"
+                },
+                {
+                    "type": "text",
+                    "text": "let student = { \n      name: \"John Doe\",        // String value\n      age: 16,                          // Number \n      valueisEnrolled: true, // Boolean value \n};",
+                    "name": "TextBox 22"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 23"
+                }
+            ]
+        },
+        {
+            "slideNumber": 6,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 15"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 16"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 17"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 18"
+                },
+                {
+                    "type": "text",
+                    "text": "06",
+                    "name": "TextBox 19"
+                },
+                {
+                    "type": "text",
+                    "text": "EXAMPLE OF",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "OBJECT",
+                    "name": "TextBox 21"
+                },
+                {
+                    "type": "text",
+                    "text": "let car = { \n        brand: \"Toyota\", \n        model: \"Camry\", \n        year: 2022, \n       start: function() {          \n       console.log(\"Car is starting...\"); \n       } \n}; \nconsole.log(car.brand); // Output: Toyota car.start(); // Output: Car is starting...",
+                    "name": "TextBox 22"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 23"
+                }
+            ]
+        },
+        {
+            "slideNumber": 7,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 15"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 16"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 17"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 18"
+                },
+                {
+                    "type": "text",
+                    "text": "07",
+                    "name": "TextBox 19"
+                },
+                {
+                    "type": "text",
+                    "text": "EXAMPLE OF",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "OBJECT",
+                    "name": "TextBox 21"
+                },
+                {
+                    "type": "text",
+                    "text": "let students = { \n              surname: \"Smith\", \n              firstname: \"John\", \n              age: 16, \n             class: \"SS2\", \n            displayFullName: function() { \n                   return this.firstname + \" \" + this.surname;          \n              } \n}; // Example console.log(students.displayFullName()); //",
+                    "name": "TextBox 22"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 23"
+                }
+            ]
+        },
+        {
+            "slideNumber": 8,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "08",
+                    "name": "TextBox 13"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 24"
+                },
+                {
+                    "type": "text",
+                    "text": "ACCESSING",
+                    "name": "TextBox 25"
+                },
+                {
+                    "type": "text",
+                    "text": "OBJECT",
+                    "name": "TextBox 26"
+                },
+                {
+                    "type": "text",
+                    "text": "console.log(car[\"model\"]); // Output: \"Camry\"",
+                    "name": "TextBox 34"
+                },
+                {
+                    "type": "text",
+                    "text": "Bracket Notation:",
+                    "name": "TextBox 35"
+                },
+                {
+                    "type": "text",
+                    "text": "02",
+                    "name": "TextBox 39"
+                }
+            ]
+        },
+        {
+            "slideNumber": 9,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "08",
+                    "name": "TextBox 13"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 24"
+                },
+                {
+                    "type": "text",
+                    "text": "Adding, Updating,",
+                    "name": "TextBox 25"
+                },
+                {
+                    "type": "text",
+                    "text": "and Deleting Properties",
+                    "name": "TextBox 26"
+                },
+                {
+                    "type": "text",
+                    "text": "car.year = 2023;",
+                    "name": "TextBox 34"
+                },
+                {
+                    "type": "text",
+                    "text": "Update an existing property:",
+                    "name": "TextBox 35"
+                },
+                {
+                    "type": "text",
+                    "text": "02",
+                    "name": "TextBox 39"
+                },
+                {
+                    "type": "text",
+                    "text": "delete car.model;",
+                    "name": "TextBox 40"
+                },
+                {
+                    "type": "text",
+                    "text": "Delete a property:",
+                    "name": "TextBox 41"
+                },
+                {
+                    "type": "text",
+                    "text": "03",
+                    "name": "TextBox 45"
+                }
+            ]
+        },
+        {
+            "slideNumber": 10,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 6"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 7"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 8"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 9"
+                },
+                {
+                    "type": "text",
+                    "text": "09",
+                    "name": "TextBox 13"
+                },
+                {
+                    "type": "text",
+                    "text": "Looping Through",
+                    "name": "TextBox 24"
+                },
+                {
+                    "type": "text",
+                    "text": "an OBJECT",
+                    "name": "TextBox 25"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 26"
+                },
+                {
+                    "type": "text",
+                    "text": "You can use a for...in loop to iterate through an object's properties.\n\nfor (let key in car) { \nconsole.log(`${key}: ${car[key]}`);\n }",
+                    "name": "TextBox 27"
+                }
+            ]
+        },
+        {
+            "slideNumber": 11,
+            "elements": [
+                {
+                    "type": "text",
+                    "text": "Contact",
+                    "name": "TextBox 15"
+                },
+                {
+                    "type": "text",
+                    "text": "About Us",
+                    "name": "TextBox 16"
+                },
+                {
+                    "type": "text",
+                    "text": "Service",
+                    "name": "TextBox 17"
+                },
+                {
+                    "type": "text",
+                    "text": "Home",
+                    "name": "TextBox 18"
+                },
+                {
+                    "type": "text",
+                    "text": "10",
+                    "name": "TextBox 19"
+                },
+                {
+                    "type": "text",
+                    "text": "Objects are fundamental building blocks in JavaScript to store and manipulate data.\nThey allow grouping of related properties and methods.\nAccessing and modifying properties is straightforward using dot or bracket notation.",
+                    "name": "TextBox 20"
+                },
+                {
+                    "type": "text",
+                    "text": "DEEPER LIFE HIGH SCHOOL",
+                    "name": "TextBox 21"
+                }
+            ]
+        }
+    ]
+}

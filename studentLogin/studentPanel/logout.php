@@ -1,0 +1,27 @@
+<?php
+session_start();
+	unset($_SESSION['userLast_login']);
+	unset($_SESSION['studentLoggedIn']);
+	unset($_SESSION['studentName']);
+	unset($_SESSION['studentId']);
+	unset($_SESSION['studentEmail']);
+	unset($_SESSION['studentLoggedIn']);
+	unset($_SESSION['studentYearGroup']);
+	unset($_SESSION['pages']);
+	unset($_SESSION['setNext']);
+	unset($_SESSION['idOfTest']);
+	unset($_SESSION['questionsIdsArray']);
+	unset($_SESSION['nextQuestIdToSelect']);
+	unset($_SESSION['nextIndexId']);
+	unset($_SESSION['prevIndexId']);
+	unset($_SESSION['questTableName']);
+	unset($_SESSION['totalQuestions']);
+	unset($_SESSION['correctOption']);
+	unset($_SESSION['markForQuestion']);
+	unset($_SESSION['nextQuesIdTosave']);
+	unset($_SESSION['answersTableName']);
+	unset($_SESSION['passportNameAndLocation']);
+	//unset($_SESSION['testId']);
+	
+	header('location:../index.php');
+?>

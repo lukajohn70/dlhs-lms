@@ -1,0 +1,9 @@
+<?php
+session_start();
+		unset($_SESSION['adminLast_login']);
+		unset($_SESSION['nameOfAdmin']);
+		unset($_SESSION['adminId']);
+		unset($_SESSION['adminEmail']);
+		unset($_SESSION['adminLoggedIn']);
+		header('location:../index.php');
+?>

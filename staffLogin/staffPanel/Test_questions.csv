@@ -1,0 +1,11 @@
+S/No,question,OptionA,OptionB,OptionC,OptionD,correctOption,mark
+1,Who is the father of Computer Science?,Alan Turing,Charles Babbage,Elon Musk,Bill Gates,B,0.5
+2,How many bits are in 2 bytes,4,8,12,16,D,0.5
+3,Who invented Boolean Algebra,Alan Boole,George Boole,John Boole,Carol Boole,B,0.5
+4,How many Nibbles are in 4 bytes,2,4,6,8,D,0.5
+5,Convert 4 from base 10 to base 2,100,101,110,1001,A,0.5
+6,The sum of 2 and 4 is ___________,2,4,6,8,C,0.5
+7,Who invented the Telephone?,Alexander Graham Bell,Alan Ruring,Geoorge Boole,Steve Jobs,A,0.5
+8,How many days make a leap year?,364,365,366,367,C,0.5
+9,How many seconds make an hour,3500,3600,3700,3800,B,0.5
+10,Convert 3 to base 2,110,10,101,11,D,0.5

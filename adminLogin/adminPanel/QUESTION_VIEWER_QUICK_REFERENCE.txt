@@ -1,0 +1,273 @@
+═══════════════════════════════════════════════════════════════════
+   🎓 ADMIN QUESTION BANK VIEWER - QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════
+
+📍 LOCATION: Admin Panel → Tests → View Teacher Questions
+
+🎯 PURPOSE: View and review ALL test questions created by teachers
+
+═══════════════════════════════════════════════════════════════════
+   ⚡ QUICK START
+═══════════════════════════════════════════════════════════════════
+
+1. Login as Admin
+2. Sidebar → Tests → "View Teacher Questions"
+3. Use filters to find specific tests
+4. Click "View Questions" to see full test
+5. Review questions, answers, and marks
+
+═══════════════════════════════════════════════════════════════════
+   🔍 FILTERING OPTIONS
+═══════════════════════════════════════════════════════════════════
+
+Filter By:
+   👤 Teacher       → See specific teacher's tests
+   📚 Subject       → Filter by subject
+   🎓 Year Group    → Filter by class level
+   ⏱️ Status        → Not Started / In Progress / Completed
+   🔎 Search        → Search test names
+
+💡 TIP: Combine filters for precise results!
+Example: Teacher=Mr. Smith + Subject=Mathematics + Year=SS2
+
+═══════════════════════════════════════════════════════════════════
+   📊 STATISTICS DASHBOARD
+═══════════════════════════════════════════════════════════════════
+
+Top Cards Show:
+   📄 Total Tests      → All tests in system
+   👥 Total Teachers   → Teachers who created tests  
+   📚 Total Subjects   → Subjects with tests
+
+═══════════════════════════════════════════════════════════════════
+   📋 TESTS TABLE FEATURES
+═══════════════════════════════════════════════════════════════════
+
+✅ Sortable Columns  → Click headers to sort
+✅ Pagination        → 25 tests per page
+✅ Export Options    → Excel, PDF, CSV, Print
+✅ Built-in Search   → DataTable search box
+✅ Color-Coded       → Status badges (Yellow/Green/Gray)
+
+═══════════════════════════════════════════════════════════════════
+   👁️ VIEWING QUESTIONS
+═══════════════════════════════════════════════════════════════════
+
+When you click "View Questions":
+
+TEST SUMMARY:
+   • Total Questions
+   • Total Marks
+   • Average per Question
+   • Test Duration
+
+EACH QUESTION SHOWS:
+   • Question text
+   • 4 options (A, B, C, D)
+   • ✓ Correct answer (highlighted green)
+   • Marks allocated
+   • Solution/explanation (if available)
+
+═══════════════════════════════════════════════════════════════════
+   🎨 STATUS INDICATORS
+═══════════════════════════════════════════════════════════════════
+
+Badge Colors:
+   🟡 Yellow = Not Started
+   🟢 Green = In Progress
+   ⚫ Gray   = Completed
+
+Correct Answer:
+   ✓ Green badge with checkmark
+
+═══════════════════════════════════════════════════════════════════
+   ✅ WHAT YOU CAN DO
+═══════════════════════════════════════════════════════════════════
+
+✓ View all teachers' tests
+✓ See all questions and answers
+✓ Filter by teacher/subject/year
+✓ Export to Excel/PDF/CSV
+✓ Monitor question quality
+✓ Review marks allocation
+
+═══════════════════════════════════════════════════════════════════
+   ❌ WHAT YOU CANNOT DO
+═══════════════════════════════════════════════════════════════════
+
+✗ Edit questions (read-only)
+✗ Delete questions
+✗ Create new tests
+✗ Modify test settings
+
+WHY? This is an OVERSIGHT tool, not an editing tool.
+Teachers manage their own questions via Staff Panel.
+
+═══════════════════════════════════════════════════════════════════
+   💡 COMMON USE CASES
+═══════════════════════════════════════════════════════════════════
+
+1. QUALITY ASSURANCE
+   → Review test standards before administration
+   → Ensure questions are appropriate for year group
+
+2. TEACHER SUPPORT
+   → Show new teachers examples of good questions
+   → Provide feedback on question design
+
+3. ACADEMIC INTEGRITY
+   → Verify test content aligns with curriculum
+   → Check marks distribution is fair
+
+4. TEST MODERATION
+   → Review upcoming high-stakes tests
+   → Ensure no errors before test starts
+
+5. POST-TEST REVIEW
+   → Investigate student complaints
+   → Verify question accuracy
+
+═══════════════════════════════════════════════════════════════════
+   🚀 EFFICIENCY TIPS
+═══════════════════════════════════════════════════════════════════
+
+⚡ Use search box for quick access to specific tests
+⚡ Combine filters to narrow results (e.g., Teacher + Subject)
+⚡ Sort by Test Date to see newest tests first
+⚡ Export to Excel for offline review
+⚡ Click "Reset Filters" to start fresh
+⚡ Refresh icon (🔄) reloads all data
+
+═══════════════════════════════════════════════════════════════════
+   ⚠️ QUICK TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+Problem: No tests showing
+Solution: Click "Reset Filters" | Check if teachers created tests
+
+Problem: Questions don't load
+Solution: Table might not exist | Contact tech support
+
+Problem: Strange characters in questions
+Solution: Encoding issue | Usually still readable
+
+Problem: Export not working
+Solution: Check internet connection | Try different format
+
+═══════════════════════════════════════════════════════════════════
+   📱 MOBILE FRIENDLY
+═══════════════════════════════════════════════════════════════════
+
+✓ Filters stack on small screens
+✓ Table scrolls horizontally
+✓ Touch-friendly buttons
+✓ Readable text on mobile
+
+═══════════════════════════════════════════════════════════════════
+   🎯 EXAMPLE WORKFLOW
+═══════════════════════════════════════════════════════════════════
+
+SCENARIO: Review Computer Science tests for SS2
+
+STEPS:
+1. Filter Subject → Computer Science
+2. Filter Year Group → SS 2
+3. Filter Status → Not Started (review before test)
+4. Browse results in table
+5. Click "View Questions" on specific test
+6. Review each question for quality
+7. Export to PDF for records
+8. Provide feedback to teacher if needed
+
+═══════════════════════════════════════════════════════════════════
+   🔒 SECURITY
+═══════════════════════════════════════════════════════════════════
+
+✓ Admin-only access
+✓ Session validation on every request
+✓ Read-only (no destructive operations)
+✓ SQL injection prevention
+✓ XSS protection
+
+═══════════════════════════════════════════════════════════════════
+   📊 KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════════════════════
+
+In DataTable:
+   • Type to search instantly
+   • Arrow keys to navigate
+   • Enter to select/view
+
+═══════════════════════════════════════════════════════════════════
+   💾 EXPORT OPTIONS
+═══════════════════════════════════════════════════════════════════
+
+Available Formats:
+   📋 Copy    → Copy table to clipboard
+   📄 CSV     → Comma-separated values
+   📊 Excel   → Microsoft Excel format
+   📑 PDF     → Portable document format
+   🖨️ Print   → Print-ready view
+
+═══════════════════════════════════════════════════════════════════
+   📈 BEST PRACTICES
+═══════════════════════════════════════════════════════════════════
+
+1. Review upcoming tests BEFORE they start
+2. Export important tests for archives
+3. Use filters to find specific content quickly
+4. Provide constructive feedback to teachers
+5. Check marks allocation is appropriate
+6. Ensure questions align with curriculum
+7. Verify correct answers are accurate
+8. Keep records of high-stakes exams
+
+═══════════════════════════════════════════════════════════════════
+   🎓 QUALITY CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+When Reviewing Questions:
+   ☑ Question is clear and unambiguous
+   ☑ Options are all plausible
+   ☑ Only ONE correct answer
+   ☑ Marks allocation is fair
+   ☑ Difficulty matches year group
+   ☑ No grammatical errors
+   ☑ Solution provided (if applicable)
+   ☑ Aligns with curriculum
+
+═══════════════════════════════════════════════════════════════════
+   📞 NEED HELP?
+═══════════════════════════════════════════════════════════════════
+
+1. Check the full guide (ADMIN_QUESTION_VIEWER_GUIDE.md)
+2. Try "Reset Filters" button
+3. Refresh the page
+4. Contact system administrator
+
+═══════════════════════════════════════════════════════════════════
+   ✨ KEY BENEFITS
+═══════════════════════════════════════════════════════════════════
+
+FOR YOU:
+   ✓ Complete oversight of test questions
+   ✓ Easy search and filtering
+   ✓ Professional interface
+   ✓ Export for records
+
+FOR SCHOOL:
+   ✓ Better test quality
+   ✓ Teacher support
+   ✓ Academic standards
+   ✓ Transparency
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 REMEMBER: This is a POWERFUL oversight tool for maintaining
+   academic quality. Use it regularly to ensure the highest
+   standards in your school's assessment system!
+
+═══════════════════════════════════════════════════════════════════
+Last Updated: October 2025 | Version 1.0
+═══════════════════════════════════════════════════════════════════
+

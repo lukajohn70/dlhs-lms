@@ -1,0 +1,309 @@
+<?php
+session_start();
+	require_once 'userExpiredSession.php';
+	if (!isset($_SESSION['adminLoggedIn']))
+	{
+		header('location:../index.php');
+	}
+	else
+	{
+		include "../../db_connection/dlhs_db_connection.php";
+	}
+?>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="icon" type="image/jpg" href="../../images/dlhslogo3.jpg">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DLHS Dashboard">
+    <meta name="author" content="DLHS IT Department">
+    <meta name="keyword" content="DLHS, Dashboard, Admin, Education, School">
+    <link rel="shortcut icon" href="../images/dlhslogo2.jpg">
+
+    <title>Set Academic Year | DLHS</title>
+
+    <!-- Bootstrap CSS -->    
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- bootstrap theme -->
+    <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <!--external css-->
+    <!-- font icon -->
+    <link href="css/elegant-icons-style.css" rel="stylesheet" />
+    <link href="css/font-awesome.min.css" rel="stylesheet" />
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+    <!-- date picker -->
+    
+    <!-- color picker -->
+    
+    <!-- Custom styles -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/style-responsive.css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/jquery.dataTables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/rowReorder.dataTables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/responsive.dataTables.min.css"/>
+	<script src="jQuery3.3.1.js"></script>
+	<script src="setAcademicYearAjax.js"></script>
+	<style>
+		.modal1 {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            padding-top: 100px; /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            }
+			
+			.modal-content {
+            border-radius:7px;
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            color:black;
+            }
+
+            /* The Close Button */
+            .close1{
+            color: #000000;;
+            float: right;
+			padding-right:20px;
+			padding-top:20px;
+            font-size: 28px;
+            font-weight: bold;
+            }
+
+            .close1:hover, .close1:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+            }
+	</style>
+  </head>
+  <body>
+
+	<!-- container section start -->
+	<section id="container" class="">
+		<!--Including the header-->
+		<?php include 'header.php'; ?>
+
+		<!--Including the sidebar-->
+		<?php include 'sideBar.php'; ?>
+
+      <!--main content start-->
+      <section id="main-content">
+          <section class="wrapper">
+		  <div class="row">
+				<div class="col-lg-12">
+					<h3 class="page-header"><i class="fa fa-file-text-o"></i> Set Academic Year</h3>
+					<ol class="breadcrumb">
+						<li><i class="fa fa-home"></i><a href="index.php">Home</a></li>
+						<li><i class="fa fa-file-text-o"></i>Academic Year</li>
+						<li><a href="#" style="color:#0acca2;"><i class="fa fa-calendar-o"></i> <?php echo date('d')." ".date('M').", ".date("Y"); ?></a></li>
+					</ol>
+				</div>
+			</div>
+              
+              
+				<div class="row">
+					<div class="col-lg-4">
+						<section class="panel">
+							<header class="panel-heading">
+								Please fill required field in the form
+							</header>
+							<div class="panel-body">
+								<form>
+									<div class="form-group">
+										<label>Set Academic Year</label>
+										<select class="form-control m-bot15" name="academicYear" id="academicYear" required >
+										<option value="">... Select Academic year ...</option>
+										<?php
+											$academicYear="SELECT * FROM academic_year";
+											$result4 = $connection->query($academicYear);
+											while($row4 = $result4->fetch_array(MYSQLI_NUM)){
+										?>
+										<option value="<?php echo $row4[0]; ?>"><?php echo $row4[1]; ?></option>
+										<?php } ?>
+									</select>
+									</div>
+									<button type="button" class="btn btn-primary" id="submit" onclick="setAcademicYear()"><i class="fa fa-sign-in"></i> Submit</button><br><br>
+									<div class="message2" style="color:red;" align="center"></div><div class="message1" style="color:green; font-size:17px;" align="center"></div><br>
+								</form>
+							</div>
+						</section>
+					</div>
+					<div class="col-lg-8">
+						<section class="panel">
+							<header class="panel-heading">
+								View | Edit Academic Year
+							</header>
+							<div class="panel-body">
+								<div class="table-responsive">
+									<table id="example" class="table table-striped table-bordered bulk_action" style="width:100%" width="100%">
+												<thead>
+													<tr>
+														<th>S/NO</th>
+														<th><center>Academic Year</center></th>
+													</tr>
+												</thead>
+												<tbody>
+													
+												</tbody>
+											</table>
+								</div>
+								<!-- End of table-responsive -->
+                            </div>
+						</section>
+					</div>
+					
+				</div>				
+                </div>
+              </div>
+              <!-- page end-->
+          </section>
+      </section>
+      <!--main content end-->
+      <div class="text-right">
+        <div class="credits">
+            <?php include "footer.php"; ?>
+        </div>
+    </div>
+  </section>
+  <!-- container section end -->
+    <!-- javascripts -->
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <!-- nice scroll -->
+    <script src="js/jquery.scrollTo.min.js"></script>
+    <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
+
+    <!-- jquery ui -->
+    <script src="js/jquery-ui-1.9.2.custom.min.js"></script>
+
+    <!--custom checkbox & radio-->
+    <script type="text/javascript" src="js/ga.js"></script>
+    <!--custom switch-->
+    <script src="js/bootstrap-switch.js"></script>
+    <!--custom tagsinput-->
+    <script src="js/jquery.tagsinput.js"></script>
+    
+    <!-- colorpicker -->
+   
+    <!-- bootstrap-wysiwyg -->
+    <script src="js/jquery.hotkeys.js"></script>
+    <script src="js/bootstrap-wysiwyg.js"></script>
+    <script src="js/bootstrap-wysiwyg-custom.js"></script>
+    <!-- ck editor -->
+    <script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
+    <!-- custom form component script for this page-->
+    <script src="js/form-component.js"></script>
+    <!-- custome script for all page -->
+    <script src="js/scripts.js"></script>
+	<script src="../../datatables/js/jquery.dataTables.min.js"></script>
+	<script src="../../datatables/js/dataTables.rowReorder.min.js"></script>
+	<script src="../../datatables/js/dataTables.responsive.min.js"></script>
+	<script src="../../datatables/js/dataTables.buttons.min.js"></script>
+	<script src="../../datatables/js/buttons.flash.min.js"></script>
+	<script src="../../datatables/js/jszip.min.js"></script>
+	<script src="../../datatables/js/pdfmake.min.js"></script>
+	<script src="../../datatables/js/vfs_fonts.js"></script>
+	<script src="../../datatables/js/buttons.html5.min.js"></script>
+	<script src="../../datatables/js/buttons.print.min.js"></script>
+	<script>
+		//function declaration to set academic year
+		function setAcademicYear()
+		{
+			$('.message1').html("");
+			$('.message2').html("");
+					
+			
+			var academicYearId = document.getElementById('academicYear').value;
+			var academicYearName = $('#academicYear option:selected').text();
+			
+			if (academicYearId=="")
+			{
+				$('.message2').html('<i class="fa fa-info-circle"></i> Please select Academic year')
+			}
+			else
+			{
+				var form_data = 
+				  'academicYearId='+academicYearId+
+				  '&academicYearName='+academicYearName;
+			
+				$.ajax({
+					url: "setAcademicYear.php",
+					type: "POST",       
+					data: form_data,    
+					success: function (html) {   
+						if (html==0) 
+						{                              
+							 window.location.replace("logout.php");
+						}
+						else if (html==1) 
+						{                              
+							$('.message2').html("");
+							$('.message1').html('<i class="fa fa-check"></i> Academic year successfully set to ' + academicYearName).fadeIn('slow');
+							$('#example').DataTable().clear().destroy();
+							callTable();
+						}
+						else if (html==2)
+						{                              
+							$('.message1').html("");
+							$('.message2').html('<i class="fa fa-times"></i> Could not set Academic year. Please try again.').fadeIn('slow');
+						}
+					}
+				});
+			}
+		}	
+
+		function callTable()	//Declaration of the data table function
+		{
+			$.ajax({
+					url: 'getAcademicYear.php',
+					type: 'get',
+					dataType: 'JSON',
+					success: function(response)
+					{
+						var len = response.length;
+						for(var i=0; i<len; i++){
+							var academicYearId = response[i].academicYearId;
+							var academicYearName = response[i].academicYearName;						
+							
+							var tr_str = "<tr>" +
+								"<td>" + (i+1) + "</td>" +
+								"<td><center>" + academicYearName + "</center></td>" +								
+								"</tr>";
+
+							$("#example tbody").append(tr_str);
+						}
+						$('#example').DataTable( {
+						"paging":   true,
+						"ordering": true,
+						"info":     true,
+						"responsive": true,
+						dom: 'lBfrtip',
+						buttons: [
+							'copy', 'csv', 'excel', 'pdf', 'print'
+						],
+						rowReorder: {
+								selector: 'td:nth-child(2)'
+							},
+							"responsive": true
+						});
+					}
+			});
+		}
+		//calling the data table function
+		callTable();
+	</script>
+
+
+  </body>
+</html>

@@ -1,0 +1,18 @@
+<?php
+	unset($_SESSION['studentLast_login']);
+	unset($_SESSION['studentLoggedIn']);
+	unset($_SESSION['studentName']);
+	unset($_SESSION['studentId']);
+	unset($_SESSION['studentEmail']);
+	unset($_SESSION['studentLoggedIn']);
+	unset($_SESSION['studentYearGroup']);
+	unset($_SESSION['pages']);
+	unset($_SESSION['setNext']);
+	unset($_SESSION['correctOption']);
+	unset($_SESSION['questionsIdsArray']);
+	unset($_SESSION['nextQuestIdToSelect']);
+	unset($_SESSION['nextIndexId']);
+	unset($_SESSION['prevIndexId']);
+	unset($_SESSION['idOfTest']);
+	unset($_SESSION['passportNameAndLocation']);
+?>

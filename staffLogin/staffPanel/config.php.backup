@@ -1,0 +1,51 @@
+<?php
+session_start();
+/* DATABASE CONFIGURATION FOR LINUX */
+define('DB_SERVER', 'localhost');
+define('DB_USERNAME', 'dlhs_user');
+define('DB_PASSWORD', 'dlhs2024#');
+define('DB_DATABASE', 'deeper_life');
+
+function getDB()
+{
+    $dbhost = DB_SERVER;
+    $dbuser = DB_USERNAME;
+    $dbpass = DB_PASSWORD;
+    $dbname = DB_DATABASE;
+    
+    try {
+        // Create PDO connection with additional options for Linux/MySQL 8.0+
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+        ];
+        
+        $dbConnection = new PDO("mysql:host=$dbhost;dbname=$dbname;charset=utf8mb4", $dbuser, $dbpass, $options);
+        return $dbConnection;
+    }
+    catch (PDOException $e) {
+        echo 'Connection failed: ' . $e->getMessage();
+        return null;
+    }
+}
+
+// Test connection function
+function testConnection()
+{
+    $db = getDB();
+    if ($db) {
+        try {
+            $stmt = $db->query("SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = '" . DB_DATABASE . "'");
+            $result = $stmt->fetch();
+            echo "✅ Connection successful! Database has " . $result['table_count'] . " tables.\n";
+            return true;
+        } catch (PDOException $e) {
+            echo "❌ Connection failed: " . $e->getMessage() . "\n";
+            return false;
+        }
+    }
+    return false;
+}
+?>

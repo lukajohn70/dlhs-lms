@@ -1,0 +1,27 @@
+# Dependencies / vendor
+vendor/
+node_modules/
+
+# Environment / secrets
+.env
+config.local.php
+db_connection/dlhs_db_connection.php
+
+# MAMP / macOS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/*.log
+*.log
+
+# Scratch / temp
+scratch/
+
+# IDE
+.vscode/
+.idea/
+
+# Compiled assets (if any)
+*.min.css.map
+*.min.js.map

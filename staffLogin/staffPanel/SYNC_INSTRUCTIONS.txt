@@ -1,0 +1,66 @@
+================================================================================
+                    PERFORMANCE ANALYSIS - AUTO-SYNC FEATURE
+================================================================================
+
+🎯 QUICK START
+--------------------------------------------------------------------------------
+
+1. Open this page: Performance Dashboard
+   (Staff Panel → Performance Analysis → Performance Dashboard)
+
+2. Look for the blue banner at the top that says "Auto-Sync Test Results"
+
+3. Click the green "Sync Now" button
+
+4. Wait for the sync to complete (30 seconds - 2 minutes)
+
+5. Done! All your graded tests are now imported automatically
+
+
+================================================================================
+
+💡 WHAT IT DOES
+--------------------------------------------------------------------------------
+
+✅ Automatically imports ALL graded test results
+✅ Calculates student scores from your test tables
+✅ Assigns letter grades (A, B, C, D, F)
+✅ Updates all charts with REAL data
+✅ Tracks student improvement over time
+✅ NO manual data entry needed!
+
+
+================================================================================
+
+⏰ WHEN TO USE
+--------------------------------------------------------------------------------
+
+• First Time: Click "Sync Now" to import all past graded tests
+• Weekly: After grading tests, click "Sync Now" to update analytics
+• Anytime: When you want to see current performance trends
+
+
+================================================================================
+
+❓ TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+Problem: Button does nothing
+Solution: Check browser console (F12) for errors
+
+Problem: "No records synced"
+Solution: Make sure you have completed tests (status = 2)
+
+Problem: Error message appears
+Solution: Check that sync_performance_data.php file exists in this folder
+
+
+================================================================================
+
+📧 CONTACT
+--------------------------------------------------------------------------------
+
+For technical support, check: ../../PERFORMANCE_ANALYSIS_README.md
+
+================================================================================
+

@@ -1,0 +1,80 @@
+/* DLHS Theme variables and utilities (admin copy)
+   This is a copy of the staff theme so admin pages can import it locally.
+*/
+:root{
+  --dlhs-font-sans: 'Lato', 'Roboto', Helvetica, Arial, sans-serif;
+  --dlhs-font-heading: 'Lato', sans-serif;
+
+  --dlhs-primary: #0acca2; /* bright teal */
+  --dlhs-primary-dark: #089f8b; /* darker teal */
+  --dlhs-accent: #688a7e; /* muted sage */
+  --dlhs-info: #57889c; /* blue */
+  --dlhs-success: #26c281; /* green */
+  --dlhs-brown: #d1b993; /* warm brown */
+
+  --dlhs-text: #333333;
+  --dlhs-muted: #797979;
+  --dlhs-bg: #ffffff;
+}
+
+/* Basic typography */
+html, body {
+  font-family: var(--dlhs-font-sans);
+  color: var(--dlhs-muted);
+}
+
+h1,h2,h3,h4,h5{ font-family: var(--dlhs-font-heading); color:var(--dlhs-text); }
+
+/* Links */
+a, a:visited { color: var(--dlhs-primary); }
+a:hover, a:focus { color: var(--dlhs-primary-dark); text-decoration: none; }
+
+/* Buttons */
+.btn-dlhs {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--dlhs-primary) 0%, var(--dlhs-primary-dark) 100%);
+  color: #fff;
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-dlhs[disabled]{ opacity: .6; cursor: not-allowed; }
+
+/* Utility text/background classes */
+.text-dlhs { color: var(--dlhs-primary) !important; }
+.bg-dlhs { background: var(--dlhs-primary); color:#fff !important; }
+.text-accent { color: var(--dlhs-accent) !important; }
+.bg-accent { background: var(--dlhs-accent); color:#fff !important; }
+
+/* Card / surface */
+.dlhs-card {
+  background: var(--dlhs-bg);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 16px;
+}
+
+/* Logo tweak: keeps existing HTML but controls the .lite span color */
+.logo .lite { color: var(--dlhs-primary); font-weight:600; }
+
+/* Form placeholders & selects (Select2 friendly) */
+.select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--dlhs-text); }
+
+/* Small helpers */
+.muted { color: var(--dlhs-muted); }
+.center { text-align:center; }
+
+/* Accessibility: high-contrast focus */
+:focus { outline: 3px solid rgba(10,204,162,0.15); outline-offset: 2px; }
+
+/* Make selection use the accent for small visual consistency */
+::selection { background: var(--dlhs-accent); color: #fff; }
+
+/* Responsive typography helpers */
+.h1 { font-size: 1.85rem; }
+.h2 { font-size: 1.5rem; }
+.h3 { font-size: 1.25rem; }
+
+/* End of admin theme copy */

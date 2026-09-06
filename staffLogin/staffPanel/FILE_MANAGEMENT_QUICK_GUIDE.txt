@@ -1,0 +1,189 @@
+═══════════════════════════════════════════════════════════════════
+   📁 FILE MANAGEMENT SYSTEM - QUICK REFERENCE GUIDE
+═══════════════════════════════════════════════════════════════════
+
+🎯 KEY IMPROVEMENTS AT A GLANCE:
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. STATISTICS DASHBOARD (Top of Page)                          │
+│    ✓ Total Files | Storage Used | Downloads | Assignments      │
+│    ✓ Color-coded cards with live data                          │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. SMART SEARCH & FILTERS (Above File List)                    │
+│    ✓ Filter by Category (Assignments, Notes, Slides, etc.)     │
+│    ✓ Filter by Subject                                         │
+│    ✓ Filter by Type (Assignment/Resource)                      │
+│    ✓ Live Search Box (searches title, filename, description)   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. VIEW SWITCHING                                              │
+│    [Grid] [Table] ← Click to switch between views              │
+│    • Grid View = Visual cards                                  │
+│    • Table View = Sortable table with DataTables              │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. BATCH OPERATIONS                                            │
+│    ☑ Select multiple files using checkboxes                    │
+│    ☑ "Select All" button for convenience                       │
+│    ☑ "Delete Selected" for batch deletion                      │
+│    ☑ Selected files highlighted in grid view                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. FILE PREVIEW                                                │
+│    👁️ Click eye icon to preview files                          │
+│    ✓ PDFs show inline                                          │
+│    ✓ Images display full-size                                  │
+│    ✓ Videos play in modal                                      │
+│    ✓ Audio files play inline                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 6. ENHANCED GRADING MODAL                                      │
+│    ✓ No more prompt() dialogs!                                 │
+│    ✓ View student's submission                                 │
+│    ✓ See if submission was late                                │
+│    ✓ Proper grade input form                                   │
+│    ✓ Detailed feedback textarea                                │
+└─────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════
+   🚀 COMMON TASKS - HOW TO:
+═══════════════════════════════════════════════════════════════════
+
+📤 UPLOAD A FILE:
+   1. Click "Upload New File" (top right)
+   2. Drag & drop files OR click upload area
+   3. Fill required fields: Category, Subject, Title
+   4. Set target audience (All/Specific Class/Students)
+   5. Check "This is an assignment" if applicable
+   6. Add due date and max marks for assignments
+   7. Click "Upload Files"
+
+🔍 FIND A SPECIFIC FILE:
+   Method 1: Use search box - type filename/title
+   Method 2: Combine filters - select category + subject
+   Method 3: Sort table - click column headers
+
+🗑️ DELETE MULTIPLE FILES:
+   1. Check boxes next to files you want to delete
+   2. Click "Delete Selected" button
+   3. Confirm deletion
+   4. Done! Files removed instantly
+
+👁️ PREVIEW A FILE:
+   1. Find file in list
+   2. Click eye icon (👁️)
+   3. Modal opens with preview
+   4. Download if preview not available
+
+📊 SWITCH TO TABLE VIEW:
+   1. Click "Table" button above file list
+   2. Now you can sort by clicking column headers
+   3. Use pagination at bottom (10/25/50 per page)
+   4. DataTable search works too
+
+📝 GRADE A SUBMISSION:
+   1. Scroll to "Pending Submissions" section
+   2. Click "Grade" button on a submission
+   3. Review student's work in modal
+   4. Enter grade (validated against max marks)
+   5. Add feedback (optional but recommended)
+   6. Click "Submit Grade"
+
+
+═══════════════════════════════════════════════════════════════════
+   💡 PRO TIPS:
+═══════════════════════════════════════════════════════════════════
+
+✨ The upload section auto-hides after successful upload
+
+✨ Click refresh icon (🔄) to update all data instantly
+
+✨ Filters work together - use multiple for precise results
+
+✨ Selected file count shows in yellow bar
+
+✨ Stats cards update automatically after operations
+
+✨ Grid view is great for visual browsing
+
+✨ Table view is best for managing many files
+
+✨ Late submissions show red "Late" badge in grading modal
+
+✨ File icons auto-detect file type
+
+
+═══════════════════════════════════════════════════════════════════
+   🎨 VISUAL INDICATORS:
+═══════════════════════════════════════════════════════════════════
+
+Badge Colors:
+   🟡 Yellow = Assignment
+   🔵 Blue = Resource
+   🔴 Red = Late Submission
+   🟢 Green = On Time
+
+Button Colors:
+   🟦 Blue = Preview
+   🟩 Green = Download
+   🟥 Red = Delete
+
+
+═══════════════════════════════════════════════════════════════════
+   📱 MOBILE FRIENDLY:
+═══════════════════════════════════════════════════════════════════
+
+✓ All features work on mobile/tablet
+✓ Filters stack vertically on small screens
+✓ Stats cards go single-column
+✓ DataTables is responsive
+✓ Touch-friendly buttons
+
+
+═══════════════════════════════════════════════════════════════════
+   ⚠️ IMPORTANT NOTES:
+═══════════════════════════════════════════════════════════════════
+
+⚠️  Max file size: 50MB per file
+⚠️  You can only delete your own files
+⚠️  Deleted files are permanently removed
+⚠️  Batch delete shows confirmation dialog
+⚠️  Grading is for assignments you created
+
+
+═══════════════════════════════════════════════════════════════════
+   ❓ TROUBLESHOOTING:
+═══════════════════════════════════════════════════════════════════
+
+Problem: "No files showing"
+Solution: Click "Reset" filters, or refresh page
+
+Problem: "Upload fails"
+Solution: Check file size < 50MB, file type allowed
+
+Problem: "Can't delete file"
+Solution: Ensure you own the file (you uploaded it)
+
+Problem: "Preview not working"
+Solution: Some file types don't preview - download instead
+
+Problem: "Grading button missing"
+Solution: Only assignments you created show grading option
+
+
+═══════════════════════════════════════════════════════════════════
+   🎉 ENJOY THE NEW FILE MANAGEMENT SYSTEM!
+═══════════════════════════════════════════════════════════════════
+
+Need help? Contact the system administrator.
+
+Last Updated: October 2025
+Version: 2.0 (Major Upgrade)
+
