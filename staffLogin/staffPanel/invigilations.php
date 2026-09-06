@@ -167,8 +167,7 @@ $staffId = $_SESSION['staffId'];
                     <div class="col-md-6 text-right" id="globalActions" style="display:none; padding-top:25px;">
                         <div class="att-summary" style="display:inline-block; vertical-align:middle; margin-right:15px; background:#fff; padding:8px 15px; border-radius:10px; border:1px solid #eee;">
                             <span style="font-size:12px; font-weight:700;">
-                                <span style="color:#27ae60;">P: <span id="attPresentCount">0</span></span> | 
-                                <span style="color:#e74c3c;">A: <span id="attAbsentCount">0</span></span> | 
+                                <span style="color:#27ae60;">Enrolled: <span id="attPresentCount">0</span></span> | 
                                 <span style="color:var(--primary);">Active: <span id="attActiveCount">0</span></span>
                             </span>
                         </div>
@@ -298,25 +297,24 @@ $staffId = $_SESSION['staffId'];
                 // Since I haven't updated getExamineesStatus.php yet, I'll do a quick check on a sample
                 // Let's assume I'll update it now.
 
-                var presentCount = 0, absentCount = 0, activeCount = 0;
+                var enrolledCount = 0, activeCount = 0;
                 var html = "";
 
                 $.each(students, function(i, s) {
                     // Render Master Status on first student
                     if (i === 0) renderMasterStatus(s.globalTestStatus);
 
-                    var isPresent = parseInt(s.attendance) === 1;
                     var isActive  = parseInt(s.examineeTeststatus) === 1;
                     var isPaused  = parseInt(s.isPaused) === 1;
                     var isSubmit  = parseInt(s.examineeTeststatus) === 2;
+                    var isStarted = parseInt(s.isStarted) === 1;
 
-                    if (isPresent) presentCount++; else absentCount++;
+                    enrolledCount++;
                     if (isActive && !isPaused) activeCount++;
 
-                    var trClass    = isSubmit ? 'submitted' : (isActive ? (isPaused ? 'paused' : 'live') : (isPresent ? '' : 'absent'));
-                    var statusText = isSubmit ? 'FINISHED' : (isActive ? (isPaused ? 'PAUSED' : 'ACTIVE') : (isPresent ? 'READY' : 'ABSENT'));
+                    var trClass    = isSubmit ? 'submitted' : (isActive ? (isPaused ? 'paused' : 'live') : '');
+                    var statusText = isSubmit ? 'FINISHED' : (isActive ? (isPaused ? 'PAUSED' : 'ACTIVE') : (isStarted ? 'STARTED' : 'WAITING'));
                     var dotClass   = (isActive && !isPaused) ? 'dot-live' : '';
-                    var attChecked = isPresent ? 'checked' : '';
                     var isChecked  = selectedStudents.has(String(s.examineeUserId)) ? 'checked' : '';
 
                     html += `
@@ -327,13 +325,7 @@ $staffId = $_SESSION['staffId'];
                             <span class="class-badge">${s.classAndYearGroupName}</span>
                         </td>
                         <td>
-                            <div class="switch-container">
-                                <label class="switch"><input type="checkbox" ${attChecked} onchange="performAction('mark_attendance', {studentId:'${s.examineeUserId}', status:this.checked?1:0})"><span class="slider"></span></label>
-                                <span style="color:${isPresent?'#27ae60':'#e74c3c'}">${isPresent?'Unlocked':'Locked'}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-dot ${dotClass}" style="${isPaused?'background:#f1c40f':''}${(!isPresent&&!isSubmit)?'background:#e74c3c':''}"></span>
+                            <span class="status-dot ${dotClass}" style="${isPaused?'background:#f1c40f':''}"></span>
                             <span style="font-size:11px; font-weight:700;">${statusText}</span>
                         </td>
                         <td>
@@ -366,8 +358,7 @@ $staffId = $_SESSION['staffId'];
                     </tr>`;
                 });
 
-                $('#attPresentCount').text(presentCount);
-                $('#attAbsentCount').text(absentCount);
+                $('#attPresentCount').text(enrolledCount);
                 $('#attActiveCount').text(activeCount);
                 $("#studentList").html(html);
             }

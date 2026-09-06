@@ -127,7 +127,6 @@ session_start();
 							"timeSubmitted" => $timeSubmitted,
 							"remainingTime" => $remainingTime,
 							"examineeTeststatus" => $examineeTeststatus,
-                            "attendance" => $row1['attendance'] ?? 0,
                             "isPaused" => $row1['isPaused'] ?? 0,
                             "isStarted" => $row1['isStarted'] ?? 0,
                             "globalTestStatus" => $globalTestStatus,

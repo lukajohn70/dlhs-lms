@@ -52,11 +52,10 @@ session_start();
 			if ($result2 && ($result2->num_rows > 0)) {
 				$row2assoc = $result2->fetch_assoc();
 				$testStatusOfTested = isset($row2assoc['testStatus']) ? (int)$row2assoc['testStatus'] : 0;
-				$attendance         = isset($row2assoc['attendance']) ? (int)$row2assoc['attendance'] : 0;
 				$isStarted          = isset($row2assoc['isStarted']) ? (int)$row2assoc['isStarted'] : 0;
 				$isPaused           = isset($row2assoc['isPaused']) ? (int)$row2assoc['isPaused'] : 0;
 
-				$logLine = "  -> student state: testStatus=$testStatusOfTested, attendance=$attendance, isStarted=$isStarted, isPaused=$isPaused, globalStatus=$testStatus\n";
+				$logLine = "  -> student state: testStatus=$testStatusOfTested, isStarted=$isStarted, isPaused=$isPaused, globalStatus=$testStatus\n";
 				file_put_contents($logFile, $logMsg . $logLine, FILE_APPEND);
 
 				// If already submitted, always block
@@ -65,20 +64,13 @@ session_start();
 					exit;
 				}
 
-				// ROBUST CHECK: Can the student enter?
-				// Either Global Start (testStatus == 1) AND marked present
-				// OR Individual Start (isStarted == 1)
-				
-				$canEnter = false;
-				if ($isStarted == 1) {
-					$canEnter = true;
-				} elseif ($testStatus == 1 && $attendance == 1) {
-					$canEnter = true;
-				}
+				// A student can enter if the test is globally open (status==1) OR they
+				// have already individually started (isStarted==1). No attendance gate.
+				$canEnter = ($testStatus == 1 || $isStarted == 1);
 
 				if ($canEnter) {
 					if ($isPaused == 1) {
-						echo 8; // Optional: Custom code for "Paused"
+						echo 8; // Paused by invigilator
 						exit;
 					}
 
@@ -97,12 +89,7 @@ session_start();
 					
 					echo ($testStatusOfTested == 1) ? 4 : 1; // 4=Continue, 1=Start
 				} else {
-					// Cannot enter
-					if ($testStatus == 1 && $attendance == 0) {
-						echo 7; // Global start but student not marked present
-					} else {
-						echo 2; // Global test not enabled
-					}
+					echo 2; // Test not started globally yet
 				}
 			} else {
 				// No examinee row found

@@ -520,10 +520,7 @@ session_start();
 								{
 									alert("This test has not been started by the invigilator yet. Please wait.");
 								}
-								else if (html==7)
-								{
-									alert("⏳ You have not been marked present yet.\n\nPlease wait for the invigilator to mark your attendance before you can start the test.");
-								}
+
 								else if (html==3)
 								{
 									alert("You were not added to take this test");
@@ -726,8 +723,7 @@ session_start();
 						window.open('viewEssay.php?testId=' + encodeURIComponent(testId), '_blank', 'width=' + w + ',height=' + h + ',top=0,left=0');
 					} else if (html == 2) {
 						alert('This test has not been started by the invigilator yet. Please wait.');
-					} else if (html == 7) {
-						alert('⏳ You have not been marked present yet.\n\nPlease wait for the invigilator to mark your attendance before you can start the test.');
+
 					} else if (html == 3) {
 						alert('You were not added to take this test');
 					} else if (html == 5) {
