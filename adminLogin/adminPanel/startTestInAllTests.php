@@ -22,51 +22,18 @@ session_start();
 			$query = "SELECT * FROM tests WHERE testId='$testId'";
 			$result = $connection->query($query);
 			$row = $result->fetch_array(MYSQLI_NUM);
-			$theDate=$row[3];
-			
-			//checking time to start
-			$hourToStart=$row[5];
-			$minuteToStart=$row[6];
-			$isAmOrPm=$row[7];
-			$secondToStart=00;
-			$dateToStart=$row[3];
-			$hourOf12=12;
-			if(($isAmOrPm=="PM") && ($hourToStart > $hourOf12 || $hourToStart < $hourOf12))
+			// Instant Start: bypass strict schedule gates when admin triggers start
+			$setStatusTo1 = 1;
+			$query1 = "UPDATE tests SET status='$setStatusTo1', testDate='$finalDate' WHERE testId='$testId'";
+			$result1 = $connection->query($query1);
+			if (!$result1) die($connection->error);
+			if($result1)
 			{
-				$hourToStart=$hourToStart + 12;
+				echo 1;
 			}
-			
-			$timeToStart=strtotime("$dateToStart $hourToStart:$minuteToStart:$secondToStart");
-						
-			$currentTime=date("Y-m-d H:i:s");
-			$currentTime1=strtotime($currentTime);
-								
-			if(strtotime($theDate) > strtotime('0:00'))
+			else
 			{
-				echo 3;
-			}
-			elseif(strtotime($theDate) < strtotime('0:00'))
-			{
-				echo 4;
-			}
-			elseif($currentTime1 < $timeToStart)
-			{
-				echo 5;
-			}
-			else 
-			{
-				$setStatusTo1 = 1;
-				$query1 = "UPDATE tests SET status='$setStatusTo1' WHERE testId='$testId'";
-				$result1 = $connection->query($query1);
-				if (!$result1) die($connection->error);
-				if($result1)
-				{
-					echo 1;
-				}
-				else
-				{
-					echo 2;
-				}
+				echo 2;
 			}
 		}
 		else

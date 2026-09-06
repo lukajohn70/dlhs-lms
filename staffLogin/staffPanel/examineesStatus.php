@@ -673,7 +673,7 @@ session_start();
 	<script src="../../datatables/js/buttons.html5.min.js"></script>
 	<script src="../../datatables/js/buttons.print.min.js"></script>
 	<script>
-		function getStatus(testId, examineeTeststatus, examineeUserId, examineeName)
+		function getStatus(testId, examineeTeststatus, examineeUserId, examineeName, isPaused)
 		{
 			if(examineeTeststatus == 0)
 			{
@@ -681,12 +681,58 @@ session_start();
 			}
 			else if(examineeTeststatus == 1)
 			{
-				return "<span class='status-badge status-inprogress'><i class='fa fa-spinner fa-spin'></i> In progress</span><br><a onclick='viewResult(\""+testId+"\",\""+examineeUserId+"\",\""+examineeName+"\")' style='cursor:pointer; font-size:11px; margin-top:5px; display:inline-block;' class='text-primary' title='View result'>View details</a>";
+				var actionBtns = "<div style='margin-top:5px; display:flex; flex-wrap:wrap; gap:3px;'>";
+				if(isPaused == 1) {
+					actionBtns += "<button type='button' class='btn btn-xs btn-success' onclick='quickTogglePause(\""+testId+"\",\""+examineeUserId+"\", 0)' title='Resume student test'><i class='fa fa-play'></i> Resume</button>";
+				} else {
+					actionBtns += "<button type='button' class='btn btn-xs btn-warning' onclick='quickTogglePause(\""+testId+"\",\""+examineeUserId+"\", 1)' title='Pause student test'><i class='fa fa-pause'></i> Pause</button>";
+				}
+				actionBtns += "<button type='button' class='btn btn-xs btn-info' onclick='quickAddTime(\""+testId+"\",\""+examineeUserId+"\", 5)' title='Add 5 minutes'>+5m</button>";
+				actionBtns += "<button type='button' class='btn btn-xs btn-info' onclick='quickAddTime(\""+testId+"\",\""+examineeUserId+"\", 10)' title='Add 10 minutes'>+10m</button>";
+				actionBtns += "</div>";
+
+				var badge = isPaused == 1 
+					? "<span class='status-badge' style='background:#f39c12; color:#fff;'><i class='fa fa-pause'></i> Paused</span>" 
+					: "<span class='status-badge status-inprogress'><i class='fa fa-spinner fa-spin'></i> In progress</span>";
+
+				return badge + actionBtns + "<a onclick='viewResult(\""+testId+"\",\""+examineeUserId+"\",\""+examineeName+"\")' style='cursor:pointer; font-size:11px; margin-top:5px; display:inline-block;' class='text-primary' title='View result'>View details</a>";
 			}
 			else if(examineeTeststatus == 2)
 			{
 				return "<span class='status-badge status-submitted'><i class='fa fa-check-circle'></i> Submitted</span><br><a onclick='viewResult(\""+testId+"\",\""+examineeUserId+"\",\""+examineeName+"\")' style='cursor:pointer; color:green; font-size:11px; margin-top:5px; display:inline-block;' title='View result'>View score</a>";
 			}
+		}
+
+		function quickTogglePause(testId, studentId, newStatus) {
+			$.ajax({
+				url: "invigilationActions.php",
+				type: "POST",
+				data: { action: "toggle_pause", testId: testId, studentId: studentId, status: newStatus },
+				dataType: "json",
+				success: function(res) {
+					if(res && res.status === "success") {
+						callExamineesStatus(testId);
+					} else {
+						alert(res.message || "Could not update pause status");
+					}
+				}
+			});
+		}
+
+		function quickAddTime(testId, studentId, minutes) {
+			$.ajax({
+				url: "invigilationActions.php",
+				type: "POST",
+				data: { action: "add_time", testId: testId, studentId: studentId, minutes: minutes },
+				dataType: "json",
+				success: function(res) {
+					if(res && res.status === "success") {
+						callExamineesStatus(testId);
+					} else {
+						alert(res.message || "Could not add time");
+					}
+				}
+			});
 		}
 		
 		function callExamineesStatus(testId) {
@@ -722,7 +768,7 @@ session_start();
 						html += "<td>" + r.timeStarted + "</td>";
 						html += "<td>" + r.timeSubmitted + "</td>";
 						html += "<td>" + r.remainingTime + " mins</td>";
-						html += "<td>" + getStatus(testId, r.examineeTeststatus, r.examineeUserId, r.examineeName) + "</td>";
+						html += "<td>" + getStatus(testId, r.examineeTeststatus, r.examineeUserId, r.examineeName, r.isPaused) + "</td>";
 						html += "</tr>";
 					});
 					

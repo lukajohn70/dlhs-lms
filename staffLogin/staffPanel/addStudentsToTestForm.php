@@ -474,15 +474,34 @@ session_start();
 					var len = response.length;
 					if(len > 0)
 					{
-						$('#result').html("<b>Below are all students of "+theClassName+"</b><br>"+"<input type='checkbox' id='checkUncheckAll' onClick='CheckUncheckAll()' /> &nbsp;(Select/Unselect) all to add/remove from test<hr>");
+						var html = '<div class="student-select-card" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+						html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
+						html += '  <strong style="color:#2c3e50;">Students in ' + theClassName + '</strong>';
+						html += '  <span id="selectedCountBadge" class="label label-info" style="font-size:12px;">0 / ' + len + ' selected</span>';
+						html += '</div>';
+						html += '<div style="font-size:11px; color:#7f8c8d; margin-bottom:10px;">Select all for whole-class exams, or pick specific students for elective subjects.</div>';
+						html += '<div style="margin-bottom:10px; display:flex; gap:8px;">';
+						html += '  <button type="button" class="btn btn-xs btn-primary" onclick="selectAllStudents(true)"><i class="fa fa-check-square-o"></i> Select All (Whole Class)</button>';
+						html += '  <button type="button" class="btn btn-xs btn-default" onclick="selectAllStudents(false)" style="margin-left:6px;"><i class="fa fa-square-o"></i> Clear</button>';
+						html += '</div>';
+						html += '<div style="max-height:280px; overflow-y:auto; border:1px solid #e8ecf1; border-radius:6px; padding:6px; background:#fafbfc;">';
 						for(var i=0; i<len; i++){
 							var studentId = response[i].studentId;
 							var surname = response[i].surname;
 							var firstName = response[i].firstName;
 							var middleName = response[i].middleName;
-							$("#result").append("<input type='checkbox' name='rowSelectCheckBox[]' id='rowSelectCheckBox' value='"+studentId+"' /> &nbsp; "+ (+i+1)+ " &nbsp; &nbsp;"+surname + " &nbsp; " + firstName +" &nbsp; " + middleName + "<br>");
+							html += '<label style="display:block; padding:5px 8px; margin-bottom:3px; font-weight:normal; cursor:pointer; border-radius:4px; background:#fff; border:1px solid #f0f2f5;" onmouseover="this.style.background=\'#e8f8f5\'" onmouseout="this.style.background=\'#fff\'">';
+							html += '<input type="checkbox" name="rowSelectCheckBox[]" value="'+studentId+'" onchange="updateSelectedCount()" style="margin-right:8px; vertical-align:middle;" /> ';
+							html += '<span style="color:#95a5a6; font-size:11px; width:22px; display:inline-block;">'+(i+1)+'.</span> ';
+							html += '<strong>'+surname+'</strong> ' + firstName + ' ' + middleName;
+							html += '</label>';
 						}
-						$("#result").append("<br><button type='button' id='submitSelected' onClick='getChecked()' class='btn btn-primary'><i class='fa fa-sign-in'></i> Add Students to selected test</button>");
+						html += '</div>';
+						html += '<div style="margin-top:12px;">';
+						html += '<button type="button" id="submitSelected" onClick="getChecked()" class="btn btn-success btn-block" style="font-weight:600;"><i class="fa fa-user-plus"></i> Enroll Selected Students (0)</button>';
+						html += '</div>';
+						html += '</div>';
+						$('#result').html(html);
 						viewAdded();
 					}
 					else
@@ -646,22 +665,44 @@ session_start();
 		function CheckUncheckAll()
 		{
 		   var  selectAllCheckbox=document.getElementById("checkUncheckAll");
-			if(selectAllCheckbox.checked==true)
+			if(selectAllCheckbox && selectAllCheckbox.checked==true)
 			{
-				var checkboxes =  document.getElementsByName("rowSelectCheckBox[]");
-				for(var i=0, n=checkboxes.length;i<n;i++) 
-				{
-					checkboxes[i].checked = true;
-				}
+				selectAllStudents(true);
 			}
 			else
 			{
-				var checkboxes =  document.getElementsByName("rowSelectCheckBox[]");
-				for(var i=0, n=checkboxes.length;i<n;i++) 
-				{
-					checkboxes[i].checked = false;
+				selectAllStudents(false);
+			}
+		}
+
+		function updateSelectedCount() {
+			var checked = document.querySelectorAll("input[name='rowSelectCheckBox[]']:checked").length;
+			var total = document.querySelectorAll("input[name='rowSelectCheckBox[]']").length;
+			var badge = document.getElementById('selectedCountBadge');
+			if (badge) {
+				badge.innerText = checked + ' / ' + total + ' selected';
+				if (checked === total && total > 0) {
+					badge.className = 'label label-success';
+				} else if (checked > 0) {
+					badge.className = 'label label-primary';
+				} else {
+					badge.className = 'label label-info';
 				}
 			}
+			var btn = document.getElementById('submitSelected');
+			if (btn) {
+				btn.innerHTML = "<i class='fa fa-user-plus'></i> Enroll Selected Students (" + checked + ")";
+			}
+		}
+
+		function selectAllStudents(checked) {
+			var checkboxes = document.getElementsByName("rowSelectCheckBox[]");
+			for(var i=0; i<checkboxes.length; i++) {
+				checkboxes[i].checked = checked;
+			}
+			var chkAll = document.getElementById("checkUncheckAll");
+			if (chkAll) chkAll.checked = checked;
+			updateSelectedCount();
 		}
 		
 		//Function to select and unselect students to be added to a test

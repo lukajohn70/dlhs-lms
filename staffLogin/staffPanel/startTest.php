@@ -34,51 +34,18 @@ session_start();
 				exit;
 			}
 
-			$theDate=$row['testDate'];
-			
-			//checking time to start
-			$hourToStart=$row['startHour'];
-			$minuteToStart=$row['startMinute'];
-			$isAmOrPm=$row['amOrPm'];
-			$secondToStart=00;
-			$dateToStart=$row['testDate'];
-			$hourOf12=12;
-			if(($isAmOrPm=="PM") && ($hourToStart > $hourOf12 || $hourToStart < $hourOf12))
+			// Instant Start: bypass strict schedule gates since teacher explicitly triggered start
+			$setStatusTo1 = 1;
+			$query1 = "UPDATE tests SET status='$setStatusTo1', testDate='$finalDate' WHERE testId='$testId'";
+			$result1 = $connection->query($query1);
+			if (!$result1) die($connection->error);
+			if($result1)
 			{
-				$hourToStart=$hourToStart + 12;
+				echo 1;
 			}
-			
-			$timeToStart=strtotime("$dateToStart $hourToStart:$minuteToStart:$secondToStart");
-						
-			$currentTime=date("Y-m-d H:i:s");
-			$currentTime1=strtotime($currentTime);
-								
-			if(strtotime($theDate) > strtotime('0:00'))
+			else
 			{
-				echo 3;
-			}
-			elseif(strtotime($theDate) < strtotime('0:00'))
-			{
-				echo 4;
-			}
-			elseif($currentTime1 < $timeToStart)
-			{
-				echo 5;
-			}
-			else 
-			{
-				$setStatusTo1 = 1;
-				$query1 = "UPDATE tests SET status='$setStatusTo1' WHERE testId='$testId'";
-				$result1 = $connection->query($query1);
-				if (!$result1) die($connection->error);
-				if($result1)
-				{
-					echo 1;
-				}
-				else
-				{
-					echo 2;
-				}
+				echo 2;
 			}
 		}
 		else
@@ -86,5 +53,4 @@ session_start();
 			echo 0;
 		}
 	}
-	
 ?>
