@@ -49,38 +49,56 @@ $totalNoNotCorrect = 0;
 $totalQuestionsAnswered = 0;
 $totalQuestionsNotAnswered = 0;
 
-for($i = 0; $i < $numberOfQuestions; $i++) {
-    $questionId = $questionsArray[$i];
-    $query3 = "SELECT * FROM `$questionsTableName` WHERE questionId='$questionId'";
-    $result3 = $questionsTableName ? $connection->query($query3) : false;
-    $row3 = $result3 ? $result3->fetch_array(MYSQLI_NUM) : null;
-    
-    if ($row3) {
-        $correctOption = dlhsNormalizeOptionValue($row3[7]);
-        $mark = $row3[8];
-        $totalmarksToBeEarned += $mark;
-    } else {
-        continue;
+if ($numberOfQuestions > 0 && !empty($questionsTableName) && !empty($answersTableName)) {
+    $safeQIds = array_map('intval', $questionsArray);
+    $inClause = implode(',', $safeQIds);
+
+    // Batch 1: Fetch all questions in 1 query
+    $qMap = array();
+    $qRes = $connection->query("SELECT * FROM `$questionsTableName` WHERE questionId IN ($inClause)");
+    if ($qRes) {
+        while ($qRow = $qRes->fetch_array(MYSQLI_NUM)) {
+            $qMap[$qRow[0]] = array(
+                'correct' => dlhsNormalizeOptionValue($qRow[7]),
+                'mark' => (int) $qRow[8]
+            );
+        }
     }
 
-    $query4 = "SELECT * FROM `$answersTableName` WHERE userLoginId='$studentId' AND questionId='$questionId'";
-    $result4 = $answersTableName ? $connection->query($query4) : false;
-    if($result4 && $result4->num_rows > 0) {
-        $row4 = $result4->fetch_array(MYSQLI_NUM);
-        $selectedOption = dlhsNormalizeOptionValue($row4[4]);
-        if($selectedOption == $correctOption) {
-            $totalMarksEarned += $mark;
-            $totalNoCorrect++;
-        } else {
-            if($selectedOption == "0" || $selectedOption == "") {
-                $totalQuestionsNotAnswered++;
-            } else {
-                $totalQuestionsAnswered++;
-                $totalNoNotCorrect++;
-            }
+    // Batch 2: Fetch all user answers in 1 query
+    $aMap = array();
+    $aRes = $connection->query("SELECT * FROM `$answersTableName` WHERE userLoginId='$studentId' AND questionId IN ($inClause)");
+    if ($aRes) {
+        while ($aRow = $aRes->fetch_array(MYSQLI_NUM)) {
+            $aMap[$aRow[2]] = dlhsNormalizeOptionValue($aRow[4]);
         }
-    } else {
-        $totalQuestionsNotAnswered++;
+    }
+
+    // In-memory evaluation (0ms)
+    foreach ($questionsArray as $questionId) {
+        if (!isset($qMap[$questionId])) {
+            continue;
+        }
+        $correctOption = $qMap[$questionId]['correct'];
+        $mark = $qMap[$questionId]['mark'];
+        $totalmarksToBeEarned += $mark;
+
+        if (isset($aMap[$questionId])) {
+            $selectedOption = $aMap[$questionId];
+            if ($selectedOption == $correctOption) {
+                $totalMarksEarned += $mark;
+                $totalNoCorrect++;
+            } else {
+                if ($selectedOption == "0" || $selectedOption == "") {
+                    $totalQuestionsNotAnswered++;
+                } else {
+                    $totalQuestionsAnswered++;
+                    $totalNoNotCorrect++;
+                }
+            }
+        } else {
+            $totalQuestionsNotAnswered++;
+        }
     }
 }
 $totalMarksLost = $totalmarksToBeEarned - $totalMarksEarned;

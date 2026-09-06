@@ -7,6 +7,7 @@ require_once __DIR__ . '/db_connection/dlhs_db_connection.php';
 require_once __DIR__ . '/scripts/dashboard_chat_helper.php';
 
 $identity = dlhsDashboardChatResolveIdentity($connection);
+session_write_close(); // Release PHP session lock so other pages aren't blocked
 if ($identity === null) {
     http_response_code(403);
     echo json_encode(array('ok' => false, 'message' => 'Unauthorised'));

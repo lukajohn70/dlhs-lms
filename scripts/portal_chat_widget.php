@@ -1020,14 +1020,28 @@ if ($chatRole === '' || $chatUserId <= 0) {
                 }
             });
 
+            var lastPollTime = 0;
             window.setInterval(function () {
                 var windowNode = getNode('dlhsPortalChatWindow');
-                loadBootstrap(null, true);
-                if (windowNode && windowNode.classList.contains('is-open') && chatConfig.currentThreadKey) {
+                var isOpen = windowNode && windowNode.classList.contains('is-open');
+                var now = Date.now();
+
+                // If chat window is open, refresh active thread frequently (6s)
+                if (isOpen && chatConfig.currentThreadKey) {
                     fetchMessages();
+                    refreshPresence(false);
                 }
-                refreshPresence(false);
-            }, 8000);
+
+                // Only check unread/bootstrap every 30s when idle, or 10s when open
+                var interval = isOpen ? 10000 : 30000;
+                if (now - lastPollTime >= interval) {
+                    lastPollTime = now;
+                    loadBootstrap(null, true);
+                    if (!isOpen) {
+                        refreshPresence(false);
+                    }
+                }
+            }, 3000);
         });
     })();
 </script>

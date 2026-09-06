@@ -273,10 +273,6 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                 <i class="fa fa-inbox"></i>
                 <span>File Requests</span>
             </a>
-            <a class="nav-link<?php if ($currentPage === 'smartboard_remote.php') echo ' is-active'; ?>" href="smartboard_remote.php" onclick="setNext(); dlhsToggleSidebar(false)">
-                <i class="fa fa-television"></i>
-                <span>Smartboard Remote</span>
-            </a>
         </nav>
 
         <div class="sidebar-footer dlhs-sidepanel-footer">
