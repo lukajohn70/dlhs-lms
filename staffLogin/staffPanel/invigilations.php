@@ -3,9 +3,11 @@ session_start();
 require_once 'userExpiredSession.php';
 if (!isset($_SESSION['staffLoggedIn'])) {
     header('location:../index.php');
+    exit;
 }
-include "../../db_connection/dlhs_db_connection.php";
-$staffId = $_SESSION['staffId'];
+// Attendance/invigilation gate has been removed. Tests are now managed directly.
+header('Location: addTestForm.php');
+exit;
 ?>
 <!DOCTYPE html>
 <html lang="en">

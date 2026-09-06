@@ -276,7 +276,6 @@ if (!function_exists('dlhsDashboardGetNavItems')) {
                 array('label' => 'Questions', 'href' => 'addQuestionForm.php', 'icon' => 'fa-list-alt'),
                 array('label' => 'Test Access', 'href' => 'addStudentsToTestForm.php', 'icon' => 'fa-users'),
                 array('label' => 'Results', 'href' => 'examineesStatus.php', 'icon' => 'fa-bar-chart'),
-                array('label' => 'Invigilation', 'href' => 'invigilations.php', 'icon' => 'fa-shield'),
                 array('label' => 'Files', 'href' => 'file_management.php', 'icon' => 'fa-folder-open'),
                 array('label' => 'Smartboard Remote', 'href' => 'smartboard_remote.php', 'icon' => 'fa-television'),
             );

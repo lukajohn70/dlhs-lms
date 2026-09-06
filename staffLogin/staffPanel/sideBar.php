@@ -264,10 +264,7 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                     <?php endif; ?>
                 </div>
             </div>
-            <a class="nav-link<?php if ($currentPage === 'invigilations.php') echo ' is-active'; ?>" href="invigilations.php" onclick="setNext(); dlhsToggleSidebar(false)">
-                <i class="fa fa-shield"></i>
-                <span>Invigilation</span>
-            </a>
+
             <a class="nav-link<?php if ($currentPage === 'file_management.php') echo ' is-active'; ?>" href="file_management.php" onclick="setNext(); dlhsToggleSidebar(false)">
                 <i class="fa fa-folder-open"></i>
                 <span>Files</span>

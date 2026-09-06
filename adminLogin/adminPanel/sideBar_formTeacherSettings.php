@@ -55,12 +55,7 @@
                     <li><a class="" href="examineesStatus.php" style="background-color:red; color:white;" onclick="setNext()">Examinees' Status</a></li>                          
                 </ul>
             </li>
-			<li>
-                <a class="" href="invigilations.php" onclick="setNext()" >
-					<i class="icon_document_alt"></i>
-					<span>Invigilations</span>
-                </a>
-            </li>
+
 			<li class="sub-menu">
                 <a href="javascript:;" class="" style="font-size:15px;">
                     <i class="icon_documents_alt"></i>
