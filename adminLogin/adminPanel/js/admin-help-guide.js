@@ -11,10 +11,10 @@
             icon: 'fa-th-large',
             intro: 'Welcome to the Admin Portal. This dashboard provides a high-level overview of the entire system.',
             steps: [
-                { icon: 'fa-users', text: 'Monitor <b>Online Users</b> to see real-time activity across the platform.' },
-                { icon: 'fa-calendar', text: 'Manage <b>Academic Setup</b> to configure sessions, terms, and dates.' },
-                { icon: 'fa-shield', text: 'Access <b>Invigilation</b> to oversee active tests and prevent malpractice.' },
-                { icon: 'fa-database', text: 'Use <b>Backup Management</b> in Settings to ensure data safety.' }
+                { icon: 'fa-calendar', text: 'Manage <b>Academic Setup</b> to configure sessions, terms, and year groups.' },
+                { icon: 'fa-pencil-square-o', text: 'Oversee <b>Tests & Examinees</b> to manage exams and student participation.' },
+                { icon: 'fa-bar-chart', text: 'Process <b>Results & Reports</b> for terms and cumulative evaluations.' },
+                { icon: 'fa-cogs', text: 'Configure <b>System Settings</b>, cleanup, and administrative preferences.' }
             ]
         },
 
@@ -77,18 +77,6 @@
             ]
         },
 
-        'testInvigilation.php': {
-            title: 'Admin Invigilation',
-            icon: 'fa-shield',
-            intro: 'Monitor live examinations to ensure academic integrity.',
-            steps: [
-                { icon: 'fa-desktop', text: 'See all students currently taking a test and their progress.' },
-                { icon: 'fa-warning', text: 'Identify students who lose connection or attempt unauthorized actions.' },
-                { icon: 'fa-plus-circle', text: 'Add extra time to a test globally or for specific students.' },
-                { icon: 'fa-stop', text: 'Force-submit tests for students who have finished or exceeded their time.' }
-            ]
-        },
-
         'resultSettingsForm.php': {
             title: 'Result Configuration',
             icon: 'fa-bar-chart',
@@ -97,17 +85,6 @@
                 { icon: 'fa-percent', text: 'Configure weights for CAT 1, CAT 2, and Exams.' },
                 { icon: 'fa-list', text: 'Set up grade scales (A, B, C, etc.) and their corresponding marks.' },
                 { icon: 'fa-check', text: 'Enable or disable result viewing for students and parents.' }
-            ]
-        },
-
-        'backup_management.php': {
-            title: 'System Backups',
-            icon: 'fa-database',
-            intro: 'Protect your data by creating and managing system backups.',
-            steps: [
-                { icon: 'fa-download', text: 'Generate a full database backup at any time.' },
-                { icon: 'fa-history', text: 'Restore from a previous backup in case of data loss.' },
-                { icon: 'fa-cloud-download', text: 'Download backups to local storage for off-site security.' }
             ]
         },
 

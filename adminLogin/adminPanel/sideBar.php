@@ -2,7 +2,8 @@
 require_once '../../track_user_presence.php';
 
 $currentPage = basename($_SERVER['PHP_SELF']);
-$isSettings = in_array($currentPage, array('backup_management.php', 'security_violations.php', 'terminate_exam.php', 'cleanup_tests.php'));
+$isSettings = in_array($currentPage, array('security_violations.php', 'terminate_exam.php', 'cleanup_tests.php'));
+
 $isTests = in_array($currentPage, array('allTestsForm.php', 'yetToBeStartedTests.php', 'testsInProgress.php', 'endedTests.php', 'view_teacher_questions.php'));
 $isQueries = in_array($currentPage, array('reportQueries.php', 'namesAndIds.php'));
 $isResultProcessing = in_array($currentPage, array('assignFormTeachersForm.php', 'manageGradingForm.php', 'manageCharacterForm.php', 'managePsychomotorForm.php', 'manageHouseForm.php', 'manageSportForm.php', 'generateResultForm.php', 'result_config.php'));
@@ -406,10 +407,7 @@ $adminName = isset($_SESSION['adminName']) && trim((string) $_SESSION['adminName
                 <span>Question Document Hub</span>
             </a>
 
-            <a class="nav-link<?php if ($currentPage === 'testInvigilation.php') echo ' is-active'; ?>" href="testInvigilation.php" onclick="setNext(); dlhsToggleSidebar(false)">
-                <i class="fa fa-shield"></i>
-                <span>Invigilation</span>
-            </a>
+
 
             <div class="nav-item has-submenu<?php echo $isResultProcessing ? ' is-open' : ''; ?>">
                 <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isResultProcessing ? 'true' : 'false'; ?>">
@@ -430,10 +428,7 @@ $adminName = isset($_SESSION['adminName']) && trim((string) $_SESSION['adminName
                 </div>
             </div>
 
-            <a class="nav-link<?php if ($currentPage === 'online_users.php') echo ' is-active'; ?>" href="online_users.php" onclick="dlhsToggleSidebar(false)">
-                <i class="fa fa-users"></i>
-                <span>Online Users</span>
-            </a>
+
 
             <div class="nav-item has-submenu<?php echo $isSettings ? ' is-open' : ''; ?>">
                 <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isSettings ? 'true' : 'false'; ?>">
@@ -442,7 +437,7 @@ $adminName = isset($_SESSION['adminName']) && trim((string) $_SESSION['adminName
                     <i class="fa fa-chevron-down submenu-caret"></i>
                 </button>
                 <div class="nav-submenu">
-                    <a class="nav-sublink<?php if ($currentPage === 'backup_management.php') echo ' is-active'; ?>" href="backup_management.php" onclick="dlhsToggleSidebar(false)">Backup</a>
+
                     <a class="nav-sublink<?php if ($currentPage === 'cleanup_tests.php') echo ' is-active'; ?>" href="cleanup_tests.php" onclick="dlhsToggleSidebar(false)">Test Cleanup</a>
                     <a class="nav-sublink<?php if ($currentPage === 'security_violations.php') echo ' is-active'; ?>" href="security_violations.php" onclick="dlhsToggleSidebar(false)">Security</a>
                     <a class="nav-sublink<?php if ($currentPage === 'terminate_exam.php') echo ' is-active'; ?>" href="terminate_exam.php" onclick="dlhsToggleSidebar(false)">Terminate Exam</a>

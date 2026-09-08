@@ -1,19 +1,18 @@
 <?php
 session_start();
-	error_reporting(0);
-	require_once "../../db_connection/dlhs_db_connection.php";
-		$testStatus=0; //status of not yet started test.
-		
-		$query4 = "SELECT * FROM tests";
-		$result4 = $connection->query($query4);
-		$return_arr = array();
-		if (($result4->num_rows)>0)
-		{
-			while($row4 = $result4->fetch_array(MYSQLI_NUM)) 
-			{
-				$return_arr[] = array('title' => $row4[2].' ['.$row4[5].':'.$row4[6].$row4[7].']',
-							                                                'start' => $row4[3]);
-			}
-		}
-		echo json_encode($return_arr);
-?>
+error_reporting(0);
+require_once "../../db_connection/dlhs_db_connection.php";
+
+// Only fetch the columns needed for calendar events (was SELECT * previously)
+$query = "SELECT testName, testDate, startHour, startMinute, amOrPm FROM tests ORDER BY testDate ASC";
+$result = $connection->query($query);
+$return_arr = array();
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $return_arr[] = array(
+            'title' => $row['testName'] . ' [' . $row['startHour'] . ':' . $row['startMinute'] . $row['amOrPm'] . ']',
+            'start' => $row['testDate'],
+        );
+    }
+}
+echo json_encode($return_arr);

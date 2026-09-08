@@ -15,11 +15,7 @@ $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
 $sessionLabel = dlhsDashboardGetCurrentSessionLabel($connection);
 $userName = dlhsDashboardGetUserName('staff');
 
-$counts = array(
-    'pending' => dlhsDashboardCountTests($connection, 0, $staffId),
-    'inProgress' => dlhsDashboardCountTests($connection, 1, $staffId),
-    'completed' => dlhsDashboardCountTests($connection, 2, $staffId),
-);
+$counts = dlhsDashboardCountAllTests($connection, $staffId);
 
 $upcomingTests = dlhsDashboardFetchUpcomingTests($connection, $staffId, 6);
 $teacherAssignments = dlhsDashboardFetchTeacherAssignments($connection, $staffId, 5);
@@ -38,8 +34,7 @@ dlhsRenderDashboardPage(array(
     'navItems' => dlhsDashboardGetNavItems('staff'),
     'quickActions' => dlhsDashboardGetQuickActions('staff'),
     'calendarEventsUrl' => 'getDates.php',
-    'fetchChatUrl' => '../../dashboard_chat_fetch.php',
-    'sendChatUrl' => '../../dashboard_chat_send.php',
+
     'logoutUrl' => 'logout.php',
     'fontAwesomeCss' => 'css/font-awesome.min.css',
     'calendarCss' => array(

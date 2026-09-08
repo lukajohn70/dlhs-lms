@@ -89,12 +89,6 @@
 
                 </ul>
             </li>
-			<li>
-                <a class="" href="testInvigilation.php" onclick="setNext()">
-					<i class="icon_document_alt"></i>
-					<span>Invigilation</span>
-                </a>
-            </li>
 			<li class="sub-menu">
                 <a href="javascript:;" class="" style="font-size:15px;">
                     <i class="icon_documents_alt"></i>
@@ -119,7 +113,7 @@
                     <span class="menu-arrow arrow_carrot-right"></span>
                 </a>
                 <ul class="sub">
-					<li><a class="" href="backup_management.php"><i class="fa fa-database"></i> Backup Management</a></li>
+					
                 </ul>
             </li>
 			<li>                     

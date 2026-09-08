@@ -14,11 +14,7 @@ require_once '../../scripts/dashboard_theme_helper.php';
 $sessionLabel = dlhsDashboardGetCurrentSessionLabel($connection);
 $userName = dlhsDashboardGetUserName('admin');
 
-$counts = array(
-    'pending' => dlhsDashboardCountTests($connection, 0),
-    'inProgress' => dlhsDashboardCountTests($connection, 1),
-    'completed' => dlhsDashboardCountTests($connection, 2),
-);
+$counts = dlhsDashboardCountAllTests($connection);
 
 $upcomingTests = dlhsDashboardFetchUpcomingTests($connection, null, 6);
 $recentAssignments = dlhsDashboardFetchRecentAssignments($connection, 5);
@@ -37,8 +33,7 @@ dlhsRenderDashboardPage(array(
     'navItems' => dlhsDashboardGetNavItems('admin'),
     'quickActions' => dlhsDashboardGetQuickActions('admin'),
     'calendarEventsUrl' => 'getDates.php',
-    'fetchChatUrl' => '../../dashboard_chat_fetch.php',
-    'sendChatUrl' => '../../dashboard_chat_send.php',
+
     'logoutUrl' => 'logout.php',
     'fontAwesomeCss' => 'css/font-awesome.min.css',
     'calendarCss' => array(

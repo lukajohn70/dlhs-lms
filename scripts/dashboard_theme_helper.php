@@ -21,6 +21,33 @@ if (!function_exists('dlhsDashboardCountTests')) {
     }
 }
 
+if (!function_exists('dlhsDashboardCountAllTests')) {
+    function dlhsDashboardCountAllTests($connection, $staffId = null)
+    {
+        $counts = array('pending' => 0, 'inProgress' => 0, 'completed' => 0);
+        $where = "status IN (0, 1, 2)";
+
+        if ($staffId !== null) {
+            $where .= " AND staffId='" . (int) $staffId . "'";
+        }
+
+        $result = $connection->query("SELECT status, COUNT(*) AS total FROM tests WHERE {$where} GROUP BY status");
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $st = (int) $row['status'];
+                if ($st === 0) {
+                    $counts['pending'] = (int) $row['total'];
+                } elseif ($st === 1) {
+                    $counts['inProgress'] = (int) $row['total'];
+                } elseif ($st === 2) {
+                    $counts['completed'] = (int) $row['total'];
+                }
+            }
+        }
+        return $counts;
+    }
+}
+
 if (!function_exists('dlhsDashboardFetchUpcomingTests')) {
     function dlhsDashboardFetchUpcomingTests($connection, $staffId = null, $limit = 6)
     {
@@ -300,8 +327,9 @@ if (!function_exists('dlhsDashboardGetNavItems')) {
             array('label' => 'All Tests', 'href' => 'allTestsForm.php', 'icon' => 'fa-files-o'),
             array('label' => 'Teacher Questions', 'href' => 'view_teacher_questions.php', 'icon' => 'fa-book'),
             array('label' => 'Subject Assignment', 'href' => 'subjectAssignment.php', 'icon' => 'fa-book'),
-            array('label' => 'Invigilation', 'href' => 'testInvigilation.php', 'icon' => 'fa-shield'),
-            array('label' => 'Settings', 'href' => 'backup_management.php', 'icon' => 'fa-cogs'),
+
+            array('label' => 'Settings', 'href' => 'cleanup_tests.php', 'icon' => 'fa-cogs'),
+
         );
     }
 }
@@ -324,7 +352,7 @@ if (!function_exists('dlhsDashboardGetQuickActions')) {
             array('label' => 'Academic settings', 'href' => 'academic_settings.php', 'icon' => 'fa-calendar', 'variant' => 'secondary'),
             array('label' => 'Assign subjects', 'href' => 'subjectAssignment.php', 'icon' => 'fa-book', 'variant' => 'secondary'),
             array('label' => 'Manage staff', 'href' => 'addStaffForm.php', 'icon' => 'fa-user-plus', 'variant' => 'secondary'),
-            array('label' => 'Invigilation desk', 'href' => 'testInvigilation.php', 'icon' => 'fa-shield', 'variant' => 'secondary'),
+
         );
     }
 }
@@ -345,9 +373,7 @@ if (!function_exists('dlhsRenderDashboardPage')) {
         $navItems = isset($config['navItems']) ? $config['navItems'] : array();
         $quickActions = isset($config['quickActions']) ? $config['quickActions'] : array();
         $calendarEventsUrl = isset($config['calendarEventsUrl']) ? $config['calendarEventsUrl'] : 'getDates.php';
-        $bootstrapChatUrl = isset($config['bootstrapChatUrl']) ? $config['bootstrapChatUrl'] : '../../dashboard_chat_bootstrap.php';
-        $fetchChatUrl = isset($config['fetchChatUrl']) ? $config['fetchChatUrl'] : '../../dashboard_chat_fetch.php';
-        $sendChatUrl = isset($config['sendChatUrl']) ? $config['sendChatUrl'] : '../../dashboard_chat_send.php';
+
         $logoutUrl = isset($config['logoutUrl']) ? $config['logoutUrl'] : 'logout.php';
         $fontAwesomeCss = isset($config['fontAwesomeCss']) ? $config['fontAwesomeCss'] : 'css/font-awesome.min.css';
         $calendarCss = isset($config['calendarCss']) ? $config['calendarCss'] : array(
@@ -736,74 +762,7 @@ if (!function_exists('dlhsRenderDashboardPage')) {
         .mini-card strong { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em; color: #4c647b; margin-bottom: 10px; }
         .mini-card p { margin: 0; color: #1a334f; line-height: 1.7; font-size: 14px; }
 
-        .chat-fab {
-            position: fixed;
-            right: 28px;
-            bottom: 28px;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--dlhs-blue), #67d8ff);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 0;
-            box-shadow: 0 18px 38px rgba(0, 174, 239, 0.32);
-            cursor: pointer;
-            z-index: 50;
-        }
 
-        .chat-fab-badge {
-            position: absolute;
-            top: -4px;
-            right: -2px;
-            min-width: 22px;
-            height: 22px;
-            padding: 0 6px;
-            border-radius: 999px;
-            background: #ff4f7a;
-            color: #fff;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            border: 2px solid rgba(255,255,255,0.96);
-            box-shadow: 0 8px 18px rgba(233, 30, 99, 0.24);
-        }
-
-        .chat-window { position: fixed; right: 28px; bottom: 106px; width: min(400px, calc(100vw - 32px)); height: 520px; display: none; flex-direction: column; overflow: hidden; z-index: 49; }
-        .chat-window.is-open { display: flex; }
-        .chat-header { background: rgba(2, 11, 26, 0.95); color: #fff; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .chat-header h3, .chat-header p { margin: 0; }
-        .chat-header h3 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 800; }
-        .chat-header p { margin-top: 5px; font-size: 12px; color: rgba(255, 255, 255, 0.72); }
-        .chat-toolbar { padding: 14px 16px 10px; background: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(17,39,63,0.05); }
-        .chat-field-label { display: block; margin-bottom: 8px; color: #405870; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 800; }
-        .chat-thread-search,
-        .chat-thread-select { width: 100%; min-height: 44px; border-radius: 14px; border: 1px solid rgba(17,39,63,0.1); padding: 0 14px; background: rgba(255,255,255,0.92); color: #16314d; font: inherit; }
-        .chat-thread-search { margin-bottom: 10px; }
-        .chat-thread-hint { margin-top: 8px; color: #5a7086; font-size: 11px; line-height: 1.45; font-weight: 600; min-height: 16px; }
-        .chat-state { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: #90f0bb; }
-        .chat-state-dot { width: 8px; height: 8px; border-radius: 999px; background: #35d07f; }
-        .chat-state.is-connecting, .chat-state.is-error { color: #ffd49d; }
-        .chat-state.is-connecting .chat-state-dot, .chat-state.is-error .chat-state-dot { background: #ffb44f; }
-        .chat-close { appearance: none; background: transparent; border: 0; color: rgba(255,255,255,0.72); font-size: 18px; cursor: pointer; }
-        .chat-messages { flex: 1; padding: 18px; overflow-y: auto; background: rgba(255, 255, 255, 0.34); display: grid; gap: 12px; }
-        .chat-empty { padding: 18px; border-radius: 18px; background: rgba(255,255,255,0.7); color: #50667a; font-size: 13px; line-height: 1.6; }
-        .chat-message { display: flex; gap: 10px; align-items: flex-end; max-width: 92%; }
-        .chat-message.mine { margin-left: auto; flex-direction: row-reverse; }
-        .chat-avatar { width: 34px; height: 34px; border-radius: 12px; background: rgba(255,255,255,0.84); color: #17314d; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; border: 1px solid rgba(17,39,63,0.08); }
-        .chat-bubble { padding: 12px 14px; border-radius: 18px 18px 18px 6px; background: rgba(255,255,255,0.86); color: #14304c; font-size: 13px; line-height: 1.55; border: 1px solid rgba(17,39,63,0.07); box-shadow: 0 10px 20px rgba(9,27,53,0.08); }
-        .chat-message.mine .chat-bubble { background: linear-gradient(135deg, var(--dlhs-blue), #61d5ff); color: #fff; border-radius: 18px 18px 6px 18px; border-color: transparent; }
-        .chat-meta { margin-top: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; font-weight: 700; }
-        .chat-compose { padding: 16px; background: rgba(255, 255, 255, 0.6); border-top: 1px solid rgba(17,39,63,0.05); }
-        .chat-compose-row { display: flex; gap: 10px; align-items: flex-end; }
-        .chat-compose textarea { width: 100%; resize: none; min-height: 52px; max-height: 120px; border-radius: 18px; border: 1px solid rgba(17,39,63,0.09); padding: 14px 16px; font: inherit; color: #16314d; background: rgba(255,255,255,0.92); outline: none; }
-        .chat-compose button { width: 52px; height: 52px; border-radius: 16px; border: 0; background: linear-gradient(135deg, var(--dlhs-blue), #60d3ff); color: #fff; cursor: pointer; box-shadow: 0 16px 24px rgba(0,174,239,0.22); }
-        .chat-compose textarea:disabled, .chat-compose button:disabled { opacity: 0.55; cursor: not-allowed; }
-        .chat-help { margin-top: 8px; color: #5a7086; font-size: 11px; font-weight: 600; }
 
         .dlhs-mobile-menu-button {
             display: none;
@@ -870,8 +829,7 @@ if (!function_exists('dlhsRenderDashboardPage')) {
             .page { padding: 18px; }
             .hero { flex-direction: column; }
             .stats-grid, .quick-actions, .info-strip { grid-template-columns: 1fr; }
-            .chat-window { right: 12px; left: 12px; width: auto; bottom: 88px; height: 68vh; }
-            .chat-fab { right: 16px; bottom: 16px; }
+
         }
     </style>
 </head>
@@ -1155,25 +1113,6 @@ if (!function_exists('dlhsRenderDashboardPage')) {
 <?php endforeach; ?>
     <script src="<?php echo htmlspecialchars($fullcalendarJs); ?>"></script>
     <script>
-        var dashboardChatConfig = {
-            bootstrapUrl: <?php echo json_encode($bootstrapChatUrl); ?>,
-            fetchUrl: <?php echo json_encode($fetchChatUrl); ?>,
-            sendUrl: <?php echo json_encode($sendChatUrl); ?>,
-            presenceUrl: <?php echo json_encode(str_replace('fetch.php', 'presence.php', $fetchChatUrl)); ?>,
-            currentUserRole: <?php echo json_encode($role); ?>,
-            currentUserId: 0,
-            currentUserName: <?php echo json_encode($userName); ?>,
-            canSend: false,
-            recipients: {},
-            allRecipients: [],
-            threads: {},
-            allThreads: [],
-            currentTarget: null,
-            currentThreadKey: '',
-            bootstrapLoaded: false,
-            unreadTotal: 0,
-            typingTimer: null
-        };
 
         function dlhsSyncSidebarButton() {
             var sidebarButton = document.getElementById('dlhsDashboardSidebarToggle');
@@ -1224,553 +1163,8 @@ if (!function_exists('dlhsRenderDashboardPage')) {
             }
         }
 
-        function toggleDashboardChat(forceOpen) {
-            var chatWindow = document.getElementById('dashboardChatWindow');
-            var shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !chatWindow.classList.contains('is-open');
-            if (shouldOpen) {
-                chatWindow.classList.add('is-open');
-                loadDashboardChatBootstrap(function() {
-                    var select = document.getElementById('dashboardChatThreadSelect');
-                    if (select && select.value) {
-                        setDashboardActiveThread(select.value, false);
-                        fetchDashboardChatMessages();
-                        refreshDashboardChatPresence(false);
-                    }
-                }, true);
-            } else {
-                chatWindow.classList.remove('is-open');
-                refreshDashboardChatPresence(false);
-            }
-        }
 
-        function setDashboardChatState(state, text) {
-            var stateNode = document.getElementById('chatConnectionState');
-            if (!stateNode) {
-                return;
-            }
-
-            stateNode.className = 'chat-state';
-            if (state === 'connecting') {
-                stateNode.classList.add('is-connecting');
-            } else if (state === 'error') {
-                stateNode.classList.add('is-error');
-            }
-
-            stateNode.lastElementChild.textContent = text;
-        }
-
-        function setDashboardChatCopy(title, subtitle) {
-            var titleNode = document.getElementById('dashboardChatTitle');
-            var subtitleNode = document.getElementById('dashboardChatSubtitle');
-            if (titleNode) {
-                titleNode.textContent = title;
-            }
-            if (subtitleNode) {
-                subtitleNode.textContent = subtitle;
-            }
-        }
-
-        function setDashboardChatHint(text) {
-            var hintNode = document.getElementById('dashboardChatThreadHint');
-            if (hintNode) {
-                hintNode.textContent = text;
-            }
-        }
-
-        function updateDashboardUnreadBadge(total) {
-            var badgeNode = document.getElementById('dashboardChatFabBadge');
-            var count = parseInt(total, 10) || 0;
-            dashboardChatConfig.unreadTotal = count;
-
-            if (!badgeNode) {
-                return;
-            }
-
-            badgeNode.textContent = count > 99 ? '99+' : String(count);
-            badgeNode.style.display = count > 0 ? 'inline-flex' : 'none';
-        }
-
-        function getDashboardActiveMap() {
-            return dashboardChatConfig.canSend ? dashboardChatConfig.recipients : dashboardChatConfig.threads;
-        }
-
-        function formatDashboardChatSubtitle(item) {
-            if (!item) {
-                return 'Choose who you want to talk to.';
-            }
-
-            return item.statusLabel || item.description || '';
-        }
-
-        function formatDashboardChatOption(item) {
-            var parts = [item.label || 'Conversation'];
-
-            if (item.description) {
-                parts.push(item.description);
-            }
-
-            if (item.statusLabel) {
-                parts.push(item.statusLabel);
-            }
-
-            if (item.unreadCount) {
-                parts.push(item.unreadCount + ' new');
-            }
-
-            return parts.join(' - ');
-        }
-
-        function syncDashboardThreadState(item) {
-            if (!item) {
-                setDashboardChatCopy('Messages', 'Choose who you want to talk to.');
-                setDashboardChatHint(dashboardChatConfig.canSend ? 'No conversation selected.' : 'Choose a conversation to read your messages.');
-                return;
-            }
-
-            setDashboardChatCopy(item.label || 'Messages', formatDashboardChatSubtitle(item));
-
-            if (dashboardChatConfig.canSend) {
-                if (item.targetType === 'broadcast') {
-                    setDashboardChatHint('This announcement goes to everyone.');
-                } else if (item.isTyping) {
-                    setDashboardChatHint(item.label + ' is typing...');
-                } else if (item.isOnline) {
-                    setDashboardChatHint(item.label + ' is online now.');
-                } else {
-                    setDashboardChatHint('Only people in this conversation can see these messages.');
-                }
-            } else if (item.readOnly) {
-                setDashboardChatHint('This conversation is read only.');
-            } else {
-                setDashboardChatHint(item.statusLabel || item.description || '');
-            }
-        }
-
-        function buildDashboardChatMessage(message) {
-            var isMine = message.senderRole === dashboardChatConfig.currentUserRole && parseInt(message.senderId, 10) === parseInt(dashboardChatConfig.currentUserId, 10);
-            var wrapper = document.createElement('div');
-            wrapper.className = 'chat-message' + (isMine ? ' mine' : '');
-            wrapper.setAttribute('data-message-id', message.id);
-
-            var avatar = document.createElement('div');
-            avatar.className = 'chat-avatar';
-            avatar.textContent = message.initials || 'DL';
-
-            var body = document.createElement('div');
-            var bubble = document.createElement('div');
-            bubble.className = 'chat-bubble';
-
-            var text = document.createElement('div');
-            text.textContent = message.message;
-
-            var meta = document.createElement('div');
-            meta.className = 'chat-meta';
-            var metaParts = [
-                isMine ? 'You' : message.senderName,
-                message.createdAtLabel
-            ];
-            if (isMine && message.deliveryLabel) {
-                metaParts.push(message.deliveryLabel);
-            }
-            meta.textContent = metaParts.join(' - ');
-
-            bubble.appendChild(text);
-            bubble.appendChild(meta);
-            body.appendChild(bubble);
-            wrapper.appendChild(avatar);
-            wrapper.appendChild(body);
-            return wrapper;
-        }
-
-        function updateDashboardComposerState() {
-            var compose = document.getElementById('dashboardChatCompose');
-            var composeRow = document.getElementById('dashboardChatComposeRow');
-            var input = document.getElementById('dashboardChatInput');
-            var sendButton = document.getElementById('dashboardChatSendButton');
-            var help = document.getElementById('dashboardChatHelp');
-            var hasTarget = !!dashboardChatConfig.currentThreadKey;
-            var isReadOnly = !dashboardChatConfig.canSend || !dashboardChatConfig.currentTarget;
-
-            if (!input || !sendButton) {
-                return;
-            }
-
-            if (compose) {
-                compose.style.display = 'block';
-            }
-
-            if (composeRow) {
-                composeRow.style.display = dashboardChatConfig.canSend ? 'flex' : 'none';
-            }
-
-            input.disabled = isReadOnly;
-            sendButton.disabled = isReadOnly;
-
-            if (!hasTarget) {
-                input.placeholder = 'Choose a conversation first...';
-            } else if (!dashboardChatConfig.canSend || !dashboardChatConfig.currentTarget) {
-                input.placeholder = 'Messages are read only here...';
-            } else if (dashboardChatConfig.currentTarget.targetType === 'broadcast') {
-                input.placeholder = 'Write a broadcast message to all users...';
-            } else {
-                input.placeholder = 'Type your message to ' + dashboardChatConfig.currentTarget.label + '...';
-            }
-
-            if (help) {
-                if (!hasTarget) {
-                    help.textContent = 'Pick a conversation to get started.';
-                } else if (!dashboardChatConfig.canSend) {
-                    help.textContent = 'Students can read messages here, but cannot reply.';
-                } else if (dashboardChatConfig.currentTarget.targetType === 'broadcast') {
-                    help.textContent = 'This announcement will be visible to everyone.';
-                } else if (dashboardChatConfig.currentTarget.isTyping) {
-                    help.textContent = dashboardChatConfig.currentTarget.label + ' is typing...';
-                } else if (dashboardChatConfig.currentTarget.isOnline) {
-                    help.textContent = dashboardChatConfig.currentTarget.label + ' is online now.';
-                } else {
-                    help.textContent = 'Only people in this conversation can see these messages.';
-                }
-            }
-        }
-
-        function renderDashboardChatMessages(messages) {
-            var container = document.getElementById('dashboardChatMessages');
-            if (!container) {
-                return;
-            }
-
-            if (!dashboardChatConfig.currentTarget) {
-                container.innerHTML = '<div class="chat-empty">Select a conversation to view messages.</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-
-            if (!messages.length) {
-                container.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation here.</div>';
-                return;
-            }
-
-            messages.forEach(function(message) {
-                container.appendChild(buildDashboardChatMessage(message));
-            });
-
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function setDashboardActiveThread(threadKey, shouldFetch) {
-            var activeSource = getDashboardActiveMap();
-            var target = activeSource[threadKey] || null;
-            dashboardChatConfig.currentThreadKey = target ? threadKey : '';
-            dashboardChatConfig.currentTarget = target || null;
-
-            if (!target) {
-                syncDashboardThreadState(null);
-                updateDashboardComposerState();
-                renderDashboardChatMessages([]);
-                return;
-            }
-
-            syncDashboardThreadState(target);
-            updateDashboardComposerState();
-
-            if (shouldFetch !== false) {
-                fetchDashboardChatMessages();
-            }
-        }
-
-        function renderDashboardChatTargets(filterText, preferredThreadKey) {
-            var select = document.getElementById('dashboardChatThreadSelect');
-            if (!select) {
-                return;
-            }
-
-            select.innerHTML = '';
-            filterText = (filterText || '').toLowerCase();
-
-            var groups = {};
-            if (dashboardChatConfig.canSend) {
-                dashboardChatConfig.allRecipients.forEach(function(target) {
-                    var haystack = ((target.label || '') + ' ' + (target.description || '') + ' ' + (target.group || '') + ' ' + (target.statusLabel || '')).toLowerCase();
-                    if (filterText && haystack.indexOf(filterText) === -1) {
-                        return;
-                    }
-                    var groupName = target.group || 'Conversations';
-                    if (!groups[groupName]) {
-                        groups[groupName] = [];
-                    }
-                    groups[groupName].push(target);
-                });
-
-                Object.keys(groups).forEach(function(groupName) {
-                    var optgroup = document.createElement('optgroup');
-                    optgroup.label = groupName;
-
-                    groups[groupName].forEach(function(target) {
-                        var option = document.createElement('option');
-                        option.value = target.threadKey;
-                        option.textContent = formatDashboardChatOption(target);
-                        optgroup.appendChild(option);
-                    });
-
-                    select.appendChild(optgroup);
-                });
-            } else {
-                dashboardChatConfig.allThreads.forEach(function(thread) {
-                    var haystack = ((thread.label || '') + ' ' + (thread.description || '') + ' ' + (thread.statusLabel || '')).toLowerCase();
-                    if (filterText && haystack.indexOf(filterText) === -1) {
-                        return;
-                    }
-
-                    var option = document.createElement('option');
-                    option.value = thread.threadKey;
-                    option.textContent = formatDashboardChatOption(thread);
-                    select.appendChild(option);
-                });
-            }
-
-            if (!select.options.length) {
-                var fallbackOption = document.createElement('option');
-                fallbackOption.value = '';
-                fallbackOption.textContent = dashboardChatConfig.canSend ? 'No conversations available' : 'No messages available';
-                select.appendChild(fallbackOption);
-                dashboardChatConfig.currentThreadKey = '';
-                dashboardChatConfig.currentTarget = null;
-                syncDashboardThreadState(null);
-                updateDashboardComposerState();
-                renderDashboardChatMessages([]);
-                if (filterText) {
-                    setDashboardChatHint('No match found for "' + filterText + '".');
-                }
-                return;
-            }
-
-            var activeMap = getDashboardActiveMap();
-            var defaultThreadKey = preferredThreadKey && activeMap[preferredThreadKey]
-                ? preferredThreadKey
-                : (select.options.length ? select.options[0].value : '');
-
-            select.value = defaultThreadKey;
-            setDashboardActiveThread(defaultThreadKey, false);
-            if (filterText && select.options.length > 1) {
-                setDashboardChatHint(select.options.length + ' matches found. Showing the closest match first.');
-            }
-        }
-
-        function populateDashboardChatTargets(response) {
-            var activeThreadKey = dashboardChatConfig.currentThreadKey;
-            dashboardChatConfig.recipients = {};
-            dashboardChatConfig.allRecipients = response.recipients || [];
-            dashboardChatConfig.threads = {};
-            dashboardChatConfig.allThreads = response.threads || [];
-
-            dashboardChatConfig.allRecipients.forEach(function(target) {
-                dashboardChatConfig.recipients[target.threadKey] = target;
-            });
-
-            dashboardChatConfig.allThreads.forEach(function(thread) {
-                dashboardChatConfig.threads[thread.threadKey] = thread;
-            });
-
-            renderDashboardChatTargets('', activeThreadKey || response.defaultThreadKey);
-        }
-
-        function loadDashboardChatBootstrap(callback, forceRefresh) {
-            if (dashboardChatConfig.bootstrapLoaded && !forceRefresh) {
-                if (typeof callback === 'function') {
-                    callback();
-                }
-                return;
-            }
-
-            setDashboardChatState('connecting', 'Syncing');
-
-            $.ajax({
-                url: dashboardChatConfig.bootstrapUrl,
-                dataType: 'json',
-                cache: false,
-                data: {
-                    threadKey: dashboardChatConfig.currentThreadKey || ''
-                }
-            }).done(function(response) {
-                if (!response || !response.ok) {
-                    setDashboardChatState('error', 'Reconnect');
-                    setDashboardChatHint('Unable to load conversations right now.');
-                    return;
-                }
-
-                dashboardChatConfig.bootstrapLoaded = true;
-                dashboardChatConfig.currentUserRole = response.identity && response.identity.role ? response.identity.role : dashboardChatConfig.currentUserRole;
-                dashboardChatConfig.currentUserId = response.identity && response.identity.id ? response.identity.id : 0;
-                dashboardChatConfig.currentUserName = response.identity && response.identity.name ? response.identity.name : dashboardChatConfig.currentUserName;
-                dashboardChatConfig.canSend = !!response.canSend;
-
-                updateDashboardUnreadBadge(response.unreadTotal || 0);
-                populateDashboardChatTargets(response);
-                if (dashboardChatConfig.currentThreadKey) {
-                    syncDashboardThreadState(getDashboardActiveMap()[dashboardChatConfig.currentThreadKey] || dashboardChatConfig.currentTarget);
-                }
-                setDashboardChatState('ok', 'Connected');
-
-                if (typeof callback === 'function') {
-                    callback();
-                }
-            }).fail(function() {
-                setDashboardChatState('error', 'Reconnect');
-                setDashboardChatHint('Unable to load conversations right now.');
-            });
-        }
-
-        function fetchDashboardChatMessages() {
-            if (!dashboardChatConfig.currentThreadKey) {
-                return;
-            }
-
-            setDashboardChatState('connecting', 'Syncing');
-
-            $.ajax({
-                url: dashboardChatConfig.fetchUrl,
-                dataType: 'json',
-                cache: false,
-                data: {
-                    threadKey: dashboardChatConfig.currentThreadKey,
-                    sinceId: 0
-                }
-            }).done(function(response) {
-                if (!response || !response.ok) {
-                    setDashboardChatState('error', 'Reconnect');
-                    return;
-                }
-
-                var messages = response.messages || [];
-                renderDashboardChatMessages(messages);
-                updateDashboardUnreadBadge(response.unreadTotal || 0);
-                if (response.thread) {
-                    var activeMap = getDashboardActiveMap();
-                    if (activeMap[dashboardChatConfig.currentThreadKey]) {
-                        activeMap[dashboardChatConfig.currentThreadKey].statusLabel = response.thread.statusLabel || activeMap[dashboardChatConfig.currentThreadKey].statusLabel;
-                        activeMap[dashboardChatConfig.currentThreadKey].isOnline = !!response.thread.isOnline;
-                        activeMap[dashboardChatConfig.currentThreadKey].isTyping = !!response.thread.isTyping;
-                        activeMap[dashboardChatConfig.currentThreadKey].unreadCount = 0;
-                        dashboardChatConfig.currentTarget = activeMap[dashboardChatConfig.currentThreadKey];
-                    }
-                    syncDashboardThreadState(dashboardChatConfig.currentTarget || response.thread);
-                }
-                setDashboardChatState('ok', 'Connected');
-            }).fail(function() {
-                setDashboardChatState('error', 'Reconnect');
-            });
-        }
-
-        function refreshDashboardChatPresence(isTyping) {
-            $.ajax({
-                url: dashboardChatConfig.presenceUrl,
-                dataType: 'json',
-                cache: false,
-                data: {
-                    threadKey: dashboardChatConfig.currentThreadKey || '',
-                    typing: isTyping ? 1 : 0
-                }
-            }).done(function(response) {
-                if (!response || !response.ok) {
-                    return;
-                }
-
-                updateDashboardUnreadBadge(response.unreadTotal || 0);
-                if (response.thread && dashboardChatConfig.currentThreadKey) {
-                    var activeMap = getDashboardActiveMap();
-                    if (activeMap[dashboardChatConfig.currentThreadKey]) {
-                        activeMap[dashboardChatConfig.currentThreadKey].statusLabel = response.thread.statusLabel || activeMap[dashboardChatConfig.currentThreadKey].statusLabel;
-                        activeMap[dashboardChatConfig.currentThreadKey].isOnline = !!response.thread.isOnline;
-                        activeMap[dashboardChatConfig.currentThreadKey].isTyping = !!response.thread.isTyping;
-                        dashboardChatConfig.currentTarget = activeMap[dashboardChatConfig.currentThreadKey];
-                        syncDashboardThreadState(dashboardChatConfig.currentTarget);
-                        updateDashboardComposerState();
-                    }
-                }
-            });
-        }
-
-        function sendDashboardChatMessage() {
-            var input = document.getElementById('dashboardChatInput');
-            var sendButton = document.getElementById('dashboardChatSendButton');
-            var message = input.value.replace(/\r\n/g, "\n").trim();
-
-            if (!dashboardChatConfig.currentTarget || !dashboardChatConfig.canSend || !message) {
-                input.focus();
-                return;
-            }
-
-            sendButton.disabled = true;
-            setDashboardChatState('connecting', 'Sending');
-
-            $.ajax({
-                url: dashboardChatConfig.sendUrl,
-                method: 'POST',
-                dataType: 'json',
-                data: {
-                    message: message,
-                    targetType: dashboardChatConfig.currentTarget.targetType,
-                    targetRole: dashboardChatConfig.currentTarget.targetRole,
-                    targetId: dashboardChatConfig.currentTarget.targetId
-                }
-            }).done(function(response) {
-                if (!response || !response.ok) {
-                    setDashboardChatState('error', 'Send failed');
-                    return;
-                }
-
-                input.value = '';
-                updateDashboardUnreadBadge(response.unreadTotal || dashboardChatConfig.unreadTotal);
-                loadDashboardChatBootstrap(null, true);
-                fetchDashboardChatMessages();
-            }).fail(function() {
-                setDashboardChatState('error', 'Send failed');
-            }).always(function() {
-                sendButton.disabled = false;
-            });
-        }
-
-        $('#dashboardChatSendButton').on('click', sendDashboardChatMessage);
-        $('#dashboardChatInput').on('keydown', function(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendDashboardChatMessage();
-            }
-        });
-        $('#dashboardChatThreadSelect').on('change', function() {
-            setDashboardActiveThread(this.value);
-            refreshDashboardChatPresence(false);
-        });
-        $('#dashboardChatThreadSearch').on('input', function() {
-            renderDashboardChatTargets(this.value, dashboardChatConfig.currentThreadKey);
-            var select = document.getElementById('dashboardChatThreadSelect');
-            if (select && select.value) {
-                setDashboardActiveThread(select.value, false);
-            }
-        });
-        $('#dashboardChatThreadSearch').on('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                var select = document.getElementById('dashboardChatThreadSelect');
-                if (select && select.value) {
-                    setDashboardActiveThread(select.value, true);
-                }
-            }
-        });
-        $('#dashboardChatInput').on('input', function() {
-            if (!dashboardChatConfig.currentThreadKey || !dashboardChatConfig.canSend) {
-                return;
-            }
-
-            refreshDashboardChatPresence(true);
-            window.clearTimeout(dashboardChatConfig.typingTimer);
-            dashboardChatConfig.typingTimer = window.setTimeout(function() {
-                refreshDashboardChatPresence(false);
-            }, 1200);
-        });
-
-        $(function() {
+                $(function() {
             dlhsSyncSidebarButton();
 
             $(document).on('keydown', function(event) {
@@ -1813,15 +1207,7 @@ if (!function_exists('dlhsRenderDashboardPage')) {
                 });
             }
 
-            loadDashboardChatBootstrap(null, true);
-            window.setInterval(function() {
-                var chatWindow = document.getElementById('dashboardChatWindow');
-                loadDashboardChatBootstrap(null, true);
-                if (chatWindow && chatWindow.classList.contains('is-open') && dashboardChatConfig.currentThreadKey) {
-                    fetchDashboardChatMessages();
-                }
-                refreshDashboardChatPresence(false);
-            }, 8000);
+
         });
     </script>
 </body>
