@@ -1,2 +1,2 @@
-&copy; <?php echo " ". date("Y")." ";?> Copyright: <a href="https://dlhs.com/" style="padding-right:10px;">Deeper Life High School, Kaduna</a>
+&copy; <?php echo " ". date("Y")." ";?> Copyright: <a href="https://deeperlifehighschool.org/" style="padding-right:10px;">Deeper Life High School, Kaduna</a>
 

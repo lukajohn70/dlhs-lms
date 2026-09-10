@@ -208,18 +208,11 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                 <span>Dashboard</span>
             </a>
 
-            <div class="nav-item has-submenu<?php echo $isCreateTest ? ' is-open' : ''; ?>">
-                <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isCreateTest ? 'true' : 'false'; ?>">
-                    <i class="fa fa-pencil-square-o"></i>
-                    <span>Create Test</span>
-                    <i class="fa fa-chevron-down submenu-caret"></i>
-                </button>
-                <div class="nav-submenu">
-                    <a class="nav-sublink<?php if (in_array($currentPage, array('addTestForm.php', 'editTest.php'))) echo ' is-active'; ?>" href="addTestForm.php" onclick="setNext(); dlhsToggleSidebar(false)">Create / Edit Tests</a>
-                    <a class="nav-sublink<?php if (in_array($currentPage, array('modifyTimeBeforeTestStarts.php', 'editOverAllTestTime.php', 'rescheduleTest.php'))) echo ' is-active'; ?>" href="modifyTimeBeforeTestStarts.php" onclick="setNext(); dlhsToggleSidebar(false)">Timing & Reschedule</a>
-                    <a class="nav-sublink<?php if ($currentPage === 'endTest.php') echo ' is-active'; ?>" href="endTest.php" onclick="setNext(); dlhsToggleSidebar(false)">End / Cancel Test</a>
-                </div>
-            </div>
+            <a class="nav-link<?php if (in_array($currentPage, array('addTestForm.php', 'editTest.php'))) echo ' is-active'; ?>" href="addTestForm.php" onclick="setNext(); dlhsToggleSidebar(false)">
+                <i class="fa fa-pencil-square-o"></i>
+                <span>Create / Manage Tests</span>
+            </a>
+
             <div class="nav-item has-submenu<?php echo $isQuestions ? ' is-open' : ''; ?>">
                 <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isQuestions ? 'true' : 'false'; ?>">
                     <i class="fa fa-list-alt"></i>
@@ -236,16 +229,12 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                 <i class="fa fa-folder-open"></i>
                 <span>My Question Files</span>
             </a>
-            <div class="nav-item has-submenu<?php echo $isTestAccess ? ' is-open' : ''; ?>">
-                <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isTestAccess ? 'true' : 'false'; ?>">
-                    <i class="fa fa-users"></i>
-                    <span>Test Access</span>
-                    <i class="fa fa-chevron-down submenu-caret"></i>
-                </button>
-                <div class="nav-submenu">
-                    <a class="nav-sublink<?php if ($currentPage === 'addStudentsToTestForm.php') echo ' is-active'; ?>" href="addStudentsToTestForm.php" onclick="setNext(); dlhsToggleSidebar(false)">Add Students</a>
-                </div>
-            </div>
+
+            <a class="nav-link<?php if ($currentPage === 'addStudentsToTestForm.php') echo ' is-active'; ?>" href="addStudentsToTestForm.php" onclick="setNext(); dlhsToggleSidebar(false)">
+                <i class="fa fa-users"></i>
+                <span>Test Access</span>
+            </a>
+
             <div class="nav-item has-submenu<?php echo $isResults ? ' is-open' : ''; ?>">
                 <button type="button" class="nav-link nav-toggle" aria-expanded="<?php echo $isResults ? 'true' : 'false'; ?>">
                     <i class="fa fa-bar-chart"></i>
@@ -256,7 +245,6 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                     <a class="nav-sublink<?php if ($currentPage === 'examineesStatus.php') echo ' is-active'; ?>" href="examineesStatus.php" onclick="setNext(); dlhsToggleSidebar(false)">CBT Test Results</a>
                     <a class="nav-sublink<?php if ($currentPage === 'manage_term_results.php') echo ' is-active'; ?>" href="manage_term_results.php" onclick="setNext(); dlhsToggleSidebar(false)">Enter Term Scores</a>
                     <?php if ($isFormTeacher): ?>
-                    <a class="nav-sublink<?php if ($currentPage === 'manage_assessments.php') echo ' is-active'; ?>" href="manage_assessments.php" onclick="setNext(); dlhsToggleSidebar(false)">Behavior Assessments</a>
                     <a class="nav-sublink<?php if ($currentPage === 'formTeacherBusinessForm.php') echo ' is-active'; ?>" href="formTeacherBusinessForm.php" onclick="setNext(); dlhsToggleSidebar(false)">Form Teacher Business</a>
                     <?php endif; ?>
                     <?php if ($isFormTeacher || $isAdmin): ?>

@@ -132,10 +132,6 @@ $studentName = isset($_SESSION['studentName']) && trim((string) $_SESSION['stude
                 <i class="fa fa-inbox"></i>
                 <span>File Requests</span>
             </a>
-            <a class="nav-link<?php if ($currentPage === 'student_game_controller.php') echo ' is-active'; ?>" href="student_game_controller.php" onclick="setNext(); dlhsToggleSidebar(false)">
-                <i class="fa fa-gamepad"></i>
-                <span>Live Classroom Game</span>
-            </a>
             <a class="nav-link<?php if ($currentPage === 'changePassword.php') echo ' is-active'; ?>" href="changePassword.php" onclick="setNext(); dlhsToggleSidebar(false)">
                 <i class="fa fa-key"></i>
                 <span>Change Password</span>

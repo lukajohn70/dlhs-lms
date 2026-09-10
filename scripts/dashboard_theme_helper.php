@@ -313,7 +313,6 @@ if (!function_exists('dlhsDashboardGetNavItems')) {
                 array('label' => 'My Tests', 'href' => 'pendingTests.php', 'icon' => 'fa-hourglass-half'),
                 array('label' => 'My Shared Files', 'href' => 'student_files.php', 'icon' => 'fa-folder-open'),
                 array('label' => 'File Requests', 'href' => 'student_file_requests.php', 'icon' => 'fa-inbox'),
-                array('label' => 'Live Classroom Game', 'href' => 'student_game_controller.php', 'icon' => 'fa-gamepad'),
                 array('label' => 'Change Password', 'href' => 'changePassword.php', 'icon' => 'fa-key'),
             );
         }

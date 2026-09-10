@@ -417,13 +417,8 @@ $adminName = isset($_SESSION['adminName']) && trim((string) $_SESSION['adminName
                 </button>
                 <div class="nav-submenu">
                     <a class="nav-sublink<?php if ($currentPage === 'assignFormTeachersForm.php') echo ' is-active'; ?>" href="assignFormTeachersForm.php" onclick="dlhsToggleSidebar(false)">Form Teachers</a>
-
                     <a class="nav-sublink<?php if ($currentPage === 'result_config.php') echo ' is-active'; ?>" href="result_config.php" onclick="dlhsToggleSidebar(false)">Term Date Config</a>
                     <a class="nav-sublink<?php if ($currentPage === 'manageGradingForm.php') echo ' is-active'; ?>" href="manageGradingForm.php" onclick="dlhsToggleSidebar(false)">Grading</a>
-                    <a class="nav-sublink<?php if ($currentPage === 'manageCharacterForm.php') echo ' is-active'; ?>" href="manageCharacterForm.php" onclick="dlhsToggleSidebar(false)">Character</a>
-                    <a class="nav-sublink<?php if ($currentPage === 'managePsychomotorForm.php') echo ' is-active'; ?>" href="managePsychomotorForm.php" onclick="dlhsToggleSidebar(false)">Psychomotor</a>
-                    <a class="nav-sublink<?php if ($currentPage === 'manageHouseForm.php') echo ' is-active'; ?>" href="manageHouseForm.php" onclick="dlhsToggleSidebar(false)">House</a>
-                    <a class="nav-sublink<?php if ($currentPage === 'manageSportForm.php') echo ' is-active'; ?>" href="manageSportForm.php" onclick="dlhsToggleSidebar(false)">Sports</a>
                     <a class="nav-sublink<?php if ($currentPage === 'generateResultForm.php') echo ' is-active'; ?>" href="generateResultForm.php" onclick="dlhsToggleSidebar(false)">Generate Result</a>
                 </div>
             </div>
