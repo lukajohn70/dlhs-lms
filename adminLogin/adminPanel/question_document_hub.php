@@ -488,13 +488,8 @@ $filesRes = $connection->query($filesQuery);
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <select class="teacher-select" onchange="updateTeacherAssignment(<?php echo $row['id']; ?>, this.value)">
-                                                        <option value="0">-- Not Assigned --</option>
-                                                        <?php foreach ($teachersList as $teach): ?>
-                                                            <option value="<?php echo $teach['staffId']; ?>" <?php if ((int)$row['teacherId'] === (int)$teach['staffId']) echo 'selected'; ?>>
-                                                                <?php echo htmlspecialchars($teach['fullName']); ?>
-                                                            </option>
-                                                        <?php endforeach; ?>
+                                                    <select class="teacher-select" data-file-id="<?php echo $row['id']; ?>" data-selected="<?php echo (int)($row['teacherId'] ?? 0); ?>" onchange="updateTeacherAssignment(<?php echo $row['id']; ?>, this.value)">
+                                                        <option value="<?php echo (int)($row['teacherId'] ?? 0); ?>"><?php echo htmlspecialchars(!empty($row['teacherName']) ? $row['teacherName'] : '-- Not Assigned --'); ?></option>
                                                     </select>
                                                     <?php if ($row['teacherId'] === null): ?>
                                                         <br><small class="text-danger"><i class="fa fa-exclamation-triangle"></i> Manual assign required</small>
@@ -536,11 +531,36 @@ $filesRes = $connection->query($filesQuery);
     <script src="../../datatables/js/dataTables.responsive.min.js"></script>
 
     <script>
+        var teachersList = <?php echo json_encode($teachersList); ?>;
+
+        function populateTeacherSelect(selectElem) {
+            if (selectElem.getAttribute('data-populated') === 'true') return;
+            var currentVal = selectElem.getAttribute('data-selected');
+            var opts = '<option value="0">-- Not Assigned --</option>';
+            for (var i = 0; i < teachersList.length; i++) {
+                var t = teachersList[i];
+                var sel = (String(t.staffId) === String(currentVal)) ? ' selected' : '';
+                opts += '<option value="' + t.staffId + '"' + sel + '>' + t.fullName + '</option>';
+            }
+            selectElem.innerHTML = opts;
+            selectElem.setAttribute('data-populated', 'true');
+        }
+
+        $(document).on('focus mousedown', '.teacher-select', function() {
+            populateTeacherSelect(this);
+        });
+
         $(document).ready(function() {
             $('#filesTable').DataTable({
                 responsive: true,
                 pageLength: 10,
-                order: [[1, 'desc']]
+                order: [[1, 'desc']],
+                drawCallback: function() {
+                    // Populate visible dropdowns on draw
+                    $('.teacher-select').each(function() {
+                        populateTeacherSelect(this);
+                    });
+                }
             });
         });
 

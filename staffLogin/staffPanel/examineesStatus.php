@@ -391,14 +391,17 @@ session_start();
                         <select name="testId" id="testId" class="form-control" style="border-radius:8px; height: 38px; border: 1px solid #ddd;">
                             <option value="">-- Choose an Assessment --</option>
                                 <?php
-                                $getTests = "SELECT * FROM tests WHERE staffId='$staffId' ORDER BY testId DESC";
+                                $getTests = "SELECT t.testId, t.testName, s.subjectName 
+                                             FROM tests t 
+                                             LEFT JOIN subjects s ON t.subject = s.subjectId 
+                                             WHERE t.staffId='$staffId' 
+                                             ORDER BY t.testId DESC";
                                 $result = $connection->query($getTests);
-                                while($row = $result->fetch_assoc()){
-                                    $subjectId = $row['subject'];
-                                    $getSubjectName = "SELECT subjectName FROM subjects WHERE subjectId='$subjectId'";
-                                    $resSub = $connection->query($getSubjectName);
-                                    $subRow = $resSub->fetch_assoc();
-                                    echo "<option value='".$row['testId']."'>".$row['testName']." (".$subRow['subjectName'].")</option>";
+                                if ($result) {
+                                    while($row = $result->fetch_assoc()){
+                                        $subj = !empty($row['subjectName']) ? " (" . htmlspecialchars($row['subjectName']) . ")" : "";
+                                        echo "<option value='".$row['testId']."'>".htmlspecialchars($row['testName']).$subj."</option>";
+                                    }
                                 }
                             ?>
                         </select>

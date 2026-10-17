@@ -52,6 +52,11 @@ if (!function_exists('dlhs_database_config')) {
         error_reporting($config['display_errors'] ? (E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED) : 0);
         date_default_timezone_set($config['timezone']);
 
+        if (!headers_sent() && extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+            @ini_set('zlib.output_compression', '1');
+            @ini_set('zlib.output_compression_level', '5');
+        }
+
         return $config;
     }
 
