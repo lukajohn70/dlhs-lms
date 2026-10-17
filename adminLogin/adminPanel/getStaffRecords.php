@@ -15,7 +15,6 @@ session_start();
 			$middleName = $row[3];
 			$gender = $row[6];
 			$staffEmail = $row[4];
-			$staffPassword = $row[5];
 			$staffPassport = $row[8];
 						
 			$return_arr[] = array("staffId" => $staffId,
@@ -24,7 +23,7 @@ session_start();
 							"middleName" => $middleName,
 							"gender" => $gender,
 							"staffEmail" => $staffEmail,
-							"staffPassword" => $staffPassword,
+							"staffPassword" => "",
 							"staffPassport" => $staffPassport);
 		}
 		echo json_encode($return_arr);

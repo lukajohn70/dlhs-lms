@@ -38,6 +38,7 @@ session_start();
 		$arrayQuestionsIds=$_SESSION['questionsIdsArray'];
 		$questionIdToFetch=$arrayQuestionsIds[0];
 		$_SESSION['nextQuesIdTosave']=$questionIdToFetch;
+		session_write_close();
 		
 	$query2 = "SELECT * FROM $questionsTableName WHERE questionId='$questionIdToFetch'";
 	$result2 = $connection->query($query2);

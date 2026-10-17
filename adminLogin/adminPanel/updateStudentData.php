@@ -8,6 +8,7 @@ session_start();
 	else
 	{
 		include "../../db_connection/dlhs_db_connection.php";
+		require_once "../../scripts/password_security_helper.php";
 	
 		if(isset($_POST['studentIdToUpdate']))
 		{    
@@ -18,7 +19,7 @@ session_start();
 			$gender = mysqli_real_escape_string($connection, $_POST['gender']);
 			$studentAdmissionNo = mysqli_real_escape_string($connection, $_POST['studentAdmissionNo']);
 			$email = mysqli_real_escape_string($connection, $_POST['studentEmail']);
-			$password = mysqli_real_escape_string($connection, $_POST['thePassword']);
+			$rawPassword = isset($_POST['thePassword']) ? trim((string)$_POST['thePassword']) : '';
 			$studentYearGroupId = mysqli_real_escape_string($connection, $_POST['studentYearGroupId']);
 			$studentClassId = mysqli_real_escape_string($connection, $_POST['studentClassId']);
 									
@@ -31,7 +32,12 @@ session_start();
 			}
 			else
 			{		
-				$query1 = "UPDATE studentlogin SET surname='$surname', firstName='$firstName', middleName='$middleName', gender='$gender', admissionNumber='$studentAdmissionNo', studentEmail='$email', password='$password', yearGroupId='$studentYearGroupId', classId='$studentClassId' WHERE studentId ='$studentIdToUpdate'";
+				if ($rawPassword !== '' && strpos($rawPassword, '$2y$') !== 0) {
+					$hashedPassword = mysqli_real_escape_string($connection, dlhs_hash_password($rawPassword));
+					$query1 = "UPDATE studentlogin SET surname='$surname', firstName='$firstName', middleName='$middleName', gender='$gender', admissionNumber='$studentAdmissionNo', studentEmail='$email', password='$hashedPassword', yearGroupId='$studentYearGroupId', classId='$studentClassId' WHERE studentId ='$studentIdToUpdate'";
+				} else {
+					$query1 = "UPDATE studentlogin SET surname='$surname', firstName='$firstName', middleName='$middleName', gender='$gender', admissionNumber='$studentAdmissionNo', studentEmail='$email', yearGroupId='$studentYearGroupId', classId='$studentClassId' WHERE studentId ='$studentIdToUpdate'";
+				}
 				$result1 = $connection->query($query1);
 				
 				if($result1)

@@ -154,7 +154,8 @@ session_start();
 							timeSubmittedTest VARCHAR(10) NOT NULL DEFAULT '',
 							attendance INT(1) NOT NULL DEFAULT 0,
 							isStarted INT(1) NOT NULL DEFAULT 0,
-							isPaused INT(1) NOT NULL DEFAULT 0
+							isPaused INT(1) NOT NULL DEFAULT 0,
+							INDEX idx_examinee_test (examineeUserId, testId)
 						)ENGINE=InnoDB DEFAULT CHARACTER SET=utf8";
 				$result3 = $connection->query($query3);
 				
@@ -166,7 +167,9 @@ session_start();
 							questionId INT NOT NULL,
 							selectedOption VARCHAR(10) NOT NULL,
 							correctOption VARCHAR(10) NOT NULL,
-							markForQuestion FLOAT NOT NULL
+							markForQuestion FLOAT NOT NULL,
+							INDEX idx_user_test_q (userLoginId, testId, questionId),
+							INDEX idx_user_test_sel (userLoginId, testId, selectedOption)
 						)ENGINE=InnoDB DEFAULT CHARACTER SET=utf8";
 				$result4 = $connection->query($query4);
 				if (!$result4) {

@@ -458,11 +458,12 @@ $testTime = 0;
 	<div id="myModal2" class="modal2">
 		<div class="modal-content">
 			<span class="close1">&times;</span>
-			<div style="padding:15px; color:#fff; margin:10px 10px 0px 10px;" class="bg-success"><center style="font-size:22px;"><i class="fa fa-warning" aria-hidden="true"></i> Important information</center></div>
-            <div style="background-color:#E9F1EA; padding:15px; color:#fff; margin:0px 10px 0px 10px;">
+			<div style="padding:15px; color:#fff; margin:10px 10px 0px 10px;" class="bg-warning"><center style="font-size:22px;"><i class="fa fa-warning" aria-hidden="true"></i> Attention</center></div>
+            <div style="background-color:#E9F1EA; padding:15px; color:#333; margin:0px 10px 0px 10px;">
                 <div class="form-group">
-                    <label for="exampleFormControlInput1" style="color:#000000; margin-bottom:20px;"><center>Please note that you have to attempt all questions before submitting. Click <b>Ok</b> to continue test.</center></label>
-                    <center><button class="btn btn-primary" type="button" onclick="continueTest()" style="padding:10px 40px 10px 40px;background-color:blue; width:200px; border-radius:5px; margin-bottom:20px;"><i class="fa fa-check" aria-hidden="true"></i> Ok</button></center>
+                    <label style="color:#000000; margin-bottom:20px;"><center>You still have unanswered questions in this test.<br>Are you sure you wish to submit now?</center></label>
+                    <center><button class="btn btn-primary" type="button" onclick="clickedSubmit()" style="padding:10px 40px 10px 40px;background-color:blue; width:220px; border-radius:5px; margin-bottom:15px;"><i class="fa fa-check" aria-hidden="true"></i> Submit Anyway</button></center>
+					<center><button class="btn btn-secondary" type="button" onclick="continueTest()" style="padding:10px 40px 10px 40px;background-color:#6c757d; width:220px; border-radius:5px;"><i class="fa fa-arrow-left" aria-hidden="true"></i> Return to Test</button></center>
                 </div>
             </div>
 			<br>

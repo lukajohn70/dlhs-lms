@@ -3,10 +3,12 @@ session_start();
 require_once 'userExpiredSession.php';
 if (!isset($_SESSION['adminLoggedIn']))
 {
+    session_write_close();
     echo 0;
 }
 else
 {
+    session_write_close();
     include "../../db_connection/dlhs_db_connection.php";
     
     if(isset($_POST['checkedStudents']) && !empty($_POST['checkedStudents']))

@@ -44,9 +44,12 @@ if (!function_exists('dlhs_database_config')) {
     {
         $config = dlhs_database_config();
 
-        ini_set('display_errors', $config['display_errors'] ? '1' : '0');
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+                  (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        ini_set('display_errors', ($isAjax || !$config['display_errors']) ? '0' : '1');
         ini_set('log_errors', '1');
-        error_reporting($config['display_errors'] ? E_ALL : 0);
+        error_reporting($config['display_errors'] ? (E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED) : 0);
         date_default_timezone_set($config['timezone']);
 
         return $config;

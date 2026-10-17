@@ -148,7 +148,7 @@
             function apply() {
                 // Load the fonts
                 createElement('link', {
-                    href: 'https://fonts.googleapis.com/css?family=Signika:400,700',
+                    href: 'data:text/css,',
                     rel: 'stylesheet',
                     type: 'text/css'
                 }, null, document.getElementsByTagName('head')[0]);

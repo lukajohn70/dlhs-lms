@@ -10,17 +10,21 @@ $isFormTeacher = false;
 $isAdmin = isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes';
 
 if (isset($_SESSION['staffLoggedIn']) && $_SESSION['staffLoggedIn'] === 'yes') {
-    $staffId = $_SESSION['staffId'];
-    if (isset($connection) && $connection instanceof mysqli) {
+    $staffId = (int)$_SESSION['staffId'];
+    $ftCacheKey = 'isFormTeacher_' . $staffId;
+    $ftTimeKey  = 'isFormTeacherTs_' . $staffId;
+    if (isset($_SESSION[$ftCacheKey], $_SESSION[$ftTimeKey]) && (time() - (int)$_SESSION[$ftTimeKey]) < 300) {
+        $isFormTeacher = (bool)$_SESSION[$ftCacheKey];
+    } elseif (isset($connection) && $connection instanceof mysqli) {
         $stmt = $connection->prepare("SELECT 1 FROM form_teacher_assignment WHERE teacherId = ? LIMIT 1");
         if ($stmt) {
             $stmt->bind_param('i', $staffId);
             $stmt->execute();
             $res = $stmt->get_result();
-            if ($res->num_rows > 0) {
-                $isFormTeacher = true;
-            }
+            $isFormTeacher = ($res && $res->num_rows > 0);
             $stmt->close();
+            $_SESSION[$ftCacheKey] = $isFormTeacher ? 1 : 0;
+            $_SESSION[$ftTimeKey]  = time();
         }
     }
 }

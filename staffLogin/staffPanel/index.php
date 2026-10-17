@@ -43,8 +43,6 @@ dlhsRenderDashboardPage(array(
     ),
     'jqueryJs' => 'js/jquery.js',
     'bootstrapJs' => 'js/bootstrap.min.js',
-    'extraScripts' => array(
-        'js/fullcalendar.min.js',
-    ),
-    'fullcalendarJs' => 'assets/fullcalendar/fullcalendar/fullcalendar.js',
+    'extraScripts' => array(),
+    'fullcalendarJs' => 'js/fullcalendar.min.js',
 ));

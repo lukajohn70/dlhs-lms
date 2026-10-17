@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = mysqli_real_escape_string($connection, $_POST['description']);
     $uploadedFor = mysqli_real_escape_string($connection, $_POST['uploadedFor']);
     $targetClassId = !empty($_POST['targetClass']) ? intval($_POST['targetClass']) : null;
+    $targetClasses = isset($_POST['targetClasses']) && is_array($_POST['targetClasses']) ? array_filter(array_map('intval', $_POST['targetClasses'])) : [];
     $selectedStudents = isset($_POST['selectedStudents']) ? $_POST['selectedStudents'] : [];
     
     $uploadedFiles = [];
@@ -71,25 +72,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($uploadType === 'link' && !empty($_POST['youtubeLink'])) {
         $youtubeLink = mysqli_real_escape_string($connection, trim($_POST['youtubeLink']));
         
-        $query = "INSERT INTO file_uploads (
-            fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
-            uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
-        ) VALUES (
-            'youtube_link', '$youtubeLink', '$youtubeLink', 0, 'youtube', 5, $subjectId,
-            $staffId, '$uploadedFor', " . ($targetClassId ? $targetClassId : 'NULL') . ", 
-            '$title', '$description', 0, 1
-        )";
-        
-        if ($connection->query($query)) {
-            $fileId = $connection->insert_id;
-            $uploadedFiles[] = [
-                'id' => $fileId,
-                'name' => 'YouTube Link',
-                'path' => $youtubeLink
-            ];
-            $processPostInsert($fileId);
-        } else {
-            $errors[] = "Database error for YouTube Link: " . $connection->error;
+        $classesToTarget = ($uploadedFor === 'multiple_classes' && !empty($targetClasses)) ? $targetClasses : [ $targetClassId ];
+        $actualAudience = ($uploadedFor === 'multiple_classes') ? 'specific_class' : $uploadedFor;
+
+        foreach ($classesToTarget as $clsId) {
+            $cVal = $clsId ? (int)$clsId : 'NULL';
+            $query = "INSERT INTO file_uploads (
+                fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
+                uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
+            ) VALUES (
+                'youtube_link', '$youtubeLink', '$youtubeLink', 0, 'youtube', 5, $subjectId,
+                $staffId, '$actualAudience', $cVal, 
+                '$title', '$description', 0, 1
+            )";
+            
+            if ($connection->query($query)) {
+                $fileId = $connection->insert_id;
+                $uploadedFiles[] = [
+                    'id' => $fileId,
+                    'name' => 'YouTube Link',
+                    'path' => $youtubeLink
+                ];
+                $processPostInsert($fileId);
+            } else {
+                $errors[] = "Database error for YouTube Link: " . $connection->error;
+            }
         }
 
     } elseif ($uploadType === 'file' && isset($_FILES['files'])) {
@@ -135,11 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fileTmpName = $files['tmp_name'][$i];
                 $fileType = $files['type'][$i];
                 
-                // if ($fileSize > $maxFileSize) {
-                //     $errors[] = "File '$fileName' is too large. Maximum size is 100MB.";
-                //     continue;
-                // }
-                
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                 if (!array_key_exists($fileExt, $allowedTypes)) {
                     $errors[] = "File '$fileName' has an invalid extension ($fileExt).";
@@ -157,26 +159,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $escapedNewFileName  = mysqli_real_escape_string($connection, $newFileName);
                     $escapedFilePathDB   = mysqli_real_escape_string($connection, $filePathForDB);
                     $escapedFileType     = mysqli_real_escape_string($connection, $fileType);
-                    $query = "INSERT INTO file_uploads (
-                        fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
-                        uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
-                    ) VALUES (
-                        '$escapedNewFileName', '$escapedFileName', '$escapedFilePathDB', $fileSize, '$escapedFileType', 5, $subjectId,
-                        $staffId, '$uploadedFor', " . ($targetClassId ? $targetClassId : 'NULL') . ", 
-                        '$title', '$description', 0, 1
-                    )";
-                    
-                    if ($connection->query($query)) {
-                        $fileId = $connection->insert_id;
-                        $uploadedFiles[] = [
-                            'id'   => $fileId,
-                            'name' => $fileName,
-                            'path' => $filePathForDB
-                        ];
-                        $processPostInsert($fileId);
-                    } else {
-                        $errors[] = "Database error for file '$fileName': " . $connection->error;
-                        @unlink($filePath);
+
+                    $classesToTarget = ($uploadedFor === 'multiple_classes' && !empty($targetClasses)) ? $targetClasses : [ $targetClassId ];
+                    $actualAudience = ($uploadedFor === 'multiple_classes') ? 'specific_class' : $uploadedFor;
+
+                    foreach ($classesToTarget as $clsId) {
+                        $cVal = $clsId ? (int)$clsId : 'NULL';
+                        $query = "INSERT INTO file_uploads (
+                            fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
+                            uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
+                        ) VALUES (
+                            '$escapedNewFileName', '$escapedFileName', '$escapedFilePathDB', $fileSize, '$escapedFileType', 5, $subjectId,
+                            $staffId, '$actualAudience', $cVal, 
+                            '$title', '$description', 0, 1
+                        )";
+                        
+                        if ($connection->query($query)) {
+                            $fileId = $connection->insert_id;
+                            $uploadedFiles[] = [
+                                'id'   => $fileId,
+                                'name' => $fileName,
+                                'path' => $filePathForDB
+                            ];
+                            $processPostInsert($fileId);
+                        } else {
+                            $errors[] = "Database error for file '$fileName': " . $connection->error;
+                        }
                     }
                 } else {
                     $lastErr = error_get_last();

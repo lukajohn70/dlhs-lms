@@ -1,5 +1,8 @@
 <?php
+ini_set('display_errors', '0');
+header('Content-Type: application/json; charset=utf-8');
 session_start();
+session_write_close();
 require_once('../../db_connection/dlhs_db_connection.php');
 
 if (!isset($_POST['testId']) || !isset($_POST['studentId'])) {

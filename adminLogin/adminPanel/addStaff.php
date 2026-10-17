@@ -8,6 +8,7 @@ session_start();
 	else
 	{
 		include "../../db_connection/dlhs_db_connection.php";
+		require_once "../../scripts/password_security_helper.php";
 	
 		if(isset($_POST['submitStaff']))
 		{    
@@ -16,7 +17,7 @@ session_start();
 			$middleName = mysqli_real_escape_string($connection, $_POST['middleName']);
 			$gender = mysqli_real_escape_string($connection, $_POST['gender']);
 			$email = mysqli_real_escape_string($connection, $_POST['staffEmail']);
-			$password = mysqli_real_escape_string($connection, $_POST['thePassword']);
+			$password = mysqli_real_escape_string($connection, dlhs_hash_password((string)$_POST['thePassword']));
 									
 			$query = "SELECT * FROM stafflogin WHERE username='$email'";
 			$result = $connection->query($query);

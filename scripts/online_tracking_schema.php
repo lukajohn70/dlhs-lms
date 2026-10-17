@@ -4,10 +4,16 @@
  */
 
 function dlhsEnsureOnlineTrackingTables($connection) {
+    static $checked = false;
+    if ($checked) {
+        return true;
+    }
+
     // Check if table exists
     $tableExists = $connection->query("SHOW TABLES LIKE 'online_users'");
     
     if ($tableExists && $tableExists->num_rows > 0) {
+        $checked = true;
         return true;
     }
 

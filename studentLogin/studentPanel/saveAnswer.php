@@ -12,6 +12,7 @@ require_once('answer_grading_helper.php');
 
 $testId = $_SESSION['idOfTest'];
 $studentId = $_SESSION['studentId'];
+session_write_close();
 
 // Get POST data
 $questionId = isset($_POST['question_id']) ? intval($_POST['question_id']) : 0;

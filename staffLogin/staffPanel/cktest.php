@@ -55,7 +55,6 @@ session_start();
     <!-- font icon -->
     <link href="css/elegant-icons-style.css" rel="stylesheet" />
     <link href="css/font-awesome.min.css" rel="stylesheet" />
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <!-- date picker -->
     
     <!-- color picker -->
@@ -63,10 +62,9 @@ session_start();
     <!-- Custom styles -->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.7/css/rowReorder.dataTables.min.css"/>
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.5/css/responsive.dataTables.min.css"/>
-	<link href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/jquery.dataTables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/rowReorder.dataTables.min.css"/>
+	<link rel="stylesheet" type="text/css" href="../../datatables/css/responsive.dataTables.min.css"/>
 	 <!-- bootstrap-wysiwyg -->
     <script src="js/jquery.hotkeys.js"></script>
     <script src="js/bootstrap-wysiwyg.js"></script>

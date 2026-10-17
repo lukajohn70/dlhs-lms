@@ -13,6 +13,15 @@ $studentId = $_SESSION['studentId'];
 $testId = $_SESSION['idOfTest'];
 $testedTableName = $_SESSION['testedTableName'];
 
+// Compute elapsed since last tick and release session lock immediately
+$now = time();
+if (!isset($_SESSION['startTime'])) {
+	$_SESSION['startTime'] = $now;
+}
+$elapsed = $now - (int)$_SESSION['startTime'];
+$_SESSION['startTime'] = $now;
+session_write_close();
+
 // Fetch current remaining time and pause status from DB
 $query = "SELECT remainingTime, isPaused FROM `$testedTableName` WHERE examineeUserId = ? AND testId = ?";
 $stmt = $connection->prepare($query);
@@ -29,18 +38,8 @@ if (!$row) {
 $remainingTime = (int)$row['remainingTime'];
 $isPaused = (int)($row['isPaused'] ?? 0);
 
-// Compute elapsed since last tick using session startTime reference
-$now = time();
-if (!isset($_SESSION['startTime'])) {
-	// Initialize reference to avoid large jumps
-	$_SESSION['startTime'] = $now;
-}
-
-$elapsed = $now - (int)$_SESSION['startTime'];
-
 if ($isPaused == 1) {
-	// Reset reference so no elapsed time is accumulated when unpaused
-	$_SESSION['startTime'] = $now;
+	// No elapsed time is accumulated when paused
 } else if ($elapsed > 0) {
 	$remainingTime = max(0, $remainingTime - $elapsed);
 	// Persist the new remaining time
@@ -48,9 +47,6 @@ if ($isPaused == 1) {
 	$upd->bind_param("iii", $remainingTime, $studentId, $testId);
 	$upd->execute();
 }
-
-// Reset reference for next tick
-$_SESSION['startTime'] = $now;
 
 $shouldSubmit = ($remainingTime <= 0);
 

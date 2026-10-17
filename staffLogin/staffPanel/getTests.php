@@ -1,9 +1,10 @@
 <?php
 session_start();
+	$staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+	session_write_close();
+
 	include "../../db_connection/dlhs_db_connection.php";
 	require_once "../../scripts/test_workflow_helper.php";
-	dlhsEnsureTestsCustomTypeColumn($connection);
-	dlhsEnsureTestsMockPaperColumn($connection);
 	
 	function getStatus($testId, $status, $testName)
 	{
@@ -21,13 +22,24 @@ session_start();
 			return 'Ended - <i class="fa fa-refresh" aria-hidden="true" style="color:red; cursor:pointer;" title="Click to reschedule test" onclick="rescheduleTest('.$testId.')"></i>';
 		}
 	}
-	$staffId = $_SESSION['staffId'];
+
 	$selectedTestType = dlhsNormalizeTestType(isset($_GET['testType']) ? $_GET['testType'] : '');
+	$selectedSession = isset($_GET['academicSession']) ? trim((string)$_GET['academicSession']) : '';
 	$return_arr = array();
-	$query="SELECT * FROM tests WHERE staffId='$staffId'";
+	$whereSession = '';
+	if ($selectedSession !== '') {
+		$escSession = mysqli_real_escape_string($connection, $selectedSession);
+		$whereSession = " AND t.academicSession = '$escSession'";
+	}
+	$query = "SELECT t.*, s.subjectName AS joinedSubjectName, yg.yearGroupName AS joinedYearGroupName, ay.academicYear AS joinedAcademicYear
+	          FROM tests t
+	          LEFT JOIN subjects s ON s.subjectId = t.subject
+	          LEFT JOIN yeargroup yg ON yg.yearGroupId = t.yearGroup
+	          LEFT JOIN academic_year ay ON ay.academicYearId = t.academicYearId
+	          WHERE t.staffId = '$staffId'" . $whereSession;
 	$result = $connection->query($query);
 	
-	while($row = $result->fetch_assoc())
+	while($result && ($row = $result->fetch_assoc()))
 	{
 		$effectiveTestType = dlhsGetEffectiveTestType(isset($row['testType']) ? $row['testType'] : '');
 		if ($selectedTestType !== '' && $effectiveTestType !== $selectedTestType)
@@ -50,23 +62,6 @@ session_start();
 		$essayOption = $row['essayOption'];
 		$essayTime = $row['essayTime'];
 		$setupSummary = dlhsBuildTestSetupSummary($connection, $row);
-					
-		//Getting the subject name
-		$getSubjectName="SELECT * FROM subjects WHERE subjectId='$subjectId'";
-		$result1 = $connection->query($getSubjectName);
-		$row1 = $result1->fetch_array(MYSQLI_NUM);
-		
-		//Getting the teacher name
-		$getTeacherName="SELECT * FROM yeargroup WHERE yearGroupId='$yearGroupId'";
-		$result2 = $connection->query($getTeacherName);
-		$row2 = $result2->fetch_array(MYSQLI_NUM);
-		
-		//Getting the academicYearName
-		$academicYearName="SELECT * FROM academic_year WHERE academicYearId='$academicYearId'";
-		$result3 = $connection->query($academicYearName);
-		$row3 = $result3->fetch_array(MYSQLI_NUM);
-		
-		//$getTheStatus = getStatus($testId, $status, $testName);
 		
 		$return_arr[] = array("testId" => $testId,
 						"testName" => $testName,
@@ -76,10 +71,10 @@ session_start();
 						"startMinute" => $startMinute,
 						"isAmOrPm" => $isAmOrPm,
 						"subjectId" => $subjectId,
-						"subjectName" => $row1[1],
+						"subjectName" => $row['joinedSubjectName'] ?? '',
 						"yearGroupId" => $yearGroupId,
-						"yearGroupName" => $row2[1],
-						"testYear" => $row3[1],
+						"yearGroupName" => $row['joinedYearGroupName'] ?? '',
+						"testYear" => $row['joinedAcademicYear'] ?? '',
 						"reviewOption" => $reviewOption,
 						"essayOption" => $essayOption,
 						"essayTime" => $essayTime,

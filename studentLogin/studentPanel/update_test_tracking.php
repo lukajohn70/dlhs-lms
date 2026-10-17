@@ -13,21 +13,27 @@ $studentId = $_SESSION['studentId'];
 $testedTableName = $_SESSION['testedTableName'] ?? '';
 $totalQuestions = $_SESSION['totalQuestions'] ?? 0;
 $answersTableName = $_SESSION['answersTableName'] ?? '';
+$cachedTestName = $_SESSION['testName'] ?? $_SESSION['nameOfTest'] ?? '';
+
+// Release session lock immediately to avoid blocking answer saves or timer ticks
+session_write_close();
 
 // Get remaining time from POST or session
 $remainingTime = isset($_POST['remainingTime']) ? intval($_POST['remainingTime']) : null;
 
-// Get test name from tests table
-$testName = '';
-$query = "SELECT testName FROM tests WHERE testId = ?";
-$stmt = $connection->prepare($query);
-$stmt->bind_param("i", $testId);
-$stmt->execute();
-$result = $stmt->get_result();
-if ($row = $result->fetch_assoc()) {
-    $testName = $row['testName'];
+// Get test name from session cache or fallback to database
+$testName = $cachedTestName;
+if (empty($testName)) {
+    $query = "SELECT testName FROM tests WHERE testId = ?";
+    $stmt = $connection->prepare($query);
+    $stmt->bind_param("i", $testId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $testName = $row['testName'];
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 // Count answered questions
 $answeredCount = 0;

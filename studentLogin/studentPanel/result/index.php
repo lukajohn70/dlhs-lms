@@ -16,25 +16,25 @@ $testId = isset($_SESSION['idOfTest']) ? (int) $_SESSION['idOfTest'] : (isset($_
 // Get student name
 $query = "SELECT * FROM studentlogin WHERE studentId='$studentId'";
 $result = $connection->query($query);
-$row = $result ? $result->fetch_array(MYSQLI_NUM) : null;
-$firstName = $row ? $row[2] : '';
+$row = $result ? $result->fetch_assoc() : null;
+$firstName = $row ? ($row['firstName'] ?? '') : '';
 
 // Get test info
 $query1 = "SELECT * FROM tests WHERE testId='$testId'";
 $result1 = $connection->query($query1);
-$row1 = $result1 ? $result1->fetch_array(MYSQLI_NUM) : null;
-$testName = $row1 ? $row1[2] : '';
-$testedTableName = $row1 ? $row1[13] : '';
-$answersTableName = $row1 ? $row1[15] : '';
-$questionsTableName = $row1 ? $row1[12] : '';
+$row1 = $result1 ? $result1->fetch_assoc() : null;
+$testName = $row1 ? ($row1['testName'] ?? '') : '';
+$testedTableName = $row1 ? ($row1['examineesTableName'] ?? '') : '';
+$answersTableName = $row1 ? ($row1['answersTable'] ?? '') : '';
+$questionsTableName = $row1 ? ($row1['tableName'] ?? '') : '';
 
 // Get questions array
 $query2 = "SELECT * FROM `$testedTableName` WHERE examineeUserId='$studentId' AND testId='$testId'";
 $result2 = $testedTableName ? $connection->query($query2) : false;
-$row2 = $result2 ? $result2->fetch_array(MYSQLI_NUM) : null;
+$row2 = $result2 ? $result2->fetch_assoc() : null;
 $questionsArray = array();
-if ($row2 && isset($row2[6]) && trim((string) $row2[6]) !== '') {
-    $decodedQuestions = @unserialize($row2[6]);
+if ($row2 && !empty($row2['questArray'])) {
+    $decodedQuestions = @unserialize($row2['questArray']);
     if (is_array($decodedQuestions)) {
         $questionsArray = $decodedQuestions;
     }
@@ -57,20 +57,20 @@ if ($numberOfQuestions > 0 && !empty($questionsTableName) && !empty($answersTabl
     $qMap = array();
     $qRes = $connection->query("SELECT * FROM `$questionsTableName` WHERE questionId IN ($inClause)");
     if ($qRes) {
-        while ($qRow = $qRes->fetch_array(MYSQLI_NUM)) {
-            $qMap[$qRow[0]] = array(
-                'correct' => dlhsNormalizeOptionValue($qRow[7]),
-                'mark' => (int) $qRow[8]
+        while ($qRow = $qRes->fetch_assoc()) {
+            $qMap[(int)$qRow['questionId']] = array(
+                'correct' => dlhsNormalizeOptionValue($qRow['correctOption'] ?? ''),
+                'mark' => (float)($qRow['markForQuestion'] ?? 0)
             );
         }
     }
 
     // Batch 2: Fetch all user answers in 1 query
     $aMap = array();
-    $aRes = $connection->query("SELECT * FROM `$answersTableName` WHERE userLoginId='$studentId' AND questionId IN ($inClause)");
+    $aRes = $connection->query("SELECT * FROM `$answersTableName` WHERE userLoginId='$studentId' AND questionId IN ($inClause) AND testId='$testId'");
     if ($aRes) {
-        while ($aRow = $aRes->fetch_array(MYSQLI_NUM)) {
-            $aMap[$aRow[2]] = dlhsNormalizeOptionValue($aRow[4]);
+        while ($aRow = $aRes->fetch_assoc()) {
+            $aMap[(int)$aRow['questionId']] = dlhsNormalizeOptionValue($aRow['selectedOption'] ?? '');
         }
     }
 
@@ -127,9 +127,8 @@ if ($percentMarksEarned >= 90) {
     <title>DLHS :: Test Result</title>
 
     <!-- Font Icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../fontAwesome/css/all.min.css">
+    <link rel="stylesheet" href="../css/bootstrap-5.3.2.min.css">
 
     <!-- Main css -->
     <link rel="stylesheet" href="css/style.css">

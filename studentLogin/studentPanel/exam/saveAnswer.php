@@ -6,6 +6,12 @@ if (!isset($_SESSION['studentLast_login'])) {
     exit();
 }
 
+$cachedQuestionsTable = $_SESSION['questTableName'] ?? $_SESSION['tableName'] ?? '';
+$cachedAnswersTable = $_SESSION['answersTableName'] ?? '';
+
+// Release session lock immediately to prevent blocking parallel requests
+session_write_close();
+
 require_once('../../../db_connection/dlhs_db_connection.php');
 require_once('../answer_grading_helper.php');
 
@@ -15,25 +21,31 @@ if (!isset($_POST['questionId']) || !isset($_POST['answer'])) {
     exit();
 }
 
-$testId = $_POST['testId'];
-$studentId = $_POST['studentId'];
+$testId = intval($_POST['testId']);
+$studentId = intval($_POST['studentId']);
 $questionId = intval($_POST['questionId']);
 $answer = $_POST['answer'];
 
 try {
-    // Get test details and table names
-    $stmt = $connection->prepare("SELECT tableName, answersTable FROM tests WHERE testId = ?");
-    $stmt->bind_param("i", $testId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Get test details and table names (use session cache if available)
+    if (!empty($cachedQuestionsTable) && !empty($cachedAnswersTable)) {
+        $questionsTable = $cachedQuestionsTable;
+        $answersTable = $cachedAnswersTable;
+    } else {
+        $stmt = $connection->prepare("SELECT tableName, answersTable FROM tests WHERE testId = ?");
+        $stmt->bind_param("i", $testId);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    if ($result->num_rows === 0) {
-        throw new Exception("Test not found");
+        if ($result->num_rows === 0) {
+            throw new Exception("Test not found");
+        }
+
+        $row = $result->fetch_assoc();
+        $questionsTable = $row['tableName'];
+        $answersTable = $row['answersTable'];
+        $stmt->close();
     }
-
-    $row = $result->fetch_assoc();
-    $questionsTable = $row['tableName'];
-    $answersTable = $row['answersTable'];
 
     dlhsSaveAnswerWithMetadata(
         $connection,
@@ -54,4 +66,5 @@ try {
         'status' => 'error',
         'message' => 'Error saving answer: ' . $e->getMessage()
     ]);
-} 
+}
+?>

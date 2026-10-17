@@ -1,9 +1,10 @@
 <?php
+ini_set('display_errors', '0');
 session_start();
 require_once "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/essay_timer_helper.php";
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 $studentId = isset($_SESSION['studentId']) ? (int) $_SESSION['studentId'] : 0;
 $testId = 0;
@@ -14,6 +15,7 @@ if (isset($_POST['testId']) && $_POST['testId'] !== '') {
 } elseif (isset($_SESSION['idOfTest'])) {
     $testId = (int) $_SESSION['idOfTest'];
 }
+session_write_close();
 
 if ($studentId <= 0 || $testId <= 0) {
     echo json_encode(array('success' => false, 'message' => 'Session expired'));

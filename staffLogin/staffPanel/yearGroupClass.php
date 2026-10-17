@@ -1,12 +1,15 @@
 <?php
 session_start();
+	$staffId = isset($_SESSION['staffId']) ? $_SESSION['staffId'] : 0;
+	$isStaffLoggedIn = isset($_SESSION['staffLoggedIn']);
+	session_write_close();
+
 	include "../../db_connection/dlhs_db_connection.php";
 		
 	if(isset($_POST['selectedTestId']))
 	{    
 		// Capture selected year group
-		$selectedTestId = $_POST["selectedTestId"];
-		$staffId=$_SESSION['staffId'];
+		$selectedTestId = mysqli_real_escape_string($connection, $_POST["selectedTestId"]);
 		
 		//Getting the subject and yeargroupId of the selected test
 		$getTestInfo="SELECT subject, yearGroup FROM tests WHERE testId='$selectedTestId'";
@@ -18,7 +21,7 @@ session_start();
 		$return_arr = array();
 		
 		// If staff is logged in, only show assigned classes (arms)
-		if (isset($_SESSION['staffLoggedIn'])) {
+		if ($isStaffLoggedIn) {
 			$getClass = "SELECT c.* FROM classes c 
 						 INNER JOIN subject_teacher_assignment sta ON c.classId = sta.classId 
 						 WHERE c.classYearGroup = '$yearGroupId' 

@@ -1,14 +1,17 @@
 <?php
+ini_set('display_errors', '0');
+header('Content-Type: application/json; charset=utf-8');
 session_start();
+$studentId = isset($_SESSION['studentId']) ? (int)$_SESSION['studentId'] : 0;
+session_write_close();
+
 require_once "../../db_connection/dlhs_db_connection.php";
 
-if (!isset($_SESSION['studentId']) || !isset($_POST['testId'])) {
+$testId = isset($_POST['testId']) ? (int)$_POST['testId'] : 0;
+if ($studentId <= 0 || $testId <= 0) {
     echo json_encode(array('hasAnswer' => false));
     exit;
 }
-
-$studentId = $connection->real_escape_string($_SESSION['studentId']);
-$testId = $connection->real_escape_string($_POST['testId']);
 
 // Check if essay_answers table exists
 $tableCheck = $connection->query("SHOW TABLES LIKE 'essay_answers'");

@@ -130,6 +130,7 @@ session_start();
 	
 	$_SESSION['correctOption']=$correctOption;
 	$_SESSION['markForQuestion']=$markForQuestion;
+	session_write_close();
 	
 	
 	//Selecting the selected uption of an already answered question.

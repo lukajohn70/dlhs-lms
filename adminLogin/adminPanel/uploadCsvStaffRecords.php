@@ -8,6 +8,7 @@ session_start();
 	else
 	{
 		include "../../db_connection/dlhs_db_connection.php";
+		require_once "../../scripts/password_security_helper.php";
 	
 		if(isset($_POST['uploadCsvOfStaff']))
 		{    			
@@ -39,7 +40,8 @@ session_start();
 						$middleName = ucfirst(strToLower(mysqli_real_escape_string($connection, $line[2])));
 						$gender = ucfirst(strToLower(mysqli_real_escape_string($connection, $line[3])));
 						$staffEmail = mysqli_real_escape_string($connection, $line[4]);
-						$password = mysqli_real_escape_string($connection, $line[5]);
+						$rawCsvPassword = trim((string)$line[5]);
+						$password = $rawCsvPassword !== '' ? mysqli_real_escape_string($connection, dlhs_hash_password($rawCsvPassword)) : '';
 
 						$staffRecordsArray[] = array("surname" => $surname,
 														"firstName" => $firstName,
@@ -49,7 +51,7 @@ session_start();
 														"password" => $password);
 	
 						//checking if any of the required inputs for a row is empty on the CSV file
-						if($surname == "" || $firstName == "" || $gender == "" || $staffEmail == "" || $password == "")
+						if($surname == "" || $firstName == "" || $gender == "" || $staffEmail == "" || $rawCsvPassword == "")
 						{
 							$oneRequiredFieldEmptyOrNot=1;
 						}

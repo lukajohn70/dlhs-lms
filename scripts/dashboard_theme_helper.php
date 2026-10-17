@@ -55,13 +55,16 @@ if (!function_exists('dlhsDashboardFetchUpcomingTests')) {
         $where = '1=1';
 
         if ($staffId !== null) {
-            $where .= " AND staffId='" . (int) $staffId . "'";
+            $where .= " AND t.staffId='" . (int) $staffId . "'";
         }
 
-        $query = "SELECT testId, testName, testDate, subject, yearGroup, status, testType, customTestType, mockPaperLabel
-                  FROM tests
+        $query = "SELECT t.testId, t.testName, t.testDate, t.subject, t.yearGroup, t.status, t.testType, t.customTestType, t.mockPaperLabel,
+                         s.subjectName, yg.yearGroupName
+                  FROM tests t
+                  LEFT JOIN subjects s ON s.subjectId = t.subject
+                  LEFT JOIN yeargroup yg ON yg.yearGroupId = t.yearGroup
                   WHERE {$where}
-                  ORDER BY (testDate < CURDATE()) ASC, testDate ASC, testName ASC
+                  ORDER BY (t.testDate < CURDATE()) ASC, t.testDate ASC, t.testName ASC
                   LIMIT {$limit}";
         $result = $connection->query($query);
 
@@ -82,8 +85,8 @@ if (!function_exists('dlhsDashboardFetchUpcomingTests')) {
             $rows[] = array(
                 'testId' => (int) $row['testId'],
                 'testName' => isset($row['testName']) ? $row['testName'] : 'Untitled test',
-                'subject' => dlhsDashboardResolveSubjectName($connection, isset($row['subject']) ? $row['subject'] : ''),
-                'yearGroup' => dlhsDashboardResolveYearGroupName($connection, isset($row['yearGroup']) ? $row['yearGroup'] : ''),
+                'subject' => !empty($row['subjectName']) ? $row['subjectName'] : (isset($row['subject']) ? (string)$row['subject'] : ''),
+                'yearGroup' => !empty($row['yearGroupName']) ? $row['yearGroupName'] : (isset($row['yearGroup']) ? (string)$row['yearGroup'] : ''),
                 'status' => isset($row['status']) ? (int) $row['status'] : 0,
                 'testType' => $displayType,
                 'testDate' => isset($row['testDate']) ? $row['testDate'] : '',
@@ -435,33 +438,33 @@ if (!function_exists('dlhsRenderDashboardPage')) {
         .background-orb {
             position: fixed;
             border-radius: 999px;
-            filter: blur(110px);
-            opacity: 0.3;
+            opacity: 0.28;
             z-index: 0;
+            pointer-events: none;
         }
 
         .background-orb.one {
-            width: 32rem;
-            height: 32rem;
+            width: 36rem;
+            height: 36rem;
             top: -10rem;
             left: -8rem;
-            background: var(--dlhs-blue);
+            background: radial-gradient(circle, var(--dlhs-blue) 0%, transparent 70%);
         }
 
         .background-orb.two {
-            width: 28rem;
-            height: 28rem;
+            width: 32rem;
+            height: 32rem;
             right: -6rem;
             bottom: -6rem;
-            background: var(--dlhs-magenta);
+            background: radial-gradient(circle, var(--dlhs-magenta) 0%, transparent 70%);
         }
 
         <?php if ($role !== 'admin' && $role !== 'staff'): ?>
         .sidebar {
             width: 290px;
             background: var(--dlhs-sidebar);
-            backdrop-filter: blur(24px) saturate(160%);
-            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: #fff;
             padding: 32px 24px;
             display: flex;
@@ -595,9 +598,9 @@ if (!function_exists('dlhsRenderDashboardPage')) {
 
         .hero-meta { display: grid; gap: 12px; min-width: 240px; }
         .glass-card {
-            background: var(--dlhs-soft);
-            backdrop-filter: blur(22px) saturate(160%);
-            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--dlhs-border);
             border-radius: 28px;
             box-shadow: var(--dlhs-shadow);
@@ -1045,6 +1048,11 @@ if (!function_exists('dlhsRenderDashboardPage')) {
                             </div>
                         </article>
 <?php endif; ?>
+<?php
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+?>
 <?php if ($role === 'admin' && !empty($config['recentAssignments'])): ?>
                         <article class="glass-card content-card" style="margin-top: 24px;">
                             <div class="section-head">
@@ -1113,6 +1121,33 @@ if (!function_exists('dlhsRenderDashboardPage')) {
     <script src="<?php echo htmlspecialchars($fullcalendarJs); ?>"></script>
     <script>
 
+        var dlhsCalendarInitialized = false;
+
+        function dlhsInitCalendarIfNeeded() {
+            if (dlhsCalendarInitialized || !window.jQuery || !jQuery.fn || !jQuery.fn.fullCalendar) {
+                return;
+            }
+            var $cal = jQuery('#calendar');
+            if (!$cal.length) {
+                return;
+            }
+            dlhsCalendarInitialized = true;
+            $cal.fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month'
+                },
+                editable: false,
+                droppable: false,
+                height: 'auto',
+                fixedWeekCount: false,
+                eventLimit: 2,
+                displayEventTime: false,
+                events: <?php echo json_encode($calendarEventsUrl); ?>
+            });
+        }
+
         function dlhsSyncSidebarButton() {
             var sidebarButton = document.getElementById('dlhsDashboardSidebarToggle');
             if (!sidebarButton) {
@@ -1153,17 +1188,20 @@ if (!function_exists('dlhsRenderDashboardPage')) {
                 window.localStorage.setItem('dlhs-dashboard-calendar-visible', isVisible ? '1' : '0');
             } catch (error) {}
 
-            if (isVisible && window.jQuery && jQuery.fn && jQuery.fn.fullCalendar) {
-                window.setTimeout(function() {
-                    try {
-                        jQuery('#calendar').fullCalendar('render');
-                    } catch (error) {}
-                }, 80);
+            if (isVisible) {
+                dlhsInitCalendarIfNeeded();
+                if (window.jQuery && jQuery.fn && jQuery.fn.fullCalendar) {
+                    window.setTimeout(function() {
+                        try {
+                            jQuery('#calendar').fullCalendar('render');
+                        } catch (error) {}
+                    }, 80);
+                }
             }
         }
 
 
-                $(function() {
+        $(function() {
             dlhsSyncSidebarButton();
 
             $(document).on('keydown', function(event) {
@@ -1188,25 +1226,6 @@ if (!function_exists('dlhsRenderDashboardPage')) {
             $('#calendarVisibilityToggle').on('change', function() {
                 setCalendarVisibility(this.checked);
             });
-
-            if ($('#calendar').length) {
-                $('#calendar').fullCalendar({
-                    header: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'month'
-                    },
-                    editable: false,
-                    droppable: false,
-                    height: 'auto',
-                    fixedWeekCount: false,
-                    eventLimit: 2,
-                    displayEventTime: false,
-                    events: <?php echo json_encode($calendarEventsUrl); ?>
-                });
-            }
-
-
         });
     </script>
 </body>

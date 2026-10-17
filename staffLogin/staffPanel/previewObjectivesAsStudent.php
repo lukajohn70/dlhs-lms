@@ -86,14 +86,13 @@ $stimulusMap = dlhsFetchSharedStimulusMapForQuestions($connection, $testId, $que
     <title>Preview: <?php echo htmlspecialchars($testName); ?> - DLHS</title>
     <link rel="icon" type="image/jpg" href="../../images/dlhslogo3.jpg">
     
-    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../fonts/font-awesome-4.7.0/css/font-awesome.min.css">
     
     <script src="../../libs/jquery.min.js"></script>
     <style>
         body {
             background: #f5f8fa;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding-top: 100px;
         }
         

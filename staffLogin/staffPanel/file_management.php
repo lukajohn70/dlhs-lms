@@ -81,12 +81,9 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
     <link rel="stylesheet" type="text/css" href="../../datatables/css/jquery.dataTables.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../datatables/css/responsive.dataTables.min.css"/>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f4f7f6;
             color: #333;
         }
@@ -305,8 +302,9 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
 	<!--Header-->
 	<?php include 'header.php'; ?>
 
-    <!--Sidebar-->
+    	<!--Sidebar-->
 	<?php include 'sideBar.php'; ?>
+	<?php session_write_close(); ?>
 	       
       <section id="main-content">
           <section class="wrapper">            
@@ -344,7 +342,7 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
                                   <div class="upload-area" id="uploadArea">
                                       <i class="fa fa-cloud-upload"></i>
                                       <h5 style="margin: 5px 0 2px 0; font-weight: 600;">Drag & Drop File Here</h5>
-                                      <p style="color: #888; font-size: 12px; margin: 0;">or click to browse files</p>
+                                      <p style="color: #888; font-size: 12px; margin: 0;">or click to browse files (Max: 50MB per file)</p>
                                       <input type="file" id="fileInput" name="files[]" style="display: none;" multiple>
                                   </div>
                                   
@@ -354,6 +352,17 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
                                       <div class="input-group">
                                           <span class="input-group-addon" style="background: rgba(255, 0, 0, 0.1); color: red; border-color: #ccc;"><i class="fa fa-youtube-play"></i></span>
                                           <input type="url" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=...">
+                                      </div>
+                                      <!-- Live YouTube Preview Card -->
+                                      <div id="youtubePreviewBox" style="display: none; margin-top: 10px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc;">
+                                          <div style="display: flex; gap: 12px; align-items: center;">
+                                              <img id="ytThumbImg" src="" alt="Thumbnail" style="width: 110px; height: 62px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                              <div>
+                                                  <span class="label label-danger"><i class="fa fa-youtube-play"></i> YouTube Video</span>
+                                                  <p style="margin: 4px 0 0; font-size: 12px; color: #334155; font-weight: 600;" id="ytVideoIdText"></p>
+                                                  <small style="color: #10b981;"><i class="fa fa-check-circle"></i> Valid YouTube URL recognized</small>
+                                              </div>
+                                          </div>
                                       </div>
                                   </div>
                                   
@@ -389,7 +398,8 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
                                       <label for="uploadedFor" style="font-weight: 600; font-size: 13px;">Share With *</label>
                                       <select class="form-control" id="uploadedFor" name="uploadedFor" required>
                                           <option value="all">All Students</option>
-                                          <option value="specific_class">Specific Class</option>
+                                          <option value="specific_class">Specific Class Arm</option>
+                                          <option value="multiple_classes">Multiple Class Arms</option>
                                           <option value="specific_students">Specific Students</option>
                                       </select>
                                   </div>
@@ -400,6 +410,14 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
                                       <select class="form-control" id="targetClass" name="targetClass">
                                           <option value="">-- Select Class --</option>
                                       </select>
+                                  </div>
+
+                                  <!-- Target Multiple Classes (Hidden by default) -->
+                                  <div class="form-group" id="multiClassRow" style="display: none;">
+                                      <label style="font-weight: 600; font-size: 13px;">Select Target Classes *</label>
+                                      <div class="students-list-panel" id="multiClassesList" style="max-height: 150px;">
+                                          <p class="text-muted" style="font-size: 12px; margin: 0;">Please select a subject first to load classes.</p>
+                                      </div>
                                   </div>
 
                                   <!-- Target Students (Hidden by default) -->
@@ -436,9 +454,19 @@ if ($assignmentsResult && $assignmentsResult->num_rows > 0) {
                               </div>
                           </div>
                           <div class="premium-card-body">
-                              <!-- Search Area -->
-                              <div style="margin-bottom: 20px;">
-                                  <input type="text" class="form-control" id="searchFiles" placeholder="Search shared files..." oninput="searchFiles()">
+                              <!-- Search & Filter Area -->
+                              <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                                  <div style="flex: 2; min-width: 180px;">
+                                      <input type="text" class="form-control" id="searchFiles" placeholder="Search shared files..." oninput="filterSharedFiles()">
+                                  </div>
+                                  <div style="flex: 1; min-width: 140px;">
+                                      <select class="form-control" id="filterSharedAudience" onchange="filterSharedFiles()">
+                                          <option value="">All Audiences</option>
+                                          <option value="all">All Students</option>
+                                          <option value="specific_class">Class Targets</option>
+                                          <option value="specific_students">Selected Students</option>
+                                      </select>
+                                  </div>
                               </div>
 
                               <div id="filesList">

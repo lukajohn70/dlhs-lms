@@ -1,5 +1,8 @@
 <?php
 session_start();
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 if (!isset($_SESSION['studentLast_login'])) {
     header("location:logout.php");
     exit();
@@ -37,6 +40,7 @@ $result = $stmt->get_result();
 if ($row = $result->fetch_assoc()) {
     $testName = $row['testName'];
     $testTime = $row['duration'] * 60; // duration in seconds
+    $_SESSION['testName'] = $testName;
 }
 
 // Track test activity
@@ -48,11 +52,14 @@ $answersTableName = $_SESSION['answersTableName'];
 $answeredCount = 0;
 $countQuery = "SELECT COUNT(*) as count FROM `$answersTableName` WHERE userLoginId = ? AND testId = ? AND selectedOption != 0";
 $countStmt = $connection->prepare($countQuery);
-$countStmt->bind_param("ii", $studentId, $testId);
-$countStmt->execute();
-$countResult = $countStmt->get_result();
-if ($countRow = $countResult->fetch_assoc()) {
-    $answeredCount = $countRow['count'];
+if ($countStmt) {
+    $countStmt->bind_param("ii", $studentId, $testId);
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    if ($countRow = $countResult->fetch_assoc()) {
+        $answeredCount = $countRow['count'];
+    }
+    $countStmt->close();
 }
 
 // Track this test activity
@@ -64,7 +71,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
     <title>DLHS | Exam (All Questions)</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="vendor1/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css1/util.css">
     <link rel="stylesheet" type="text/css" href="css1/main.css">
     <link rel="stylesheet" type="text/css" href="../fonts/font-awesome-4.7.0/css/font-awesome.min.css">
@@ -996,16 +1003,319 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 bottom: 222px;
             }
         }
+
+        /* Timer Urgency States */
+        .timer.timer-warning {
+            background: #f59e0b !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        .timer.timer-critical {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            animation: timerPulse 1s infinite alternate;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.5);
+        }
+        @keyframes timerPulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); }
+            100% { transform: scale(1.08); box-shadow: 0 6px 22px rgba(220, 38, 38, 0.8); }
+        }
+
+        /* Accessibility Font Zoom Controls */
+        body.fs-sm .question-title { font-size: 0.95rem; }
+        body.fs-sm .option-label { font-size: 0.88rem; }
+        body.fs-sm .question-stimulus-content { font-size: 0.88rem; }
+
+        body.fs-md .question-title { font-size: 1.1rem; }
+        body.fs-md .option-label { font-size: 1rem; }
+        body.fs-md .question-stimulus-content { font-size: 1rem; }
+
+        body.fs-lg .question-title { font-size: 1.35rem; }
+        body.fs-lg .option-label { font-size: 1.22rem; }
+        body.fs-lg .question-stimulus-content { font-size: 1.22rem; }
+
+        .font-zoom-group {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .font-zoom-btn {
+            border: none;
+            background: transparent;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .font-zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .font-zoom-btn.active {
+            background: #FFD700;
+            color: #003366;
+        }
+        .shortcuts-toggle-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 9px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFD700;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .shortcuts-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Flag and Clear Answer Controls */
+        .btn-flag-question {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            background: #fffdf5;
+            color: #b45309;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-flag-question:hover {
+            background: #fef3c7;
+            transform: translateY(-1px);
+        }
+        .btn-flag-question.is-flagged {
+            background: #f59e0b;
+            color: #ffffff;
+            border-color: #d97706;
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+        }
+        .btn-clear-answer {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            background: #fff8f8;
+            color: #dc3545;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-clear-answer:hover {
+            background: #dc3545;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        .question-chip {
+            position: relative;
+        }
+        .question-chip.flagged {
+            box-shadow: 0 0 0 2px #f59e0b, 0 2px 8px rgba(245, 158, 11, 0.25) !important;
+        }
+        .question-chip.flagged::after {
+            content: '\f02e';
+            font-family: FontAwesome;
+            position: absolute;
+            top: -5px;
+            right: -4px;
+            font-size: 11px;
+            color: #d97706;
+            background: #fff;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            line-height: 1;
+        }
+        .chip-filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .chip-filter-btn {
+            flex: 1;
+            padding: 6px 4px;
+            border: 1px solid rgba(0, 51, 102, 0.15);
+            background: #f8fbff;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #003366;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .chip-filter-btn:hover {
+            background: #e8f1ff;
+        }
+        .chip-filter-btn.active {
+            background: #003366;
+            color: #FFD700;
+            border-color: #003366;
+        }
+
+        /* Diagram / Lightbox Modal Styles */
+        .question-title img,
+        .option-label img,
+        .question-stimulus-content img {
+            cursor: zoom-in;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(0, 51, 102, 0.1);
+            border-radius: 8px;
+        }
+        .question-title img:hover,
+        .option-label img:hover,
+        .question-stimulus-content img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.2);
+        }
+        .img-lightbox-modal {
+            display: none;
+            position: fixed;
+            z-index: 100000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .img-lightbox-modal.is-open {
+            display: flex;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+            z-index: 100001;
+        }
+        .lightbox-close:hover {
+            color: #FFD700;
+        }
+        .lightbox-content-wrapper {
+            max-width: 90%;
+            max-height: 85%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            background: #fff;
+            padding: 8px;
+        }
+        .lightbox-caption {
+            color: #e2e8f0;
+            margin-top: 12px;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        /* Scorecard Dialog Styles */
+        .modal-dialog-scorecard {
+            max-width: 540px;
+        }
+        .modal-scorecard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .modal-scorecard-card {
+            border-radius: 12px;
+            padding: 14px 16px;
+            text-align: center;
+            border: 1px solid rgba(0, 51, 102, 0.1);
+        }
+        .modal-scorecard-card .card-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .modal-scorecard-card .card-val {
+            font-size: 26px;
+            font-weight: 800;
+        }
+        .modal-scorecard-card.card-total {
+            background: #f8fbff;
+            color: #003366;
+        }
+        .modal-scorecard-card.card-answered {
+            background: #e7f8ec;
+            color: #166534;
+        }
+        .modal-scorecard-card.card-unanswered {
+            background: #fff4cc;
+            color: #8a6100;
+        }
+        .modal-scorecard-card.card-flagged {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        kbd {
+            background-color: #003366;
+            color: #FFD700;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
     <div class="exam-header">
         <div class="exam-info">
             <div class="student-info">
-                <div class="test-name" id="testName"></div>
+                <div class="test-name" id="testName"><?php echo htmlspecialchars($testName); ?></div>
                 <div class="student-name">Welcome, <strong><?php echo htmlspecialchars($studentName); ?></strong></div>
             </div>
             <div class="status-actions">
+                <div class="font-zoom-group" title="Adjust question text size">
+                    <button type="button" class="font-zoom-btn" data-size="sm" title="Small text">A-</button>
+                    <button type="button" class="font-zoom-btn active" data-size="md" title="Default text">A</button>
+                    <button type="button" class="font-zoom-btn" data-size="lg" title="Large text">A+</button>
+                </div>
+                <button type="button" class="shortcuts-toggle-btn" id="shortcutsToggleBtn" title="Keyboard shortcuts guide">
+                    <i class="fa fa-keyboard-o"></i> <span>Keys</span>
+                </button>
                 <div class="status-pill online" id="connectionStatus">
                     <i class="fa fa-wifi"></i><span>Connected to server</span>
                 </div>
@@ -1022,6 +1332,8 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
             <div class="card exam-question-card">
                 <div class="card-body">
                     <form id="allQuestionsForm">
+                        <input type="hidden" name="testId" value="<?php echo htmlspecialchars($testId); ?>">
+                        <input type="hidden" name="studentId" value="<?php echo htmlspecialchars($studentId); ?>">
                         <div id="questionsContainer">
                             <div class="text-center" style="padding:30px;">Loading questions...</div>
                         </div>
@@ -1064,6 +1376,11 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                         <span class="legend-pill legend-saved">Saved successfully</span>
                         <span class="legend-pill legend-error">Save failed</span>
                     </div>
+                    <div class="chip-filter-tabs">
+                        <button type="button" class="chip-filter-btn active" data-filter="all">All (<span id="filterCountAll">0</span>)</button>
+                        <button type="button" class="chip-filter-btn" data-filter="unanswered">Unanswered (<span id="filterCountUnanswered">0</span>)</button>
+                        <button type="button" class="chip-filter-btn" data-filter="flagged">Flagged (<span id="filterCountFlagged">0</span>)</button>
+                    </div>
                     <div class="question-chip-grid" id="questionNavigator"></div>
                 </div>
             </div>
@@ -1086,7 +1403,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 <i class="fa fa-check-circle"></i>
                 <span>All questions are answered. You can submit now.</span>
             </div>
-            <button type="submit" form="allQuestionsForm" class="btn btn-success btn-lg btn-pill exam-submit-trigger" id="fixedSubmitButton">
+            <button type="button" class="btn btn-success btn-lg btn-pill exam-submit-trigger" id="fixedSubmitButton">
                 <i class="fa fa-check" style="margin-right: 8px;"></i>Submit
             </button>
         </div>
@@ -1144,36 +1461,133 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
+    <!-- Confirmation Modal with Live Scorecard -->
     <div id="confirmationModal" class="modal">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scorecard">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title text-center w-100"><i class="fa fa-warning"></i> Please confirm</h5>
+                    <h5 class="modal-title text-center w-100"><i class="fa fa-clipboard"></i> Exam Submission Summary</h5>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label class="text-dark text-center d-block mb-4">Are you sure you wish to submit? Note that you will not be able to restart or continue this test after submitting.</label>
-                        <div class="text-center">
-                            <button type="button" class="btn btn-primary modal-btn modal-btn-yes" id="confirmSubmit" onclick="confirmSubmitHandler()">
-                                <i class="fa fa-check"></i> Yes
-                            </button>
+                    <p class="text-muted text-center" style="font-size: 14px; margin-bottom: 12px;">
+                        Review your exam progress before final submission:
+                    </p>
+                    <div class="modal-scorecard-grid">
+                        <div class="modal-scorecard-card card-total">
+                            <span class="card-label">Total Questions</span>
+                            <strong class="card-val" id="modalTotalQuestions">0</strong>
                         </div>
-                        <div class="text-center">
-                            <button type="button" class="btn btn-primary modal-btn modal-btn-no" data-dismiss="modal">
-                                <i class="fa fa-times"></i> No
+                        <div class="modal-scorecard-card card-answered">
+                            <span class="card-label">Answered</span>
+                            <strong class="card-val" id="modalAnsweredQuestions">0</strong>
+                        </div>
+                        <div class="modal-scorecard-card card-unanswered">
+                            <span class="card-label">Unanswered</span>
+                            <strong class="card-val" id="modalUnansweredQuestions">0</strong>
+                        </div>
+                        <div class="modal-scorecard-card card-flagged">
+                            <span class="card-label">Flagged for Review</span>
+                            <strong class="card-val" id="modalFlaggedQuestions">0</strong>
+                        </div>
+                    </div>
+
+                    <div id="modalUnansweredWarning" class="alert alert-warning mt-3 text-center" style="display:none; border-radius:10px; font-size:14px;">
+                        <i class="fa fa-exclamation-triangle"></i> <strong>Attention:</strong> You still have <span id="modalWarningCount">0</span> unanswered questions!
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="btnReviewUnanswered" style="border-radius:20px; font-weight:700;">
+                                <i class="fa fa-arrow-circle-right"></i> Review First Unanswered Question
                             </button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <hr>
+
+                    <div id="modalUnsavedWarning" class="alert alert-warning mt-2 text-center" style="display:none; border-radius:10px; font-size:13px;"></div>
+                    <div id="modalSubmitError" class="alert alert-danger mt-2 text-center" style="display:none; border-radius:10px; font-size:13px;"></div>
+
+                    <p class="text-danger text-center mt-3" style="font-size: 13px; font-weight: 500;">
+                        <i class="fa fa-info-circle"></i> Once submitted, your exam will end immediately and cannot be continued.
+                    </p>
+
+                    <div class="d-flex justify-content-center mt-3" style="gap: 12px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary modal-btn modal-btn-yes" id="confirmSubmit" onclick="confirmSubmitHandler()">
+                            <i class="fa fa-check"></i> Submit Exam
+                        </button>
+                        <button type="button" class="btn btn-secondary modal-btn modal-btn-no" data-dismiss="modal">
+                            <i class="fa fa-arrow-left"></i> Return to Exam
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="vendor1/jquery/jquery-3.2.1.min.js"></script>
+    <!-- Keyboard Shortcuts Cheatsheet Modal -->
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center w-100"><i class="fa fa-keyboard-o"></i> CBT Keyboard Navigation</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted text-center" style="font-size: 13px; margin-bottom: 14px;">
+                        Use standard JAMB/WAEC hotkeys to answer and navigate questions quickly:
+                    </p>
+                    <table class="table table-bordered table-sm text-center" style="font-size: 14px; background:#fff; border-radius:10px; overflow:hidden;">
+                        <thead style="background:#003366; color:#FFD700;">
+                            <tr>
+                                <th style="width: 45%;">Hotkey</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> <kbd>E</kbd></td>
+                                <td>Select corresponding option</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>N</kbd> or <kbd>&darr;</kbd> / <kbd>&rarr;</kbd></td>
+                                <td>Next question</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>P</kbd> or <kbd>&uarr;</kbd> / <kbd>&larr;</kbd></td>
+                                <td>Previous question</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>F</kbd></td>
+                                <td>Toggle Flag / Bookmark</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>C</kbd></td>
+                                <td>Toggle On-Screen Calculator</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>S</kbd></td>
+                                <td>Open Submit Exam confirmation</td>
+                            </tr>
+                            <tr>
+                                <td><kbd>Esc</kbd></td>
+                                <td>Close modal or zoom view</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-primary modal-btn modal-btn-yes" id="closeShortcutsModal">
+                            <i class="fa fa-check"></i> Got it
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Diagram Lightbox Modal -->
+    <div id="imgLightboxModal" class="img-lightbox-modal" role="dialog" aria-modal="true" aria-label="Enlarged Diagram">
+        <span class="lightbox-close" id="lightboxCloseBtn" title="Close zoom">&times;</span>
+        <div class="lightbox-content-wrapper">
+            <img class="lightbox-image" id="lightboxTargetImg" alt="Enlarged Diagram">
+            <div class="lightbox-caption" id="lightboxCaption">Diagram View</div>
+        </div>
+    </div>
+
     <script>
     function showToast(message) {
         $('.toast').remove();
@@ -1205,6 +1619,99 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
             const studentId = <?php echo json_encode($_SESSION['studentId']); ?>;
             const connectionStatus = $('#connectionStatus');
             const resyncButton = $('#resyncAnswersBtn');
+
+            // Flagged Questions & LocalStorage Backups
+            window.currentActiveQuestionId = null;
+            let flaggedQuestions = new Set();
+            try {
+                const savedFlags = JSON.parse(localStorage.getItem('dlhs_exam_flagged_' + testId + '_' + studentId) || '[]');
+                flaggedQuestions = new Set(savedFlags.map(String));
+            } catch(e) {}
+
+            function getLocalAnswerCache() {
+                try {
+                    return JSON.parse(localStorage.getItem('dlhs_exam_answers_' + testId + '_' + studentId) || '{}');
+                } catch(e) {
+                    return {};
+                }
+            }
+
+            function setLocalAnswerCache(questionId, answer) {
+                try {
+                    const cache = getLocalAnswerCache();
+                    const qidStr = String(questionId);
+                    if (answer && answer !== '0') {
+                        cache[qidStr] = answer;
+                    } else {
+                        delete cache[qidStr];
+                    }
+                    localStorage.setItem('dlhs_exam_answers_' + testId + '_' + studentId, JSON.stringify(cache));
+                } catch(e) {}
+            }
+
+            function clearLocalExamCache() {
+                try {
+                    localStorage.removeItem('dlhs_exam_answers_' + testId + '_' + studentId);
+                    localStorage.removeItem('dlhs_exam_flagged_' + testId + '_' + studentId);
+                } catch(e) {}
+            }
+            window.clearLocalExamCache = clearLocalExamCache;
+
+            function toggleFlagQuestion(questionId) {
+                const qid = String(questionId);
+                if (flaggedQuestions.has(qid)) {
+                    flaggedQuestions.delete(qid);
+                    showToast('Question unflagged');
+                } else {
+                    flaggedQuestions.add(qid);
+                    showToast('Question flagged for review');
+                }
+                try {
+                    localStorage.setItem('dlhs_exam_flagged_' + testId + '_' + studentId, JSON.stringify([...flaggedQuestions]));
+                } catch(e) {}
+
+                updateQuestionFlagUI(qid);
+                updateStatusSummary();
+            }
+
+            function updateQuestionFlagUI(questionId) {
+                const qid = String(questionId);
+                const isFlagged = flaggedQuestions.has(qid);
+                const $btn = $('.btn-flag-question[data-question-id="' + qid + '"]');
+                if ($btn.length) {
+                    $btn.toggleClass('is-flagged', isFlagged);
+                    $btn.find('i').attr('class', isFlagged ? 'fa fa-bookmark' : 'fa fa-bookmark-o');
+                    $btn.find('span').text(isFlagged ? 'Flagged' : 'Flag');
+                }
+                const $chip = $('.question-chip[data-question-id="' + qid + '"]');
+                if ($chip.length) {
+                    $chip.toggleClass('flagged', isFlagged);
+                }
+            }
+
+            let currentChipFilter = 'all';
+            function applyChipFilter() {
+                $('.question-chip').each(function() {
+                    const qid = String($(this).data('question-id'));
+                    const isFlagged = flaggedQuestions.has(qid);
+                    const isUnanswered = $(this).hasClass('not_answered');
+
+                    if (currentChipFilter === 'all') {
+                        $(this).show();
+                    } else if (currentChipFilter === 'unanswered') {
+                        $(this).toggle(isUnanswered);
+                    } else if (currentChipFilter === 'flagged') {
+                        $(this).toggle(isFlagged);
+                    }
+                });
+            }
+
+            $(document).on('click', '.chip-filter-btn', function() {
+                $('.chip-filter-btn').removeClass('active');
+                $(this).addClass('active');
+                currentChipFilter = $(this).data('filter');
+                applyChipFilter();
+            });
 
             function setConnectionState(state, label) {
                 connectionStatus.removeClass('online offline pending').addClass(state);
@@ -1291,6 +1798,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 if (!questionBlock.length) {
                     return;
                 }
+                window.currentActiveQuestionId = questionId;
                 $('.question-chip').removeClass('active');
                 $('.question-chip[data-question-id="' + questionId + '"]').addClass('active');
                 $('html, body').animate({
@@ -1334,6 +1842,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
 
                 $('.question-chip').removeClass('active');
                 if (activeQuestionId !== null) {
+                    window.currentActiveQuestionId = activeQuestionId;
                     $('.question-chip[data-question-id="' + activeQuestionId + '"]').addClass('active');
                 }
             }
@@ -1357,12 +1866,14 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 let html = '';
                 Object.keys(questionStates).forEach(function(questionId, index) {
                     const state = questionStates[questionId].status;
-                    html += '<button type="button" class="question-chip ' + state + '" data-question-id="' + questionId + '">Q' + (index + 1) + '</button>';
+                    const isFlagged = flaggedQuestions.has(String(questionId));
+                    html += '<button type="button" class="question-chip ' + state + (isFlagged ? ' flagged' : '') + '" data-question-id="' + questionId + '">Q' + (index + 1) + '</button>';
                 });
                 $('#questionNavigator').html(html);
                 Object.keys(questionStates).forEach(function(questionId) {
                     updateQuestionCardState(questionId);
                 });
+                applyChipFilter();
             }
 
             function updateStatusSummary() {
@@ -1375,33 +1886,76 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 };
                 answeredQuestions.clear();
 
-                Object.keys(questionStates).forEach(function(questionId) {
-                    const state = questionStates[questionId].status;
-                    if (counts.hasOwnProperty(state)) {
-                        counts[state] += 1;
-                    }
-                    if (state !== 'not_answered') {
-                        answeredQuestions.add(questionId);
+                // 1. Sync any checked radio inputs in DOM with questionStates
+                $('input[type="radio"]:checked').each(function() {
+                    const qid = String($(this).attr('name').replace('answer[', '').replace(']', ''));
+                    const val = $(this).val();
+                    if (!questionStates[qid]) {
+                        questionStates[qid] = { status: 'saved', answer: val };
+                    } else {
+                        questionStates[qid].answer = val;
+                        if (questionStates[qid].status === 'not_answered') {
+                            questionStates[qid].status = 'saved';
+                        }
                     }
                 });
 
-                $('#countNotAnswered').text(counts.not_answered);
-                $('#countAnswered').text(counts.answered + counts.pending + counts.saved + counts.error);
+                // 2. Tally states across all questions
+                Object.keys(questionStates).forEach(function(questionId) {
+                    const qData = questionStates[questionId] || {};
+                    let state = qData.status || 'not_answered';
+                    const ans = qData.answer;
+
+                    // If marked not_answered but has a valid answer value, elevate to saved
+                    if (state === 'not_answered' && ans && ans !== '0' && ans !== '') {
+                        state = 'saved';
+                        qData.status = 'saved';
+                    }
+
+                    if (counts.hasOwnProperty(state)) {
+                        counts[state] += 1;
+                    }
+
+                    // A question is answered if state is not 'not_answered' or it has an answer selected
+                    if (state !== 'not_answered' || (ans && ans !== '0' && ans !== '')) {
+                        answeredQuestions.add(String(questionId));
+                    }
+                });
+
+                const totalAnswered = answeredQuestions.size;
+                const totalUnanswered = Math.max(0, totalQuestions - totalAnswered);
+
+                // Update all UI elements from the single source of truth
+                $('#countNotAnswered').text(totalUnanswered);
+                $('#countAnswered').text(totalAnswered);
                 $('#countSaved').text(counts.saved);
                 $('#countPending').text(counts.pending + counts.error);
-                $('#progressAnsweredCount').text(answeredQuestions.size);
+                $('#progressAnsweredCount').text(totalAnswered);
+
+                $('#filterCountAll').text(totalQuestions);
+                $('#filterCountUnanswered').text(totalUnanswered);
+                $('#filterCountFlagged').text(flaggedQuestions.size);
+
                 updateSubmitButton();
                 updateResyncButton();
+                applyChipFilter();
 
-                const percentage = totalQuestions > 0 ? (answeredQuestions.size / totalQuestions) * 100 : 0;
+                const percentage = totalQuestions > 0 ? (totalAnswered / totalQuestions) * 100 : 0;
                 $('.progress-fill').css('width', percentage + '%');
             }
 
             // Update the submit button visibility
             function updateSubmitButton() {
-                if (answeredQuestions.size === totalQuestions && totalQuestions > 0) {
+                if (totalQuestions > 0) {
                     $('#fixedSubmitButton').show();
                     $('#examSubmitBar').addClass('is-visible');
+                    const answered = answeredQuestions.size;
+                    const unanswered = Math.max(0, totalQuestions - answered);
+                    if (unanswered === 0) {
+                        $('.exam-submit-note').html('<i class="fa fa-check-circle"></i> <span>All ' + totalQuestions + ' questions answered. You can submit now.</span>');
+                    } else {
+                        $('.exam-submit-note').html('<i class="fa fa-info-circle"></i> <span>' + answered + ' of ' + totalQuestions + ' questions answered (' + unanswered + ' unanswered).</span>');
+                    }
                 } else {
                     $('#fixedSubmitButton').hide();
                     $('#examSubmitBar').removeClass('is-visible');
@@ -1411,14 +1965,14 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
             // Initialize answeredQuestions set from checked radios
             function initializeAnsweredSet() {
                 $('input[type="radio"]').each(function() {
-                    const qid = $(this).attr('name').replace('answer[', '').replace(']', '');
+                    const qid = String($(this).attr('name').replace('answer[', '').replace(']', ''));
                     if (!questionStates[qid]) {
-                        questionStates[qid] = { status: 'not_answered' };
+                        questionStates[qid] = { status: 'not_answered', answer: '' };
                     }
                 });
                 $('input[type="radio"]:checked').each(function() {
-                    const qid = $(this).attr('name').replace('answer[', '').replace(']', '');
-                    questionStates[qid] = { status: 'saved' };
+                    const qid = String($(this).attr('name').replace('answer[', '').replace(']', ''));
+                    questionStates[qid] = { status: 'saved', answer: $(this).val() };
                 });
                 renderNavigator();
                 updateStatusSummary();
@@ -1434,6 +1988,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
 
             function persistAnswer(questionId, answer, options) {
                 const settings = options || {};
+                const isCleared = (answer === '0' || answer === '');
 
                 return $.ajax({
                     url: 'exam/saveAnswer.php',
@@ -1447,12 +2002,15 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                     dataType: 'json'
                 }).done(function(response) {
                     if (response && response.status === 'success') {
-                        questionStates[questionId] = { status: 'saved', answer: answer };
+                        questionStates[questionId] = {
+                            status: isCleared ? 'not_answered' : 'saved',
+                            answer: isCleared ? '' : answer
+                        };
                         updateQuestionCardState(questionId);
                         updateStatusSummary();
                         refreshConnectionStatus(false);
                         if (!settings.silent) {
-                            showToast('Answer saved');
+                            showToast(isCleared ? 'Answer cleared' : 'Answer saved');
                         }
                     } else {
                         console.error('Error saving answer:', response ? response.message : 'Unknown error');
@@ -1526,10 +2084,49 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 });
             }
 
+            // Listen for Clear Choice button clicks
+            $(document).on('click', '.btn-clear-answer', function(e) {
+                e.preventDefault();
+                const questionId = String($(this).data('question-id'));
+                
+                // Deselect radios for this question
+                $('input[name="answer[' + questionId + ']"]').prop('checked', false);
+                $(this).hide();
+                
+                setLocalAnswerCache(questionId, '0');
+                questionStates[questionId] = {
+                    status: 'pending',
+                    answer: '0'
+                };
+                updateQuestionCardState(questionId);
+                updateStatusSummary();
+                setConnectionState('pending', 'Clearing answer...');
+                persistAnswer(questionId, '0').always(function() {
+                    $('.progress-panel').addClass('updating');
+                    $('#progressAnsweredCount').addClass('updating');
+                    setTimeout(() => {
+                        $('.progress-panel').removeClass('updating');
+                        $('#progressAnsweredCount').removeClass('updating');
+                    }, 500);
+                });
+            });
+
+            // Listen for Flag button clicks
+            $(document).on('click', '.btn-flag-question', function(e) {
+                e.preventDefault();
+                const questionId = $(this).data('question-id');
+                toggleFlagQuestion(questionId);
+            });
+
             // Listen for radio button changes
             $(document).on('change', 'input[type="radio"]', function() {
                 const questionId = $(this).attr('name').replace('answer[', '').replace(']', '');
                 const answer = $(this).val();
+                
+                // Show Clear Answer button
+                $('.btn-clear-answer[data-question-id="' + questionId + '"]').show();
+                setLocalAnswerCache(questionId, answer);
+
                 questionStates[questionId] = {
                     status: 'pending',
                     answer: answer
@@ -1547,25 +2144,6 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 });
             });
 
-            // First get the test name
-            $.ajax({
-                type: "POST",
-                url: "fetchQuestion.php",
-                data: { testId: testId },
-                dataType: "json",
-                cache: false,
-                success: function(data) {
-                    if (data && data.g) {
-                        $('#testName').html(data.g); // Display test name
-                    } else {
-                        console.error('Test name not found in response:', data);
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error('Error fetching test name:', textStatus, errorThrown);
-                }
-            });
-
             // Then load questions
             $.ajax({
                 type: "GET",
@@ -1581,15 +2159,31 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                         `);
                         return;
                     }
+                    const localAnswerCache = getLocalAnswerCache();
+                    let restoredCount = 0;
                     let html = '';
                     questions.forEach((q, idx) => {
                         if (!q.questionId) {
                             console.error('Invalid question data:', q);
                             return;
                         }
+                        const qidStr = String(q.questionId);
+                        let selected = q.selectedOption;
+                        if (!selected || selected === '0') {
+                            if (localAnswerCache[qidStr] && localAnswerCache[qidStr] !== '0') {
+                                selected = localAnswerCache[qidStr];
+                                q.selectedOption = selected;
+                                restoredCount++;
+                                persistAnswer(q.questionId, selected, { silent: true });
+                            }
+                        }
+
+                        const hasAnswer = (selected && selected !== '0');
+                        const isFlagged = flaggedQuestions.has(qidStr);
+
                         questionStates[q.questionId] = {
-                            status: q.selectedOption ? 'saved' : 'not_answered',
-                            answer: q.selectedOption || ''
+                            status: hasAnswer ? 'saved' : 'not_answered',
+                            answer: hasAnswer ? selected : ''
                         };
                         const stimulusHtml = q.stimulusContent ? `
                             <div class="question-stimulus-card">
@@ -1600,35 +2194,55 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                                 <div class="question-stimulus-content">${q.stimulusContent}</div>
                             </div>
                         ` : '';
+
+                        const optionEHtml = (q.optionE && String(q.optionE).trim() !== '') ? `
+                            <div class="option-container">
+                                <input type="radio" name="answer[${q.questionId}]" value="E" id="q${q.questionId}E" ${selected === 'E' ? 'checked' : ''}>
+                                <label class="option-label" for="q${q.questionId}E">${q.optionE}</label>
+                            </div>
+                        ` : '';
+
                         html += `
-                            <div class="question-block" data-question-id="${q.questionId}">
+                            <div class="question-block ${hasAnswer ? 'state-saved' : 'state-not_answered'}" data-question-id="${q.questionId}">
                                 ${stimulusHtml}
                                 <div class="question-header-row">
-                                    <span class="question-number-pill">Question ${idx + 1}</span>
-                                    <span class="question-state-badge ${q.selectedOption ? 'saved' : 'not_answered'}" data-question-state="${q.questionId}">${q.selectedOption ? 'Saved successfully' : 'Not answered'}</span>
+                                    <div class="d-flex align-items-center" style="gap:8px; flex-wrap:wrap;">
+                                        <span class="question-number-pill">Question ${idx + 1}</span>
+                                        <button type="button" class="btn-flag-question ${isFlagged ? 'is-flagged' : ''}" data-question-id="${q.questionId}" title="Flag / Bookmark for review">
+                                            <i class="fa ${isFlagged ? 'fa-bookmark' : 'fa-bookmark-o'}"></i> <span>${isFlagged ? 'Flagged' : 'Flag'}</span>
+                                        </button>
+                                        <button type="button" class="btn-clear-answer" data-question-id="${q.questionId}" style="${hasAnswer ? '' : 'display:none;'}" title="Clear chosen answer">
+                                            <i class="fa fa-eraser"></i> <span>Clear</span>
+                                        </button>
+                                    </div>
+                                    <span class="question-state-badge ${hasAnswer ? 'saved' : 'not_answered'}" data-question-state="${q.questionId}">${hasAnswer ? 'Saved successfully' : 'Not answered'}</span>
                                 </div>
                                 <div class="question-title">${q.question}</div>
                                 <div class="option-container">
-                                    <input type="radio" name="answer[${q.questionId}]" value="A" id="q${q.questionId}A" ${q.selectedOption === 'A' ? 'checked' : ''}>
+                                    <input type="radio" name="answer[${q.questionId}]" value="A" id="q${q.questionId}A" ${selected === 'A' ? 'checked' : ''}>
                                     <label class="option-label" for="q${q.questionId}A">${q.optionA}</label>
                                 </div>
                                 <div class="option-container">
-                                    <input type="radio" name="answer[${q.questionId}]" value="B" id="q${q.questionId}B" ${q.selectedOption === 'B' ? 'checked' : ''}>
+                                    <input type="radio" name="answer[${q.questionId}]" value="B" id="q${q.questionId}B" ${selected === 'B' ? 'checked' : ''}>
                                     <label class="option-label" for="q${q.questionId}B">${q.optionB}</label>
                                 </div>
                                 <div class="option-container">
-                                    <input type="radio" name="answer[${q.questionId}]" value="C" id="q${q.questionId}C" ${q.selectedOption === 'C' ? 'checked' : ''}>
+                                    <input type="radio" name="answer[${q.questionId}]" value="C" id="q${q.questionId}C" ${selected === 'C' ? 'checked' : ''}>
                                     <label class="option-label" for="q${q.questionId}C">${q.optionC}</label>
                                 </div>
                                 <div class="option-container">
-                                    <input type="radio" name="answer[${q.questionId}]" value="D" id="q${q.questionId}D" ${q.selectedOption === 'D' ? 'checked' : ''}>
+                                    <input type="radio" name="answer[${q.questionId}]" value="D" id="q${q.questionId}D" ${selected === 'D' ? 'checked' : ''}>
                                     <label class="option-label" for="q${q.questionId}D">${q.optionD}</label>
                                 </div>
+                                ${optionEHtml}
                             </div>
                         `;
                     });
                     $('#questionsContainer').html(html);
                     onQuestionsLoaded();
+                    if (restoredCount > 0) {
+                        showToast(`Restored ${restoredCount} saved answer${restoredCount > 1 ? 's' : ''} from local cache`);
+                    }
                     refreshConnectionStatus(false);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -1651,6 +2265,28 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                     remaining = 0;
                 }
 
+                let warned5Min = false;
+                let warned1Min = false;
+
+                function checkUrgency(seconds) {
+                    const $timer = $('#hms');
+                    if (seconds <= 60) {
+                        $timer.removeClass('timer-warning').addClass('timer-critical');
+                        if (!warned1Min && seconds > 0) {
+                            warned1Min = true;
+                            showToast('🚨 1 minute remaining! Exam will auto-submit at 00:00:00.');
+                        }
+                    } else if (seconds <= 300) {
+                        $timer.removeClass('timer-critical').addClass('timer-warning');
+                        if (!warned5Min) {
+                            warned5Min = true;
+                            showToast('⚠️ 5 minutes remaining! Please review your answers.');
+                        }
+                    } else {
+                        $timer.removeClass('timer-warning timer-critical');
+                    }
+                }
+
                 function render(seconds) {
                     var hour = Math.floor(seconds/3600);
                     var min = Math.floor(seconds%3600/60);
@@ -1659,9 +2295,13 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                         (hour = hour < 10 ? "0" + hour : hour) + " : " +
                         (min = min < 10 ? "0" + min : min) + " : " +
                         (sec = sec < 10 ? "0" + sec : sec);
+                    checkUrgency(seconds);
                 }
 
                 function autosubmit() {
+                    // Clear local storage cache
+                    clearLocalExamCache();
+
                     // DISABLE ALL SECURITY FEATURES BEFORE AUTO-SUBMISSION
                     if (typeof ExamSecurity !== 'undefined' && typeof ExamSecurity.disableAll === 'function') {
                         ExamSecurity.disableAll();
@@ -1734,11 +2374,11 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                         // On failure, keep local timer; next sync may succeed
                     });
                 }
-                var syncTick = setInterval(syncOnce, 5000);
+                var syncTick = setInterval(syncOnce, 15000);
                 // Immediate first sync to align if reloaded
                 syncOnce();
                 
-                // Track test activity every 10 seconds
+                // Track test activity every 30 seconds
                 function updateTestTracking() {
                     $.ajax({
                         url: 'update_test_tracking.php',
@@ -1749,11 +2389,11 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                         cache: false
                     });
                 }
-                // Update tracking every 10 seconds
-                setInterval(updateTestTracking, 10000);
+                // Update tracking every 30 seconds
+                setInterval(updateTestTracking, 30000);
                 setInterval(function() {
                     refreshConnectionStatus(false);
-                }, 15000);
+                }, 30000);
                 // Initial tracking update
                 updateTestTracking();
             })();
@@ -1761,24 +2401,68 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
             // Handle form submission
             $('#allQuestionsForm').on('submit', function(e) {
                 e.preventDefault();
-                const unsavedQuestions = Object.keys(questionStates).filter(function(questionId) {
-                    return questionStates[questionId].status === 'pending' || questionStates[questionId].status === 'error';
-                });
-                if (!serverConnected || unsavedQuestions.length > 0) {
-                    $('#submitMessage').html('<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Some answers are not yet confirmed on the server. Please wait for all questions to show as saved before submitting.</div>');
-                    return;
-                }
+                showModal();
+            });
+
+            // Handle submit button click directly
+            $(document).on('click', '#fixedSubmitButton, .exam-submit-trigger', function(e) {
+                e.preventDefault();
                 showModal();
             });
 
             // Modal functions
             function showModal() {
+                updateStatusSummary();
+                window.isExamSubmitting = false;
+                const total = totalQuestions;
+                const answered = answeredQuestions.size;
+                const unanswered = Math.max(0, total - answered);
+                const flagged = flaggedQuestions.size;
+
+                $('#modalTotalQuestions').text(total);
+                $('#modalAnsweredQuestions').text(answered);
+                $('#modalUnansweredQuestions').text(unanswered);
+                $('#modalFlaggedQuestions').text(flagged);
+
+                if (unanswered > 0) {
+                    $('#modalWarningCount').text(unanswered);
+                    $('#modalUnansweredWarning').show();
+                } else {
+                    $('#modalUnansweredWarning').hide();
+                }
+
+                const unsavedQuestions = Object.keys(questionStates).filter(function(questionId) {
+                    return questionStates[questionId].status === 'pending' || questionStates[questionId].status === 'error';
+                });
+                if (!serverConnected || unsavedQuestions.length > 0) {
+                    $('#modalUnsavedWarning').html('<i class="fa fa-exclamation-triangle"></i> Notice: ' + (unsavedQuestions.length > 0 ? unsavedQuestions.length + ' answer(s) are pending server sync.' : 'Server connection is slow/offline.') + ' Submitting now will attempt to sync all answers.').show();
+                } else {
+                    $('#modalUnsavedWarning').hide();
+                }
+
+                $('#modalSubmitError').hide().empty();
+                $('#confirmSubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Submit Exam');
+                $('.modal-btn-no').prop('disabled', false);
+
                 $('#confirmationModal').fadeIn(300);
             }
+            window.showModal = showModal;
 
             function hideModal() {
                 $('#confirmationModal').fadeOut(200);
             }
+            window.hideModal = hideModal;
+
+            $('#btnReviewUnanswered').on('click', function() {
+                hideModal();
+                const qids = Object.keys(questionStates);
+                const firstUnansweredQid = qids.find(function(qid) {
+                    return !questionStates[qid] || questionStates[qid].status === 'not_answered' || !questionStates[qid].answer || questionStates[qid].answer === '0';
+                });
+                if (firstUnansweredQid) {
+                    scrollToQuestion(firstUnansweredQid);
+                }
+            });
 
             // Close modal when clicking No button or clicking outside
             $('.modal-btn-no').on('click', hideModal);
@@ -1937,6 +2621,129 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                     }
                 });
             })();
+
+            // Image diagram click-to-zoom
+            $(document).on('click', '.question-title img, .option-label img, .question-stimulus-content img', function() {
+                const src = $(this).attr('src');
+                const alt = $(this).attr('alt') || 'Question diagram';
+                $('#lightboxTargetImg').attr('src', src);
+                $('#lightboxCaption').text(alt);
+                $('#imgLightboxModal').addClass('is-open');
+            });
+            $('#lightboxCloseBtn, #imgLightboxModal').on('click', function(e) {
+                if (e.target === this || e.target.id === 'lightboxCloseBtn') {
+                    $('#imgLightboxModal').removeClass('is-open');
+                }
+            });
+
+            // Font zoom controls
+            $('.font-zoom-btn').on('click', function() {
+                const size = $(this).data('size');
+                $('.font-zoom-btn').removeClass('active');
+                $(this).addClass('active');
+                $('body').removeClass('fs-sm fs-md fs-lg').addClass('fs-' + size);
+                try {
+                    localStorage.setItem('dlhs_exam_fontsize', size);
+                } catch(e) {}
+            });
+            try {
+                const savedFontSize = localStorage.getItem('dlhs_exam_fontsize') || 'md';
+                $('body').removeClass('fs-sm fs-md fs-lg').addClass('fs-' + savedFontSize);
+                $('.font-zoom-btn[data-size="' + savedFontSize + '"]').addClass('active').siblings().removeClass('active');
+            } catch(e) {}
+
+            // Shortcuts Modal handlers
+            $('#shortcutsToggleBtn').on('click', function() {
+                $('#shortcutsModal').fadeIn(200);
+            });
+            $('#closeShortcutsModal, #shortcutsModal .modal-btn-no').on('click', function() {
+                $('#shortcutsModal').fadeOut(200);
+            });
+            $(window).on('click', function(e) {
+                if ($(e.target).is('#shortcutsModal')) {
+                    $('#shortcutsModal').fadeOut(200);
+                }
+            });
+
+            // CBT Keyboard shortcuts navigation
+            function navigateToAdjacentQuestion(currentQid, direction) {
+                const qids = Object.keys(questionStates);
+                const currentIndex = qids.indexOf(String(currentQid));
+                if (currentIndex === -1) return;
+                const targetIndex = currentIndex + direction;
+                if (targetIndex >= 0 && targetIndex < qids.length) {
+                    scrollToQuestion(qids[targetIndex]);
+                }
+            }
+
+            $(document).on('keydown', function(e) {
+                if ($(e.target).is('input[type="text"], textarea') || ($(e.target).is(':input') && !$(e.target).is(':radio, :button'))) {
+                    return;
+                }
+
+                if ($('#confirmationModal').is(':visible') || $('#shortcutsModal').is(':visible') || $('#imgLightboxModal').hasClass('is-open')) {
+                    if (e.key === 'Escape' || e.keyCode === 27) {
+                        hideModal();
+                        $('#shortcutsModal').fadeOut(200);
+                        $('#imgLightboxModal').removeClass('is-open');
+                    }
+                    return;
+                }
+
+                const key = e.key ? e.key.toUpperCase() : '';
+
+                if (key === 'C' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    $('#calculatorToggle').trigger('click');
+                    return;
+                }
+
+                if ((e.key === 'Escape' || e.keyCode === 27) && $('#calculatorPanel').hasClass('is-open')) {
+                    $('#calculatorClose').trigger('click');
+                    return;
+                }
+
+                const currentQid = window.currentActiveQuestionId;
+                if (!currentQid) return;
+
+                if (['A', 'B', 'C', 'D', 'E'].indexOf(key) !== -1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    const $radio = $('input[name="answer[' + currentQid + ']"][value="' + key + '"]');
+                    if ($radio.length) {
+                        $radio.prop('checked', true).trigger('change');
+                        $radio.focus();
+                    }
+                    return;
+                }
+
+                if (key === 'F' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    toggleFlagQuestion(currentQid);
+                    return;
+                }
+
+                if ((key === 'N' || e.keyCode === 40 || e.keyCode === 39) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    e.preventDefault();
+                    navigateToAdjacentQuestion(currentQid, 1);
+                    return;
+                }
+
+                if ((key === 'P' || e.keyCode === 38 || e.keyCode === 37) && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    e.preventDefault();
+                    navigateToAdjacentQuestion(currentQid, -1);
+                    return;
+                }
+
+                if (key === 'S' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                    e.preventDefault();
+                    showModal();
+                    return;
+                }
+
+                if ((key === 'ENTER' || e.keyCode === 13) && $('#confirmationModal').is(':visible')) {
+                    e.preventDefault();
+                    window.confirmSubmitHandler();
+                    return;
+                }
+            });
+
             refreshConnectionStatus(true);
         });
     </script>
@@ -1945,47 +2752,112 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
     window.confirmSubmitHandler = function() {
         console.log("Confirm submit clicked!");
         
-        // DISABLE ALL SECURITY FEATURES BEFORE SUBMISSION
-        if (typeof ExamSecurity !== 'undefined' && typeof ExamSecurity.disableAll === 'function') {
-            ExamSecurity.disableAll();
-            console.log("✅ Security features disabled after confirmation");
+        if (window.isExamSubmitting) {
+            console.log("Submission already in progress, ignoring duplicate trigger.");
+            return;
         }
+        window.isExamSubmitting = true;
+
+        $('#confirmSubmit').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+        $('.modal-btn-no').prop('disabled', true);
+        $('#modalSubmitError').hide().empty();
         
-        let formData = $('#allQuestionsForm').serialize();
-        console.log("Form data to submit:", formData);
-        $('#confirmationModal').fadeOut(200);
-        
-        // Submit and redirect immediately to results page
-        $.post('submitAllAnswers.php', formData, function(response) {
-            console.log("AJAX response:", response);
-            if (response.success) {
-                // Redirect IMMEDIATELY to results page (no delay, no warnings)
-                console.log("Redirecting to result page...");
-                
-                // Fallback redirect in case the immediate one is blocked by browser transition
-                setTimeout(function() {
-                    window.location.href = 'result/index.php';
-                }, 200);
-                
-                window.location.href = 'result/index.php';
-            } else {
-                // Only show error if submission failed
-                if (window.examConnectionHelpers) {
-                    window.examConnectionHelpers.markDisconnected('Submission not confirmed');
+        try {
+            // DISABLE ALL SECURITY FEATURES BEFORE SUBMISSION
+            if (typeof ExamSecurity !== 'undefined' && typeof ExamSecurity.disableAll === 'function') {
+                try {
+                    ExamSecurity.disableAll();
+                } catch(e) {
+                    console.warn("Could not disable security features:", e);
                 }
-                $('#submitMessage').html('<div class="alert alert-danger">' + (response.message || "Submission failed. Please try again.") + '</div>');
+                console.log("✅ Security features disabled after confirmation");
             }
-        }, 'json').fail(function(xhr) {
-            console.error("Submission failed:", xhr.responseText);
-            if (window.examConnectionHelpers) {
-                window.examConnectionHelpers.markDisconnected('Submission not confirmed');
+            
+            // Clear local storage cache safely
+            try {
+                if (typeof window.clearLocalExamCache === 'function') {
+                    window.clearLocalExamCache();
+                } else if (typeof clearLocalExamCache === 'function') {
+                    clearLocalExamCache();
+                }
+            } catch(e) {
+                console.warn("Could not clear local exam cache:", e);
             }
-            $('#submitMessage').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> Submission failed because the server could not be reached. Please reconnect and submit again.</div>');
-        });
-    }
+            
+            let formData = $('#allQuestionsForm').serialize();
+            if (!formData || formData.indexOf('testId=') === -1) {
+                const tid = <?php echo json_encode($testId); ?>;
+                const sid = <?php echo json_encode($_SESSION['studentId']); ?>;
+                formData = (formData ? formData + '&' : '') + 'testId=' + encodeURIComponent(tid) + '&studentId=' + encodeURIComponent(sid);
+            }
+            console.log("Form data to submit:", formData);
+            
+            // Submit with explicit timeout and error recovery
+            $.ajax({
+                url: 'submitAllAnswers.php',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                timeout: 30000,
+                success: function(response) {
+                    console.log("AJAX response:", response);
+                    if (response && response.success) {
+                        console.log("Redirecting to result page...");
+                        $('#confirmationModal').fadeOut(100);
+                        setTimeout(function() {
+                            window.location.href = 'result/index.php';
+                        }, 100);
+                        window.location.href = 'result/index.php';
+                    } else {
+                        window.isExamSubmitting = false;
+                        $('#confirmSubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Submit Exam');
+                        $('.modal-btn-no').prop('disabled', false);
+                        const errMsg = (response && response.message) ? response.message : "Submission failed. Please try again.";
+                        $('#modalSubmitError').html('<i class="fa fa-exclamation-circle"></i> ' + errMsg).show();
+                        $('#submitMessage').html('<div class="alert alert-danger">' + errMsg + '</div>');
+                        if (window.examConnectionHelpers) {
+                            window.examConnectionHelpers.markDisconnected('Submission not confirmed');
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Submission failed:", xhr.responseText, status, error);
+                    window.isExamSubmitting = false;
+                    $('#confirmSubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Submit Exam');
+                    $('.modal-btn-no').prop('disabled', false);
+                    let errMsg = "Submission failed because the server could not be reached. Please check your connection and submit again.";
+                    if (status === 'timeout') {
+                        errMsg = "Submission request timed out. Please check your connection and click Submit Exam again.";
+                    } else {
+                        try {
+                            if (xhr.responseText) {
+                                const parsed = JSON.parse(xhr.responseText);
+                                if (parsed && parsed.message) errMsg = parsed.message;
+                            }
+                        } catch(e) {}
+                    }
+                    $('#modalSubmitError').html('<i class="fa fa-exclamation-circle"></i> ' + errMsg).show();
+                    $('#submitMessage').html('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + errMsg + '</div>');
+                    if (window.examConnectionHelpers) {
+                        window.examConnectionHelpers.markDisconnected('Submission not confirmed');
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Synchronous error during submission setup:", err);
+            window.isExamSubmitting = false;
+            $('#confirmSubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Submit Exam');
+            $('.modal-btn-no').prop('disabled', false);
+            $('#modalSubmitError').html('<i class="fa fa-exclamation-circle"></i> An unexpected error occurred: ' + err.message).show();
+        }
+    };
+
+    $(document).on('click', '#confirmSubmit', function(e) {
+        e.preventDefault();
+        window.confirmSubmitHandler();
+    });
     </script>
     <!-- Bootstrap JS dependencies -->
-    <script src="vendor1/bootstrap/js/popper.js"></script>
-    <script src="vendor1/bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
 </body>
 </html> 

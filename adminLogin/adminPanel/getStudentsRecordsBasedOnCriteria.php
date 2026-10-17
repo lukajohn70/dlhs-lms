@@ -1,67 +1,79 @@
 <?php
-session_start();
-	error_reporting(0);
-	include "../../db_connection/dlhs_db_connection.php";
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+	@session_start();
+}
+if (session_status() === PHP_SESSION_ACTIVE) {
+	session_write_close();
+}
 
-		$return_arr = array();
+ini_set('display_errors', '0');
+error_reporting(0);
+header('Content-Type: application/json; charset=utf-8');
 
-		if (!isset($_POST['selectedYearGroupId']) || !isset($_POST['selectedClassId'])) {
-			echo json_encode($return_arr);
-			exit;
-		}
+include "../../db_connection/dlhs_db_connection.php";
 
-		$selectedYearGroupId = intval($_POST['selectedYearGroupId']);
-		$selectedClassId     = intval($_POST['selectedClassId']);
+$return_arr = array();
 
-		$query  = "SELECT * FROM studentlogin WHERE yearGroupId='$selectedYearGroupId' AND classId='$selectedClassId'";
-		$result = $connection->query($query);
+if (!isset($_POST['selectedClassId']) || !isset($_POST['selectedYearGroupId'])) {
+	echo json_encode($return_arr);
+	exit;
+}
 
-		if ($result && $result->num_rows > 0)
-		{
-			while ($row = $result->fetch_array(MYSQLI_NUM))
-			{
-				$studentId          = $row[0];
-				$surname            = $row[1];
-				$firstName          = $row[2];
-				$middleName         = $row[3];
-				$gender             = $row[4];
-				$admissionNumber    = $row[5];
-				$studentEmail       = $row[6];
-				$studentPassword    = $row[7];
-				$studentYearGroupId = $row[8];
-				$studentClassId     = $row[9];
-				$studentPassport    = $row[10];
+$selectedYearGroupId = intval($_POST['selectedYearGroupId']);
+$selectedClassId     = intval($_POST['selectedClassId']);
 
-				// Getting student's class name
-				$className = '';
-				$query1    = "SELECT * FROM classes WHERE classId='$studentClassId'";
-				$result1   = $connection->query($query1);
-				$row1      = ($result1) ? $result1->fetch_array(MYSQLI_NUM) : null;
-				if ($row1) { $className = $row1[2]; }
+if ($selectedClassId <= 0) {
+	echo json_encode($return_arr);
+	exit;
+}
 
-				// Getting student's year group name
-				$yearGroupName = '';
-				$query2        = "SELECT * FROM yeargroup WHERE yearGroupId='$studentYearGroupId'";
-				$result2       = $connection->query($query2);
-				$row2          = ($result2) ? $result2->fetch_array(MYSQLI_NUM) : null;
-				if ($row2) { $yearGroupName = $row2[1]; }
+// Single high-performance JOIN query (1 query instead of 1 + 2N queries)
+$query = "
+	SELECT 
+		s.studentId,
+		s.surname,
+		s.firstName,
+		s.middleName,
+		s.gender,
+		s.admissionNumber,
+		s.studentEmail,
+		s.password,
+		s.yearGroupId,
+		s.classId,
+		s.passport,
+		c.className,
+		c.classYearGroup,
+		y.yearGroupName
+	FROM studentlogin s
+	LEFT JOIN classes c ON s.classId = c.classId
+	LEFT JOIN yeargroup y ON c.classYearGroup = y.yearGroupId
+	WHERE s.classId = '$selectedClassId'
+	ORDER BY s.surname ASC, s.firstName ASC
+";
 
-				$return_arr[] = array(
-					"studentId"          => $studentId,
-					"surname"            => $surname,
-					"firstName"          => $firstName,
-					"middleName"         => $middleName,
-					"gender"             => $gender,
-					"admissionNumber"    => $admissionNumber,
-					"studentClassName"   => trim($yearGroupName . ' ' . $className),
-					"studentEmail"       => $studentEmail,
-					"studentPassword"    => $studentPassword,
-					"studentYearGroupId" => $studentYearGroupId,
-					"studentClassId"     => $studentClassId,
-					"studentPassport"    => $studentPassport
-				);
-			}
-		}
+$result = $connection->query($query);
 
-		echo json_encode($return_arr);
+if ($result && $result->num_rows > 0)
+{
+	while ($row = $result->fetch_assoc())
+	{
+		$yearGroupId = !empty($row['classYearGroup']) ? $row['classYearGroup'] : $row['yearGroupId'];
+		$return_arr[] = array(
+			"studentId"          => $row['studentId'],
+			"surname"            => $row['surname'],
+			"firstName"          => $row['firstName'],
+			"middleName"         => $row['middleName'],
+			"gender"             => $row['gender'],
+			"admissionNumber"    => $row['admissionNumber'],
+			"studentClassName"   => trim(($row['yearGroupName'] ?? '') . ' ' . ($row['className'] ?? '')),
+			"studentEmail"       => $row['studentEmail'],
+			"studentPassword"    => $row['password'],
+			"studentYearGroupId" => $yearGroupId,
+			"studentClassId"     => $row['classId'],
+			"studentPassport"    => $row['passport']
+		);
+	}
+}
+
+echo json_encode($return_arr);
 ?>

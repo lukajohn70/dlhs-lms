@@ -284,8 +284,6 @@ $filesRes = $connection->query($filesQuery);
     <link href="css/style-responsive.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="../../datatables/css/jquery.dataTables.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../datatables/css/responsive.dataTables.min.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
         :root {
             --primary: #00AEEF;
@@ -296,7 +294,7 @@ $filesRes = $connection->query($filesQuery);
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f5f8fa;
         }
 

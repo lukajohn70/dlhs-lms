@@ -1,35 +1,20 @@
 <?php
+ini_set('display_errors', '0');
+header('Content-Type: application/json; charset=utf-8');
 session_start();
 
 if (!isset($_SESSION['studentId']) || !isset($_SESSION['idOfTest'])) {
     die(json_encode(['success' => false, 'message' => 'Unauthorized']));
 }
 
+$studentId = (int)$_SESSION['studentId'];
+$testId = (int)$_SESSION['idOfTest'];
+$testedTableName = $_SESSION['testedTableName'] ?? null;
+
+// Release session lock immediately to prevent blocking student UI
+session_write_close();
+
 require_once('../../db_connection/dlhs_db_connection.php');
-
-$studentId = $_SESSION['studentId'];
-$testId = $_SESSION['idOfTest'];
-
-// Create security_violations table if it doesn't exist
-$createTableQuery = "
-CREATE TABLE IF NOT EXISTS security_violations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    studentId INT NOT NULL,
-    testId INT NOT NULL,
-    violation VARCHAR(255) NOT NULL,
-    timestamp DATETIME NOT NULL,
-    userAgent TEXT,
-    screenResolution VARCHAR(50),
-    violationCount INT DEFAULT 1,
-    autoSubmit TINYINT(1) DEFAULT 0,
-    ipAddress VARCHAR(45),
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_student_test (studentId, testId),
-    INDEX idx_timestamp (timestamp)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-";
-
-$connection->query($createTableQuery);
 
 // Get violation details
 $violation = $_POST['violation'] ?? 'Unknown violation';
@@ -47,49 +32,52 @@ $stmt = $connection->prepare("
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
-$stmt->bind_param(
-    "iissssiis",
-    $studentId,
-    $testId,
-    $violation,
-    $timestamp,
-    $userAgent,
-    $screenResolution,
-    $violationCount,
-    $autoSubmit,
-    $ipAddress
-);
+if ($stmt) {
+    $stmt->bind_param(
+        "iissssiis",
+        $studentId,
+        $testId,
+        $violation,
+        $timestamp,
+        $userAgent,
+        $screenResolution,
+        $violationCount,
+        $autoSubmit,
+        $ipAddress
+    );
 
-if ($stmt->execute()) {
-    // If this is an auto-submit violation, flag the test
-    if ($autoSubmit) {
-        $testedTableName = $_SESSION['testedTableName'] ?? null;
-        if ($testedTableName) {
+    if ($stmt->execute()) {
+        // If this is an auto-submit violation, flag the test
+        if ($autoSubmit && $testedTableName) {
             $flagQuery = "UPDATE `$testedTableName` SET 
                          testStatus = 2,
                          timeSubmittedTest = NOW()
                          WHERE examineeUserId = ? AND testId = ?";
             $flagStmt = $connection->prepare($flagQuery);
-            $flagStmt->bind_param("ii", $studentId, $testId);
-            $flagStmt->execute();
-            $flagStmt->close();
+            if ($flagStmt) {
+                $flagStmt->bind_param("ii", $studentId, $testId);
+                $flagStmt->execute();
+                $flagStmt->close();
+            }
         }
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Violation logged',
+            'violationCount' => $violationCount
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to log violation'
+        ]);
     }
-    
-    echo json_encode([
-        'success' => true,
-        'message' => 'Violation logged',
-        'violationCount' => $violationCount
-    ]);
+
+    $stmt->close();
 } else {
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to log violation'
+        'message' => 'Database error'
     ]);
 }
-
-$stmt->close();
 ?>
-
-
-

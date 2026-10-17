@@ -429,10 +429,20 @@ if (!function_exists('dlhsTableExists')) {
             return false;
         }
 
-        $escapedTable = mysqli_real_escape_string($connection, $tableName);
-        $result = $connection->query("SHOW TABLES LIKE '{$escapedTable}'");
+        static $existingTables = null;
+        if ($existingTables === null) {
+            $existingTables = array();
+            $res = $connection->query("SHOW TABLES");
+            if ($res) {
+                while ($r = $res->fetch_row()) {
+                    if (isset($r[0])) {
+                        $existingTables[strtolower((string)$r[0])] = true;
+                    }
+                }
+            }
+        }
 
-        return $result && $result->num_rows > 0;
+        return isset($existingTables[strtolower((string)$tableName)]);
     }
 }
 

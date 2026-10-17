@@ -280,6 +280,7 @@ session_start();
 
 		<!--Including the sidebar-->
 		<?php include 'sideBar.php'; ?>
+		<?php session_write_close(); ?>
 
       <!--main content start-->
       <section id="main-content">
@@ -443,14 +444,28 @@ session_start();
 								<button class="btn btn-success btn-sm" id="toggleFormBtn" onclick="dlhsToggleCreateForm()" style="font-weight: 700; border-radius: 6px; padding: 6px 12px;"><i class="fa fa-plus"></i> Create New Test</button>
 							</header>
 							<div class="panel-body">
-								<div class="form-group" style="max-width:320px;">
-									<label>Filter by test type</label>
-									<select class="form-control" id="testTypeFilter">
-										<option value="">... All Test Types ...</option>
-										<?php foreach ($configuredTestTypes as $configuredTestType) { ?>
-										<option value="<?php echo htmlspecialchars($configuredTestType); ?>"><?php echo htmlspecialchars($configuredTestType); ?></option>
-										<?php } ?>
-									</select>
+								<div style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:15px;">
+									<div class="form-group" style="min-width:240px; max-width:300px; margin-bottom:0;">
+										<label style="font-weight:600; font-size:12px;">Filter by Academic Session</label>
+										<select class="form-control" id="sessionFilter">
+											<option value="">... All Sessions ...</option>
+											<?php foreach ($academicSessions as $academicSessionRow) { ?>
+											<?php $sName = isset($academicSessionRow['sessionName']) ? $academicSessionRow['sessionName'] : ''; ?>
+											<option value="<?php echo htmlspecialchars($sName); ?>">
+												<?php echo htmlspecialchars($sName); ?><?php echo !empty($academicSessionRow['isCurrentSession']) ? ' (Current)' : ''; ?>
+											</option>
+											<?php } ?>
+										</select>
+									</div>
+									<div class="form-group" style="min-width:240px; max-width:300px; margin-bottom:0;">
+										<label style="font-weight:600; font-size:12px;">Filter by Test Type</label>
+										<select class="form-control" id="testTypeFilter">
+											<option value="">... All Test Types ...</option>
+											<?php foreach ($configuredTestTypes as $configuredTestType) { ?>
+											<option value="<?php echo htmlspecialchars($configuredTestType); ?>"><?php echo htmlspecialchars($configuredTestType); ?></option>
+											<?php } ?>
+										</select>
+									</div>
 								</div>
 								<div class="table-responsive">
 									<table id="example" class="table table-striped table-bordered bulk_action" style="width:100%" width="100%">
@@ -699,24 +714,6 @@ session_start();
 <script src="js/jquery.scrollTo.min.js"></script>
 <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
 
-    <!-- jquery ui -->
-<script src="js/jquery-ui-1.9.2.custom.min.js"></script>
-
-    <!--custom checkbox & radio-->
-    <script type="text/javascript" src="js/ga.js"></script>
-    <!--custom switch-->
-    <script src="js/bootstrap-switch.js"></script>
-    <!--custom tagsinput-->
-<script src="js/jquery.tagsinput.js"></script>
-    
-    <!-- colorpicker -->
-   
-    <!-- bootstrap-wysiwyg -->
-<script src="js/jquery.hotkeys.js"></script>
-    <script src="js/bootstrap-wysiwyg.js"></script>
-    <script src="js/bootstrap-wysiwyg-custom.js"></script>
-    <!-- ck editor -->
-    <script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
     <!-- custome script for all page -->
     <script src="js/scripts.js"></script>
 <script src="../../datatables/js/jquery.dataTables.min.js"></script>
@@ -809,6 +806,15 @@ session_start();
 			var hasStudents = studentCount > 0;
 			var hasQuestions = questionCount > 0;
 
+			var readinessBadge = '';
+			if (hasStudents && hasQuestions) {
+				readinessBadge = '<span class="label label-success" style="font-size:10px;padding:3px 8px;border-radius:12px;display:inline-block;margin-bottom:2px;background:#10b981;" title="Exam is fully configured and ready"><i class="fa fa-check-circle"></i> Ready for Exam</span>';
+			} else if (hasStudents && !hasQuestions) {
+				readinessBadge = '<span class="label label-warning" style="font-size:10px;padding:3px 8px;border-radius:12px;display:inline-block;margin-bottom:2px;background:#f59e0b;" title="Students added, awaiting questions"><i class="fa fa-exclamation-triangle"></i> Questions Pending</span>';
+			} else {
+				readinessBadge = '<span class="label label-danger" style="font-size:10px;padding:3px 8px;border-radius:12px;display:inline-block;margin-bottom:2px;background:#ef4444;" title="No students assigned yet"><i class="fa fa-times-circle"></i> Incomplete Setup</span>';
+			}
+
 			var studentsBtn = hasStudents
 				? '<a href="addStudentsToTestForm.php?testId=' + testId + '" title="' + studentCount + ' students added — click to manage" style="display:inline-flex;align-items:center;gap:4px;margin:2px;padding:4px 10px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;"><i class="fa fa-users"></i> ' + studentCount + ' students</a>'
 				: '<a href="addStudentsToTestForm.php?testId=' + testId + '" title="No students added yet" style="display:inline-flex;align-items:center;gap:4px;margin:2px;padding:4px 10px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;animation:dlhs-pulse 1.6s infinite;"><i class="fa fa-user-plus"></i> Add Students</a>';
@@ -817,7 +823,7 @@ session_start();
 				? '<a href="addQuestionForm.php?testId=' + testId + '" title="' + questionCount + ' question sets — click to manage" style="display:inline-flex;align-items:center;gap:4px;margin:2px;padding:4px 10px;background:linear-gradient(135deg,#2980b9,#3498db);color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;"><i class="fa fa-question-circle"></i> ' + questionCount + ' questions</a>'
 				: '<a href="addQuestionForm.php?testId=' + testId + '" title="No questions yet — click to add" style="display:inline-flex;align-items:center;gap:4px;margin:2px;padding:4px 10px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;animation:dlhs-pulse 1.6s infinite;"><i class="fa fa-pencil-square-o"></i> Add Questions →</a>';
 
-			return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + studentsBtn + questionsBtn + '</div>';
+			return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + readinessBadge + studentsBtn + questionsBtn + '</div>';
 		}
 
 		function buildGeneratedTestName(sessionText, yearGroupText, subjectText, testTypeText)
@@ -914,7 +920,10 @@ session_start();
 			$.ajax({
 					url: 'getTests.php',
 					type: 'get',
-					data: {testType: $('#testTypeFilter').val()},
+					data: {
+						testType: $('#testTypeFilter').val(),
+						academicSession: $('#sessionFilter').val()
+					},
 					dataType: 'JSON',
 					success: function(response)
 					{
@@ -1661,9 +1670,36 @@ session_start();
 			}
 		}
 
-		$('#testTypeFilter').on('change', function(){
+		$('#testTypeFilter, #sessionFilter').on('change', function(){
 			$('#example').DataTable().clear().destroy();
 			callTable();
+		});
+
+		// Check for URL presets (e.g. from my_question_files.php)
+		$(document).ready(function() {
+			var urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.get('openCreate') === '1') {
+				var formCol = document.getElementById('createFormColumn');
+				if (formCol && formCol.style.display === 'none') {
+					dlhsToggleCreateForm();
+				}
+				var presetSubj = urlParams.get('presetSubject');
+				var presetYg = urlParams.get('presetYearGroup');
+				var presetType = urlParams.get('presetType');
+
+				if (presetSubj && presetYg) {
+					var compositeVal = presetSubj + '|' + presetYg;
+					$('#subject_composite').val(compositeVal).trigger('change');
+				}
+				if (presetType) {
+					$('#testType').val(presetType).trigger('change');
+				}
+				setTimeout(function() {
+					$('html, body').animate({
+						scrollTop: $("#createFormColumn").offset().top - 70
+					}, 400);
+				}, 200);
+			}
 		});
 
 		function dlhsHandleSubjectChange(mode) {

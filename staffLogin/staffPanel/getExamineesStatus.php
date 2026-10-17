@@ -1,9 +1,11 @@
 <?php
 session_start();
+	$staffId = isset($_SESSION['staffId']) ? (int)$_SESSION['staffId'] : 0;
+	session_write_close();
+
 	include "../../db_connection/dlhs_db_connection.php";
 	
-	$staffId = $_SESSION['staffId'] ?? 0;
-	$testId  = $_POST['testId'] ?? '';
+	$testId  = isset($_POST['testId']) ? mysqli_real_escape_string($connection, (string)$_POST['testId']) : '';
 	$mode    = $_POST['mode'] ?? '';
 	
 	$return_arr = array();
@@ -37,16 +39,8 @@ session_start();
 	$theStartHour = $row['startHour'];
 	$theStartMinute= $row['startMinute'];
 	$theIsAmOrPm= $row['amOrPm'];
-	$examineesTableName=$row['examineesTableName'];
-	
-	$query1="SELECT * FROM `$examineesTableName`";
-	$result1 = $connection->query($query1);
-	
-	if(!$result1)
-	{
-		echo json_encode($return_arr);
-		exit;
-	}
+	$examineesTableName = $row['examineesTableName'];
+	$answersTableName   = $row['answersTable'];
 
 	$allowedClasses = [];
 	$isGlobalInvigilator = false;
@@ -72,67 +66,77 @@ session_start();
 		}
 	}
 
-	if(($result1->num_rows) > 0)
+	$answersJoinSql = "";
+	$answersSelectSql = "0 AS answeredCount";
+	if (!empty($answersTableName)) {
+		$answersSelectSql = "COALESCE(ans.answeredCount, 0) AS answeredCount";
+		$answersJoinSql = "LEFT JOIN (
+			SELECT userLoginId, COUNT(*) AS answeredCount
+			FROM `$answersTableName`
+			WHERE selectedOption != '0' AND selectedOption != ''
+			GROUP BY userLoginId
+		) ans ON ans.userLoginId = e.examineeUserId";
+	}
+
+	$query1 = "SELECT e.*,
+	                  s.surname, s.firstName, s.middleName,
+	                  c.className, y.yearGroupName,
+	                  $answersSelectSql
+	           FROM `$examineesTableName` e
+	           LEFT JOIN studentlogin s ON s.studentId = e.examineeUserId
+	           LEFT JOIN classes c ON c.classId = e.studentClassId
+	           LEFT JOIN yeargroup y ON y.yearGroupId = c.classYearGroup
+	           $answersJoinSql";
+	$result1 = $connection->query($query1);
+	
+	if(!$result1)
 	{
-		while($row1 = $result1->fetch_assoc())
-		{
-			$examineeUserId = $row1['examineeUserId'];
-			$examineeClassId = (int)$row1['studentClassId'];
+		echo json_encode($return_arr);
+		exit;
+	}
 
-			if ($mode === 'invigilate' && !$isGlobalInvigilator && !in_array($examineeClassId, $allowedClasses)) {
-				continue;
-			}
+	$testDate = $theDate." (".$theStartHour.":".$theStartMinute." ".$theIsAmOrPm.")";
+	$testDuration = $row['duration'];
 
-			$examineeTeststatus = $row1['testStatus'];
-			$testDate = $theDate." (".$theStartHour.":".$theStartMinute." ".$theIsAmOrPm.")";
-			$remainingTime = round(($row1['remainingTime']/60), 2);
-			$testDuration = $row['duration'];
-			$timeStarted = $row1['timeStartedTest'] ?? "";
-			$timeSubmitted = $row1['timeSubmittedTest'] ?? "";
-			
-			// Simple class/year lookup (cached in local scope if needed, but for now direct)
-			$classAndYearGroupName = "";
-			$getCN = $connection->query("SELECT c.className, y.yearGroupName FROM classes c JOIN yeargroup y ON c.classYearGroup = y.yearGroupId WHERE c.classId='$examineeClassId'");
-			if ($getCN && $cnRow = $getCN->fetch_assoc()) {
-				$classAndYearGroupName = $cnRow['yearGroupName']." ".$cnRow['className'];
-			}
-			
-			//Getting the examinee name
-			$examineeName = "Unknown Student";
-			$getExamineeName="SELECT surname, firstName, middleName FROM studentlogin WHERE studentId='$examineeUserId'";
-			$result4 = $connection->query($getExamineeName);
-			if($result4 && $result4->num_rows > 0)
-			{
-				$row4 = $result4->fetch_assoc();
-				$examineeName = $row4['surname']." ".$row4['firstName']." ".$row4['middleName'];
-			}
+	while($row1 = $result1->fetch_assoc())
+	{
+		$examineeUserId = $row1['examineeUserId'];
+		$examineeClassId = (int)$row1['studentClassId'];
 
-			$answeredCount = 0;
-			$answersTableName = $row['answersTable'];
-			if (!empty($answersTableName)) {
-				$ansRes = $connection->query("SELECT COUNT(*) as answered FROM `$answersTableName` WHERE userLoginId='$examineeUserId' AND selectedOption != '0' AND selectedOption != ''");
-				if ($ansRes) {
-					$answeredCount = (int)$ansRes->fetch_assoc()['answered'];
-				}
-			}
-			
-			$return_arr[] = array(
-							"testId" => $testId,
-							"examineeUserId" => $examineeUserId,
-							"examineeName" => $examineeName,
-							"classAndYearGroupName" => $classAndYearGroupName,
-							"testDate" => $testDate,
-							"duration" => $testDuration,
-							"timeStarted" => $timeStarted,
-							"timeSubmitted" => $timeSubmitted,
-							"remainingTime" => $remainingTime,
-							"examineeTeststatus" => $examineeTeststatus,
-                            "isPaused" => $row1['isPaused'] ?? 0,
-                            "isStarted" => $row1['isStarted'] ?? 0,
-                            "globalTestStatus" => $globalTestStatus,
-                            "answeredCount" => $answeredCount,
-                            "totalQuestions" => $totalQuestions);
+		if ($mode === 'invigilate' && !$isGlobalInvigilator && !in_array($examineeClassId, $allowedClasses)) {
+			continue;
 		}
+
+		$examineeTeststatus = $row1['testStatus'];
+		$remainingTime = round(($row1['remainingTime']/60), 2);
+		$timeStarted = $row1['timeStartedTest'] ?? "";
+		$timeSubmitted = $row1['timeSubmittedTest'] ?? "";
+		
+		$classAndYearGroupName = trim(($row1['yearGroupName'] ?? '') . ' ' . ($row1['className'] ?? ''));
+		
+		$examineeName = "Unknown Student";
+		if (!empty($row1['surname']) || !empty($row1['firstName'])) {
+			$examineeName = trim(($row1['surname'] ?? '') . " " . ($row1['firstName'] ?? '') . " " . ($row1['middleName'] ?? ''));
+		}
+
+		$answeredCount = (int)($row1['answeredCount'] ?? 0);
+		
+		$return_arr[] = array(
+						"testId" => $testId,
+						"examineeUserId" => $examineeUserId,
+						"examineeName" => $examineeName,
+						"classAndYearGroupName" => $classAndYearGroupName,
+						"testDate" => $testDate,
+						"duration" => $testDuration,
+						"timeStarted" => $timeStarted,
+						"timeSubmitted" => $timeSubmitted,
+						"remainingTime" => $remainingTime,
+						"examineeTeststatus" => $examineeTeststatus,
+						"isPaused" => $row1['isPaused'] ?? 0,
+						"isStarted" => $row1['isStarted'] ?? 0,
+						"globalTestStatus" => $globalTestStatus,
+						"answeredCount" => $answeredCount,
+						"totalQuestions" => $totalQuestions);
 	}
 	
 	echo json_encode($return_arr);

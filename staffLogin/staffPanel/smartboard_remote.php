@@ -69,9 +69,6 @@ $prefilledPin = isset($_GET['pin']) ? htmlspecialchars($_GET['pin']) : '';
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --dlhs-blue: #00AEEF;

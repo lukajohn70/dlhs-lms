@@ -37,7 +37,7 @@
 	</style>
 	</head>
 	<body style="background: #eef3f9;">
-		<main class="role-login-shell" style="--role-bg: url('/dlhs/adminLogin/images/dlhslogo3.jpg');">
+		<main class="role-login-shell" style="--role-bg: url('images/dlhslogo3.jpg');">
 			<section class="role-login-brand">
 				<div>
 					<img src="images/dlhslogo.png" class="role-login-logo" alt="DLHS logo">

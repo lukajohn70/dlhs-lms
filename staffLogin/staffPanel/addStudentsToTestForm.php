@@ -128,8 +128,6 @@ session_start();
             return true;
         }
 	</script>
-    <!-- ck editor -->
-	<script src="jQuery3.3.1.js"></script>
 	<style>
 		body{
 			overflow-x:hidden;
@@ -182,6 +180,7 @@ session_start();
 
 		<!--Including the sidebar-->
 		<?php include 'sideBar.php'; ?>
+		<?php session_write_close(); ?>
 
       <!--main content start-->
       <section id="main-content">
@@ -364,17 +363,6 @@ session_start();
     <script src="js/jquery.scrollTo.min.js"></script>
     <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
 
-    <!-- jquery ui -->
-    <script src="js/jquery-ui-1.9.2.custom.min.js"></script>
-
-    <!--custom checkbox & radio-->
-    <script type="text/javascript" src="js/ga.js"></script>
-    <!--custom switch-->
-    <script src="js/bootstrap-switch.js"></script>
-    <!--custom tagsinput-->
-    <script src="js/jquery.tagsinput.js"></script>
-    <!-- custom form component script for this page-->
-    <script src="js/form-component.js"></script>
     <!-- custome script for all page -->
     <script src="js/scripts.js"></script>
 	<script src="../../datatables/js/jquery.dataTables.min.js"></script>
@@ -646,10 +634,7 @@ session_start();
 							buttons: [
 								'copy', 'csv', 'excel', 'pdf', 'print'
 							],
-							rowReorder: {
-									selector: 'td:nth-child(2)'
-								},
-								"responsive": true
+							"responsive": true
 							});
 							
 							//Assigning testId to hidden field to be stored to enable time to be added to students of the test when test has started
@@ -883,10 +868,7 @@ session_start();
 						buttons: [
 							'copy', 'csv', 'excel', 'pdf', 'print'
 						],
-						rowReorder: {
-								selector: 'td:nth-child(2)'
-							},
-							"responsive": true
+						"responsive": true
 					});
 					
 					//Assigning testId to hidden field to be stored to enable time to be added to students of the test when test has started

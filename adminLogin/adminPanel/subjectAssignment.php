@@ -26,9 +26,6 @@ include "../../db_connection/dlhs_db_connection.php";
     <!-- DataTables -->
     <link rel="stylesheet" type="text/css" href="../../datatables/css/jquery.dataTables.min.css"/>
     <link rel="stylesheet" type="text/css" href="../../datatables/css/responsive.dataTables.min.css"/>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -39,7 +36,7 @@ include "../../db_connection/dlhs_db_connection.php";
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
         }
@@ -153,6 +150,20 @@ include "../../db_connection/dlhs_db_connection.php";
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        .fa-trash:before {
+            content: "\f014";
+        }
+
+        .btn-delete-assign {
+            padding: 5px 12px !important;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 
@@ -160,6 +171,7 @@ include "../../db_connection/dlhs_db_connection.php";
     <section id="container">
         <?php include "header.php"; ?>
         <?php include "sideBar.php"; ?>
+        <?php session_write_close(); ?>
 
         <section id="main-content">
             <section class="wrapper">
@@ -345,7 +357,7 @@ include "../../db_connection/dlhs_db_connection.php";
                         data: 'assignmentId',
                         className: 'text-center',
                         render: function(data) {
-                            return `<button class="btn btn-danger btn-xs" onclick="deleteAssignment(${data})"><i class="fa fa-trash"></i></button>`;
+                            return `<button class="btn btn-danger btn-xs btn-delete-assign" title="Remove Assignment" onclick="deleteAssignment(${data})"><i class="fa fa-trash-o"></i> Remove</button>`;
                         }
                     }
                 ],

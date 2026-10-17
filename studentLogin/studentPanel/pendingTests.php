@@ -455,13 +455,6 @@ session_start();
 	<script src="../../datatables/js/jquery.dataTables.min.js"></script>
 	<script src="../../datatables/js/dataTables.rowReorder.min.js"></script>
 	<script src="../../datatables/js/dataTables.responsive.min.js"></script>
-	<script src="../../datatables/js/dataTables.buttons.min.js"></script>
-	<script src="../../datatables/js/buttons.flash.min.js"></script>
-	<script src="../../datatables/js/jszip.min.js"></script>
-	<script src="../../datatables/js/pdfmake.min.js"></script>
-	<script src="../../datatables/js/vfs_fonts.js"></script>
-	<script src="../../datatables/js/buttons.html5.min.js"></script>
-	<script src="../../datatables/js/buttons.print.min.js"></script>
 	<script src="js/scripts.js"></script>
 
 	<script>
@@ -663,8 +656,7 @@ session_start();
 							"ordering": true,
 							"info":     true,
 							"responsive": true,
-							dom: 'lBfrtip',
-							buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+							dom: 'lfrtip'
 						};
 						
 						var tableNotStarted = $('#notStartedTable').DataTable(dtOptions);

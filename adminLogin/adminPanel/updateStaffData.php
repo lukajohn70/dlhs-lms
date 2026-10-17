@@ -8,6 +8,7 @@ session_start();
 	else
 	{
 		include "../../db_connection/dlhs_db_connection.php";
+		require_once "../../scripts/password_security_helper.php";
 	
 		if(isset($_POST['staffIdToUpdate']))
 		{    
@@ -17,7 +18,7 @@ session_start();
 			$middleName = mysqli_real_escape_string($connection, $_POST['middleName']);
 			$gender = mysqli_real_escape_string($connection, $_POST['gender']);
 			$email = mysqli_real_escape_string($connection, $_POST['staffEmail']);
-			$password = mysqli_real_escape_string($connection, $_POST['thePassword']);
+			$rawPassword = isset($_POST['thePassword']) ? trim((string)$_POST['thePassword']) : '';
 									
 			$query = "SELECT * FROM stafflogin WHERE username='$email' AND staffId !='$staffIdToUpdate'";
 			$result = $connection->query($query);
@@ -28,7 +29,12 @@ session_start();
 			}
 			else
 			{		
-				$query1 = "UPDATE stafflogin SET surname='$surname', firstName='$firstName', middleName='$middleName', username='$email', password='$password', gender='$gender' WHERE staffId ='$staffIdToUpdate'";
+				if ($rawPassword !== '' && strpos($rawPassword, '$2y$') !== 0) {
+					$hashedPassword = mysqli_real_escape_string($connection, dlhs_hash_password($rawPassword));
+					$query1 = "UPDATE stafflogin SET surname='$surname', firstName='$firstName', middleName='$middleName', username='$email', password='$hashedPassword', gender='$gender' WHERE staffId ='$staffIdToUpdate'";
+				} else {
+					$query1 = "UPDATE stafflogin SET surname='$surname', firstName='$firstName', middleName='$middleName', username='$email', gender='$gender' WHERE staffId ='$staffIdToUpdate'";
+				}
 				$result1 = $connection->query($query1);
 				
 				if($result1)

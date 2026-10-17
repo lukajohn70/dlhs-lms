@@ -7,44 +7,45 @@ if (!isset($_SESSION['adminLoggedIn'])) {
 
 if (isset($_POST['password1'])) {
     require_once "../../scripts/password_policy.php";
+    require_once "../../db_connection/dlhs_db_connection.php";
     
-    $passwordRaw = (string) $_POST['password1'];
-    $password2Raw = (string) $_POST['password2'];
+    $passwordRaw = (string)$_POST['password1'];
+    $password2Raw = (string)$_POST['password2'];
 
     if ($passwordRaw !== $password2Raw) {
         echo "3|Passwords do not match.";
         exit;
     }
 
-    $policyMessage = dlhsPasswordPolicyMessage($passwordRaw, 'staff'); // Use staff policy for admin
+    $policyMessage = dlhsPasswordPolicyMessage($passwordRaw, 'staff');
     if ($policyMessage !== '') {
         echo "3|" . $policyMessage;
         exit;
     }
 
-    include "../../db_connection/dlhs_db_connection.php";
-    $password1Escaped = mysqli_real_escape_string($connection, $passwordRaw);
     $adminId = $_SESSION['adminId'];
-
-    // If adminId is 'env-admin', we can't update it in the DB
     if ($adminId === 'env-admin') {
         echo "3|Environment-based admin password cannot be changed through this panel.";
         exit;
     }
 
-    $query = "UPDATE admintable SET password='$password1Escaped' WHERE id='$adminId'";
-    $result = $connection->query($query);
-    if (!$result) {
+    $hashedPassword = password_hash($passwordRaw, PASSWORD_DEFAULT);
+    $adminIdInt = (int)$adminId;
+
+    $stmt = $connection->prepare("UPDATE admintable SET password = ? WHERE adminId = ?");
+    if (!$stmt) {
         echo "3|" . $connection->error;
         exit;
     }
+    $stmt->bind_param("si", $hashedPassword, $adminIdInt);
 
-    if ($connection->affected_rows >= 0) {
+    if ($stmt->execute()) {
         $_SESSION['forcePasswordChange'] = 0;
         echo 1;
     } else {
         echo 2;
     }
+    $stmt->close();
 } else {
     echo 0;
 }

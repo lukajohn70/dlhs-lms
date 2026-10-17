@@ -40,14 +40,25 @@ $(document).ready(function() {
         handleFiles(e.target.files);
     });
     
+    // YouTube link live preview listener
+    $('#youtubeLink').on('input change paste keyup', function() {
+        updateYouTubePreview($(this).val());
+    });
+    
     // Target audience selection toggle
     $('#uploadedFor').change(function() {
         const val = $(this).val();
         if (val === 'specific_class') {
             $('#targetClassRow').slideDown();
+            $('#multiClassRow').slideUp();
+            $('#studentsSelectionRow').slideUp();
+        } else if (val === 'multiple_classes') {
+            $('#targetClassRow').slideUp();
+            $('#multiClassRow').slideDown();
             $('#studentsSelectionRow').slideUp();
         } else if (val === 'specific_students') {
             $('#targetClassRow').slideDown();
+            $('#multiClassRow').slideUp();
             $('#studentsSelectionRow').slideDown();
             // Automatically load students if a class is already selected
             const classId = $('#targetClass').val();
@@ -56,6 +67,7 @@ $(document).ready(function() {
             }
         } else {
             $('#targetClassRow').slideUp();
+            $('#multiClassRow').slideUp();
             $('#studentsSelectionRow').slideUp();
         }
     });
@@ -82,6 +94,7 @@ $(document).ready(function() {
             subjectHidden.val('');
             targetClassSelect.val('');
             $('#studentsList').html('<p class="text-muted" style="font-size: 12px; margin: 0;">Please select a class first to load students.</p>');
+            $('#multiClassesList').html('<p class="text-muted" style="font-size: 12px; margin: 0;">Please select a subject first to load classes.</p>');
             return;
         }
         
@@ -92,6 +105,7 @@ $(document).ready(function() {
         subjectHidden.val(sId);
         
         targetClassSelect.html('<option value="">-- Loading Arms --</option>');
+        $('#multiClassesList').html('<p class="text-muted" style="font-size: 12px; margin: 0;"><i class="fa fa-spinner fa-spin"></i> Loading classes...</p>');
         
         $.ajax({
             url: 'getTeacherAssignedClassesAndSubjects.php',
@@ -100,17 +114,22 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 let options = '<option value="">-- Select Class --</option>';
+                let multiOptions = '';
                 if (response.success && response.data && response.data.length > 0) {
                     response.data.forEach(function(item) {
                         options += `<option value="${item.classId}">${escapeHtml(item.className)}</option>`;
+                        multiOptions += `<div class="checkbox-item"><label><input type="checkbox" name="targetClasses[]" value="${item.classId}" class="multiClassCheckbox"> ${escapeHtml(item.className)}</label></div>`;
                     });
                 } else {
                     options = '<option value="">No classes assigned</option>';
+                    multiOptions = '<p class="text-muted" style="font-size: 12px; margin: 0;">No classes assigned for this subject.</p>';
                 }
                 targetClassSelect.html(options);
+                $('#multiClassesList').html(multiOptions);
             },
             error: function() {
                 targetClassSelect.html('<option value="">Error loading classes</option>');
+                $('#multiClassesList').html('<p class="text-danger" style="font-size: 12px; margin: 0;">Error loading classes.</p>');
             }
         });
     });
@@ -135,12 +154,23 @@ function toggleUploadType(type) {
     }
 }
 
-// Display file selections
+// Display file selections with 50MB size guard
 function handleFiles(files) {
     const filePreview = document.getElementById('filePreview');
+    const fileInput = document.getElementById('fileInput');
     filePreview.innerHTML = '';
     
     if (files.length === 0) return;
+    
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].size > MAX_FILE_SIZE) {
+            showPremiumModal(`"${escapeHtml(files[i].name)}" is ${formatFileSize(files[i].size)}, which exceeds the 50MB upload limit. Please select a smaller file or host on YouTube.`, 'File Too Large', 'warning');
+            fileInput.value = '';
+            filePreview.innerHTML = '';
+            return;
+        }
+    }
     
     let totalSize = 0;
     Array.from(files).forEach(file => {
@@ -150,7 +180,7 @@ function handleFiles(files) {
         fileDiv.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <i class="${getFileIconClass(file.name)}" style="color: #688a7e; font-size: 16px;"></i>
-                <span style="font-weight: 500;">${file.name}</span>
+                <span style="font-weight: 500;">${escapeHtml(file.name)}</span>
             </div>
             <span class="text-muted" style="font-size: 11px;">${formatFileSize(file.size)}</span>
         `;
@@ -265,6 +295,17 @@ function uploadFiles() {
         showPremiumModal('Please select a target class.', 'Class Required', 'warning');
         return;
     }
+
+    if (uploadedFor === 'multiple_classes') {
+        const selectedClasses = document.querySelectorAll('.multiClassCheckbox:checked');
+        if (selectedClasses.length === 0) {
+            showPremiumModal('Please select at least one class arm to share with.', 'Classes Required', 'warning');
+            return;
+        }
+        selectedClasses.forEach(cb => {
+            formData.append('targetClasses[]', cb.value);
+        });
+    }
     
     if (uploadedFor === 'specific_students') {
         if (!$('#targetClass').val()) {
@@ -351,8 +392,11 @@ function clearForm() {
     $('#subject').val('');
     $('#filePreview').html('');
     $('#targetClassRow').hide();
+    $('#multiClassRow').hide();
     $('#studentsSelectionRow').hide();
     $('#targetClass').find('option:not(:first)').remove();
+    $('#multiClassesList').html('<p class="text-muted" style="font-size: 12px; margin: 0;">Please select a subject first to load classes.</p>');
+    $('#youtubePreviewBox').hide();
     
     // Reset to file mode
     $('#uploadTypeFile').prop('checked', true);
@@ -435,8 +479,11 @@ function displayFilesTable(files) {
         html += `<td>${formatFileSize(file.fileSize)}</td>`;
         html += `<td><span class="badge" style="background-color: #688a7e;">${file.downloadCount || 0}</span></td>`;
         html += `<td>${formatDate(file.created_at)}</td>`;
-        html += `<td>
-            <button class="btn-delete-file" onclick="deleteFile(${file.fileId})" title="Delete Shared File">
+        html += `<td style="white-space: nowrap;">
+            <button class="btn btn-default btn-sm" onclick="copyFileLink('${escapeHtml(file.filePath)}', '${escapeHtml(file.title)}')" title="Copy Link for Students" style="border-radius: 6px; padding: 6px 10px; margin-right: 4px;">
+                <i class="fa fa-link" style="color: #4f6e63;"></i>
+            </button>
+            <button class="btn-delete-file" onclick="deleteFile(${file.fileId})" title="Delete Shared File" style="display: inline-flex;">
                 <i class="fa fa-trash"></i>
             </button>
         </td>`;
@@ -498,7 +545,8 @@ function displayFilesGrid(files) {
         html += `<strong>Shared:</strong> ${formatDate(file.created_at)}`;
         html += `</p>`;
         html += '</div>';
-        html += '<div class="file-actions">';
+        html += '<div class="file-actions" style="display: flex; gap: 6px;">';
+        html += `<button class="btn btn-default btn-sm" onclick="copyFileLink('${escapeHtml(file.filePath)}', '${escapeHtml(file.title)}')" title="Copy Link for Students" style="border-radius: 6px; padding: 6px 10px;"><i class="fa fa-link" style="color: #4f6e63;"></i></button>`;
         html += `<button class="btn-delete-file" onclick="deleteFile(${file.fileId})" title="Delete Shared File"><i class="fa fa-trash"></i></button>`;
         html += '</div>';
         html += '</div>';
@@ -542,15 +590,60 @@ function deleteFile(fileId) {
     );
 }
 
-function searchFiles() {
-    const val = $('#searchFiles').val().toLowerCase();
+function filterSharedFiles() {
+    const searchVal = ($('#searchFiles').val() || '').toLowerCase();
+    const audienceVal = $('#filterSharedAudience').val() || '';
+
     const filtered = allFilesData.filter(file => {
-        return file.title.toLowerCase().includes(val) || 
-               file.originalName.toLowerCase().includes(val) ||
-               (file.description && file.description.toLowerCase().includes(val)) ||
-               (file.subjectName && file.subjectName.toLowerCase().includes(val));
+        const matchesSearch = !searchVal ||
+            (file.title && file.title.toLowerCase().includes(searchVal)) || 
+            (file.originalName && file.originalName.toLowerCase().includes(searchVal)) ||
+            (file.description && file.description.toLowerCase().includes(searchVal)) ||
+            (file.subjectName && file.subjectName.toLowerCase().includes(searchVal));
+
+        const matchesAudience = !audienceVal || (file.uploadedFor === audienceVal);
+
+        return matchesSearch && matchesAudience;
     });
     displayFiles(filtered);
+}
+const searchFiles = filterSharedFiles;
+
+function updateYouTubePreview(url) {
+    if (!url) {
+        $('#youtubePreviewBox').slideUp(150);
+        return;
+    }
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const match = url.match(regExp);
+    if (match && match[1]) {
+        const videoId = match[1];
+        $('#ytThumbImg').attr('src', `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+        $('#ytVideoIdText').text(`Video ID: ${videoId}`);
+        $('#youtubePreviewBox').stop(true, true).slideDown(200);
+    } else {
+        $('#youtubePreviewBox').slideUp(150);
+    }
+}
+
+function copyFileLink(filePath, title) {
+    let fullUrl = filePath;
+    if (!filePath.startsWith('http://') && !filePath.startsWith('https://')) {
+        fullUrl = window.location.origin + '/' + filePath.replace(/^\/+/, '');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            showPremiumModal(`Direct resource link for "<strong>${escapeHtml(title)}</strong>" copied to clipboard:<br><br><input type="text" class="form-control" value="${fullUrl}" readonly onclick="this.select()">`, 'Link Copied', 'success');
+        }).catch(() => {
+            promptCopy(fullUrl, title);
+        });
+    } else {
+        promptCopy(fullUrl, title);
+    }
+}
+
+function promptCopy(fullUrl, title) {
+    showPremiumModal(`Direct resource link for "<strong>${escapeHtml(title)}</strong>":<br><br><input type="text" class="form-control" value="${fullUrl}" readonly onclick="this.select()"><p class="text-muted" style="margin-top:6px; font-size:12px;">Press Ctrl+C to copy.</p>`, 'Resource Link', 'info');
 }
 
 function switchView(view) {

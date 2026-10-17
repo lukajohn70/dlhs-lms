@@ -1,7 +1,6 @@
 <?php
 session_start();
-	error_reporting(0);
-include "../../db_connection/dlhs_db_connection.php";
+error_reporting(0);
 
 header('Content-Type: application/json');
 
@@ -10,9 +9,14 @@ if (!isset($_SESSION['adminLoggedIn'])) {
     exit;
 }
 
+// Release session lock immediately to prevent blocking other tabs and parallel requests
+session_write_close();
+
+include "../../db_connection/dlhs_db_connection.php";
+
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-if ($action == 'fetch') {
+if ($action === 'fetch') {
     $query = "SELECT sta.subjectTeacherAssignmentId as assignmentId, yg.yearGroupName, c.className, s.subjectName, 
                      CONCAT(UPPER(IFNULL(sl.surname, '')), ' ', IFNULL(sl.firstName, ''), ' ', IFNULL(sl.middleName, '')) as teacherName
               FROM subject_teacher_assignment sta
@@ -33,39 +37,61 @@ if ($action == 'fetch') {
     
     echo json_encode(['status' => 'success', 'data' => $assignments]);
 } 
-elseif ($action == 'assign') {
-    $classIds = isset($_POST['classIds']) ? explode(',', $_POST['classIds']) : [];
-    $subjectId = isset($_POST['subjectId']) ? mysqli_real_escape_string($connection, $_POST['subjectId']) : '';
-    $teacherId = isset($_POST['teacherId']) ? mysqli_real_escape_string($connection, $_POST['teacherId']) : '';
+elseif ($action === 'assign') {
+    $rawClassIds = isset($_POST['classIds']) ? explode(',', $_POST['classIds']) : [];
+    $classIds = array_values(array_filter(array_map('intval', $rawClassIds), function($id) { return $id > 0; }));
+    $subjectId = isset($_POST['subjectId']) ? intval($_POST['subjectId']) : 0;
+    $teacherId = isset($_POST['teacherId']) ? intval($_POST['teacherId']) : 0;
     
-    if (empty($classIds) || empty($subjectId) || empty($teacherId)) {
+    if (empty($classIds) || $subjectId <= 0 || $teacherId <= 0) {
         echo json_encode(['status' => 'error', 'message' => 'Missing required fields.']);
         exit;
+    }
+    
+    // Batch lookup existing assignments in 1 query instead of N queries
+    $inList = implode(',', $classIds);
+    $checkQuery = "SELECT subjectTeacherAssignmentId, classId FROM subject_teacher_assignment WHERE subjectId = {$subjectId} AND classId IN ({$inList})";
+    $checkResult = $connection->query($checkQuery);
+    
+    $existingMap = [];
+    if ($checkResult) {
+        while ($cRow = $checkResult->fetch_assoc()) {
+            $existingMap[(int)$cRow['classId']] = (int)$cRow['subjectTeacherAssignmentId'];
+        }
     }
     
     $success = 0;
     $updated = 0;
     $errors = [];
     
+    // Use transaction and prepared statements for high-throughput batch write
+    $connection->begin_transaction();
+    
+    $updStmt = $connection->prepare("UPDATE subject_teacher_assignment SET teacherId = ? WHERE subjectTeacherAssignmentId = ?");
+    $insStmt = $connection->prepare("INSERT INTO subject_teacher_assignment (classId, subjectId, teacherId) VALUES (?, ?, ?)");
+    
     foreach ($classIds as $classId) {
-        $classId = trim($classId);
-        if (empty($classId)) continue;
-        
-        // Check for existing assignment
-        $check = $connection->query("SELECT subjectTeacherAssignmentId FROM subject_teacher_assignment WHERE classId='$classId' AND subjectId='$subjectId'");
-        
-        if ($check && $check->num_rows > 0) {
-            $row = $check->fetch_assoc();
-            $aid = $row['subjectTeacherAssignmentId'];
-            $q = "UPDATE subject_teacher_assignment SET teacherId='$teacherId' WHERE subjectTeacherAssignmentId='$aid'";
-            if ($connection->query($q)) $updated++;
-            else $errors[] = "Update failed for class ID $classId: " . $connection->error;
+        if (isset($existingMap[$classId])) {
+            $aid = $existingMap[$classId];
+            $updStmt->bind_param("ii", $teacherId, $aid);
+            if ($updStmt->execute()) {
+                $updated++;
+            } else {
+                $errors[] = "Update failed for class ID {$classId}: " . $connection->error;
+            }
         } else {
-            $q = "INSERT INTO subject_teacher_assignment (classId, subjectId, teacherId) VALUES ('$classId', '$subjectId', '$teacherId')";
-            if ($connection->query($q)) $success++;
-            else $errors[] = "Insert failed for class ID $classId: " . $connection->error;
+            $insStmt->bind_param("iii", $classId, $subjectId, $teacherId);
+            if ($insStmt->execute()) {
+                $success++;
+            } else {
+                $errors[] = "Insert failed for class ID {$classId}: " . $connection->error;
+            }
         }
     }
+    
+    $connection->commit();
+    $updStmt->close();
+    $insStmt->close();
     
     if (count($errors) > 0) {
         echo json_encode(['status' => 'partial', 'message' => 'Some operations failed.', 'success' => $success, 'updated' => $updated, 'errors' => $errors]);
@@ -73,25 +99,30 @@ elseif ($action == 'assign') {
         echo json_encode(['status' => 'success', 'message' => 'Assignments processed successfully.', 'new' => $success, 'updated' => $updated]);
     }
 } 
-elseif ($action == 'delete') {
-    $id = isset($_POST['id']) ? mysqli_real_escape_string($connection, $_POST['id']) : '';
+elseif ($action === 'delete') {
+    $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
     
-    if (empty($id)) {
+    if ($id <= 0) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid ID.']);
         exit;
     }
     
-    if ($connection->query("DELETE FROM subject_teacher_assignment WHERE subjectTeacherAssignmentId='$id'")) {
+    $stmt = $connection->prepare("DELETE FROM subject_teacher_assignment WHERE subjectTeacherAssignmentId = ?");
+    $stmt->bind_param("i", $id);
+    if ($stmt->execute()) {
         echo json_encode(['status' => 'success', 'message' => 'Assignment deleted.']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Delete failed: ' . $connection->error]);
     }
+    $stmt->close();
 }
-elseif ($action == 'get_arms') {
-    $yearGroupId = isset($_GET['yearGroupId']) ? mysqli_real_escape_string($connection, $_GET['yearGroupId']) : '';
+elseif ($action === 'get_arms') {
+    $yearGroupId = isset($_GET['yearGroupId']) ? intval($_GET['yearGroupId']) : 0;
     
-    $query = "SELECT classId, className FROM classes WHERE classYearGroup = '$yearGroupId' ORDER BY className";
-    $result = $connection->query($query);
+    $stmt = $connection->prepare("SELECT classId, className FROM classes WHERE classYearGroup = ? ORDER BY className");
+    $stmt->bind_param("i", $yearGroupId);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $arms = [];
     
     if ($result) {
@@ -99,6 +130,7 @@ elseif ($action == 'get_arms') {
             $arms[] = $row;
         }
     }
+    $stmt->close();
     
     echo json_encode(['status' => 'success', 'data' => $arms]);
 }

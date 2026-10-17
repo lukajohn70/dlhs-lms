@@ -123,10 +123,8 @@ if ($isPrintMode):
     <meta charset="utf-8">
     <title><?= ($resultType === 'mid_term' ? 'Mid-Term' : 'End-of-Term') ?> Report | DLHS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;600;700;800&display=swap');
-        
         body { 
-            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; 
             background: #f0f3f6; 
             color: #1e293b; 
             margin: 0; 

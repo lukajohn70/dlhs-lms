@@ -206,7 +206,6 @@ $staffName = $_SESSION['staffName'];
 
 <!-- JavaScript -->
 <script src="../../libs/jquery.min.js"></script>
-<script src="jQuery3.3.1.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script class="include" type="text/javascript" src="js/jquery.dcjqaccordion.2.7.js"></script>
 <script src="js/jquery.scrollTo.min.js"></script>
@@ -247,7 +246,6 @@ function loadAssignments() {
             let html = '';
             Object.keys(groupedAssignments).forEach(function(subjectId) {
                 let subject = groupedAssignments[subjectId];
-                let subjectAssignmentIds = subject.classes.map(c => c.assignmentId);
                 
                 html += '<div class="assignment-card">';
                 html += '  <div class="assignment-header">';
@@ -256,17 +254,15 @@ function loadAssignments() {
                 html += '  </div>';
                 html += '  <div class="assignment-body">';
                 
-                // List classes for this subject
+                // List classes for this subject with preloaded student count
                 subject.classes.forEach(function(cls) {
+                    const count = typeof cls.studentCount === 'number' ? cls.studentCount : 0;
                     html += '  <div class="class-item">';
                     html += '    <div class="class-name">' + cls.className + '</div>';
                     html += '    <div class="student-count-pill" id="studentCount_' + cls.assignmentId + '">';
-                    html += '      <i class="fa fa-spinner fa-spin"></i> Syncing...';
+                    html += '      <i class="fa fa-users"></i> ' + count + ' ' + (count === 1 ? 'student' : 'students');
                     html += '    </div>';
                     html += '  </div>';
-                    
-                    // Load student count for this class
-                    loadStudentCount(cls.classId, cls.assignmentId);
                 });
                 
                 html += '  </div>';
@@ -283,26 +279,6 @@ function loadAssignments() {
                 'Unable to retrieve assignments. Please try again later.' +
                 '</div>'
             ).fadeIn();
-        }
-    });
-}
-
-function loadStudentCount(classId, assignmentId) {
-    $.ajax({
-        url: 'get_class_student_count.php',
-        type: 'GET',
-        data: { classId: classId },
-        dataType: 'json',
-        success: function(response) {
-            const count = response.count || 0;
-            $('#studentCount_' + assignmentId).html(
-                '<i class="fa fa-users"></i> ' + count + ' ' + (count === 1 ? 'student' : 'students')
-            );
-        },
-        error: function() {
-            $('#studentCount_' + assignmentId).html(
-                '<i class="fa fa-exclamation-circle"></i> Error'
-            );
         }
     });
 }

@@ -1,6 +1,7 @@
 <?php
 session_start(); 
 require_once dirname(__DIR__) . "/config/database.php";
+require_once dirname(__DIR__) . "/scripts/password_security_helper.php";
 
 function dlhs_admin_fallback_login($username, $password)
 {
@@ -50,7 +51,7 @@ if(isset($_POST['adminUsername']))
         exit;
     }
     
-    $query = "SELECT * FROM admintable WHERE username=? AND password=? LIMIT 1";
+    $query = "SELECT * FROM admintable WHERE username=? LIMIT 1";
     $stmt = $connection->prepare($query);
     if (!$stmt) {
         http_response_code(500);
@@ -58,26 +59,40 @@ if(isset($_POST['adminUsername']))
         exit;
     }
 
-    $stmt->bind_param('ss', $username, $password);
+    $stmt->bind_param('s', $username);
     $stmt->execute();
     $result = $stmt->get_result();
     
-    if (($result->num_rows)>0)
+    if (($result->num_rows) > 0)
     {
-        $row = $result->fetch_array(MYSQLI_NUM);
-                                
-        dlhs_set_admin_session($row[0], $row[1]);
-        $_SESSION['forcePasswordChange'] = ($password === '1234' || $password === '4321') ? 1 : 0;
-        
-        $result->close();
-        $stmt->close();
-        echo ($_SESSION['forcePasswordChange'] === 1) ? 2 : 1;
+        $row = $result->fetch_assoc();
+        $adminId = $row['adminId'] ?? $row['id'];
+        $storedPassword = $row['password'];
+
+        $isValid = dlhs_verify_and_rehash_password($password, $storedPassword, function($newHash) use ($connection, $adminId) {
+            $idCol = isset($row['adminId']) ? 'adminId' : 'id';
+            $upd = $connection->prepare("UPDATE admintable SET password = ? WHERE $idCol = ?");
+            if ($upd) {
+                $upd->bind_param("ss", $newHash, $adminId);
+                $upd->execute();
+                $upd->close();
+            }
+        });
+
+        if ($isValid) {
+            session_regenerate_id(true);
+            dlhs_set_admin_session($adminId, $row['username']);
+            $_SESSION['forcePasswordChange'] = ($password === '1234' || $password === '4321') ? 1 : 0;
+            
+            $result->close();
+            $stmt->close();
+            echo ($_SESSION['forcePasswordChange'] === 1) ? 2 : 1;
+            exit;
+        }
     }
-    else
-    {
-        $result->close();
-        $stmt->close();
-        echo 0;
-    }
+
+    $result->close();
+    $stmt->close();
+    echo 0;
 }
 ?>

@@ -16,14 +16,10 @@
 				dataType: "json",
 				cache: false,
 				success: function(data1){
-					if (data1==1)
-					{
-						window.location.replace("submit.php");
-					}
-					else
-					{
-						alert("something went wrong");
-					}
+					window.location.replace("submit.php");
+				},
+				error: function(){
+					window.location.replace("submit.php");
 				}
        });
 	}

@@ -233,14 +233,18 @@
     // 5. DETECT DEVTOOLS OPEN
     function detectDevToolsOpen() {
         const threshold = 160;
+        let lastReported = 0;
         
         setInterval(function() {
             if (window.outerWidth - window.innerWidth > threshold || 
                 window.outerHeight - window.innerHeight > threshold) {
-                logViolation('DevTools possibly opened');
-                // Warning removed - logged silently
+                const now = Date.now();
+                if (now - lastReported > 15000) {
+                    lastReported = now;
+                    logViolation('DevTools possibly opened');
+                }
             }
-        }, 1000);
+        }, 3000);
     }
     
     // 6. PREVENT SCREENSHOTS

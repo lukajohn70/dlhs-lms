@@ -28,8 +28,6 @@ $prefilledPin = isset($_GET['pin']) ? htmlspecialchars($_GET['pin']) : '';
     <title>DLHS Classroom Quiz | Deeper Life High School</title>
     <link rel="icon" type="image/jpg" href="../../images/dlhslogo3.jpg">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap and CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/font-awesome.css" rel="stylesheet" />

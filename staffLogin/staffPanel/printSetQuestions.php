@@ -91,8 +91,7 @@ if(isset($_SESSION['staffName'])) {
     <title>Print Set Questions: <?php echo htmlspecialchars($testName); ?> - DLHS</title>
     <link rel="icon" type="image/jpg" href="../../images/dlhslogo3.jpg">
     
-    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../fonts/font-awesome-4.7.0/css/font-awesome.min.css">
     
     <style>
         @media print {
@@ -110,7 +109,7 @@ if(isset($_SESSION['staffName'])) {
         
         body {
             background: #fff;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 20px;
         }
         

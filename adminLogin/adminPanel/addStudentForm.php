@@ -768,8 +768,11 @@ session_start();
 							</div>
 							<div class="item form-group">
 								<div class="col-md-12">
-									<label><span style="color:#000000;">Student Password: </span> <span style="color:red; font-size:18px;">*</span></label><br>
-									<input type="text" name="password1" required="required" id="password1" class="form-control"  >
+									<label><span style="color:#000000;">New Password <small style="font-weight:normal; color:#555;">(leave blank to keep current password)</small>: </span></label><br>
+									<div style="display:flex; gap:8px;">
+										<input type="text" name="password1" id="password1" class="form-control" placeholder="Leave blank to keep current password, or enter new password">
+										<button type="button" class="btn btn-warning btn-sm" onclick="document.getElementById('password1').value='1234';" title="Fill default password (1234)" style="white-space:nowrap;"><i class="fa fa-key"></i> Reset to 1234</button>
+									</div>
 								</div>
 							</div>
 							<div class="item form-group">
@@ -947,7 +950,7 @@ session_start();
 								<div class="col-md-6">
 									<label for="className5" style="color:#000000;">Arm <span style="color:red; font-size:18px;">*</span></label>
 									<select class="form-control" name="className5" id="className5" onchange="viewStudentsBasedOnCriteria()" required >
-										
+										<option value="">... Select Year group first ...</option>
 									</select>
 								</div>
 								<div class="col-md-12" style="margin-top:8px;">
@@ -983,21 +986,15 @@ session_start();
 									<select class="form-control" name="classes6" id="classes6" required >
 										<option value="">... Select class ...</option>
 										<?php
-											$classes6="SELECT * FROM classes";
+											$classes6 = "SELECT c.classId, c.className, y.yearGroupName FROM classes c LEFT JOIN yeargroup y ON c.classYearGroup = y.yearGroupId ORDER BY y.yearGroupId ASC, c.className ASC";
 											$result6 = $connection->query($classes6);
-											if($result6->num_rows > 0)
+											if($result6 && $result6->num_rows > 0)
 											{
-												while($row6 = $result6->fetch_array(MYSQLI_NUM))
+												while($row6 = $result6->fetch_assoc())
 												{
-													$theClassName=$row6[2];
-													$theClassYearGroupId=$row6[1];
-													
-													//Getting the year group name
-													$classes61="SELECT * FROM yeargroup WHERE yearGroupId='$theClassYearGroupId'";
-													$result61 = $connection->query($classes61);
-													$row61 = $result61->fetch_array(MYSQLI_NUM);
+													$label = trim(($row6['yearGroupName'] ?? '') . ' ' . ($row6['className'] ?? ''));
 										?>
-										<option value="<?php echo $row6[0]; ?>"><?php echo $row61[1].' '.$theClassName; ?></option>
+										<option value="<?php echo htmlspecialchars($row6['classId']); ?>"><?php echo htmlspecialchars($label); ?></option>
 										<?php } }?>
 									</select><br>
 									<button type='button' onClick='getChecked()' class='btn btn-primary'><i class='fa fa-sign-in'></i> Add Students to selected class</button><br>
@@ -1152,7 +1149,7 @@ session_start();
 								<div class="col-md-6">
 									<label style="color:#000000;">Arm <span style="color:red; font-size:18px;">*</span></label>
 									<select class="form-control" name="className6" id="className6" onchange="viewStudentsForDeletion()" required >
-										
+										<option value="">... Select Year group first ...</option>
 									</select>
 								</div>
 							</div>
@@ -1230,8 +1227,6 @@ session_start();
     <script src="js/bootstrap-wysiwyg-custom.js"></script>
     <!-- ck editor -->
     <script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
-    <!-- custom form component script for this page-->
-    <script src="js/form-component.js"></script>
     <!-- custome script for all page -->
     <script src="js/scripts.js"></script>
 <script src="../../datatables/js/jquery.dataTables.min.js"></script>
@@ -1244,16 +1239,42 @@ session_start();
 	<script src="../../datatables/js/buttons.html5.min.js"></script>
 	<script src="../../datatables/js/buttons.print.min.js"></script>
 	<script>
+		function escapeHtml(value)
+		{
+			return String(value == null ? '' : value)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#039;');
+		}
+
+		function escapeJs(value)
+		{
+			return String(value == null ? '' : value)
+				.replace(/\\/g, '\\\\')
+				.replace(/'/g, "\\'")
+				.replace(/"/g, '\\"')
+				.replace(/\n/g, '\\n')
+				.replace(/\r/g, '\\r');
+		}
+
 		//function to check if a picture of the student was uploaded before or not.
 		function callPictureCheck(studentId, studentPassport, firstName, surname)
 		{
-			if(studentPassport == "")
+			var sId = escapeJs(studentId);
+			var sFirst = escapeJs(firstName);
+			var sSur = escapeJs(surname);
+			var sPass = escapeJs(studentPassport);
+			var sPassHtml = escapeHtml(studentPassport);
+
+			if(!studentPassport || studentPassport === "")
 			{
-				return "<a href='javascript:void(0)' onclick='openToUploadPic(\""+studentId+"\",\""+firstName+"\",\""+surname+"\",\""+studentPassport+"\")' style='cursor: pointer;' title='Click to upload passport of this student'>Upload Picture</a>";
+				return '<a href="javascript:void(0)" onclick="openToUploadPic(\''+sId+'\',\''+sFirst+'\',\''+sSur+'\')" style="cursor: pointer;" title="Click to upload passport of this student">Upload Picture</a>';
 			}
 			else
 			{
-				return "<a href='javascript:void(0)' onclick='openToUpdatePicture(\""+studentId+"\",\""+firstName+"\",\""+surname+"\",\""+studentPassport+"\")' style='cursor:pointer;' title='Click to update picture'><img src='studentPassports/"+studentPassport+"' style='width:50px; height:60px;'/></a>";
+				return '<a href="javascript:void(0)" onclick="openToUpdatePicture(\''+sId+'\',\''+sFirst+'\',\''+sSur+'\',\''+sPass+'\')" style="cursor:pointer;" title="Click to update picture"><img src="studentPassports/'+sPassHtml+'" style="width:50px; height:60px;"/></a>';
 			}
 		}
 		
@@ -1265,40 +1286,46 @@ session_start();
 					dataType: 'JSON',
 					success: function(response)
 					{
-						//alert(response)
-						var len = response.length;
+						var students = Array.isArray(response) ? response : [];
+						var len = students.length;
+						var rows = [];
 						
 						for(var i=0; i<len; i++){
-							var studentId = response[i].studentId;
-							var surname = response[i].surname;
-							var firstName = response[i].firstName;						
-							var middleName = response[i].middleName;	
-							var gender = response[i].gender;	
-							var admissionNumber = response[i].admissionNumber;	
-							var studentClassName = response[i].studentClassName;	
-							var studentEmail = response[i].studentEmail;	
-							var studentPassword = response[i].studentPassword;	
-							var studentYearGroupId = response[i].studentYearGroupId;	
-							var studentClassId = response[i].studentClassId;	
-							var studentPassport = response[i].studentPassport;	
-							var studentFullName = surname+" "+firstName+" "+middleName;
+							var s = students[i];
+							var studentId = s.studentId;
+							var surname = s.surname || '';
+							var firstName = s.firstName || '';						
+							var middleName = s.middleName || '';	
+							var gender = s.gender || '';	
+							var admissionNumber = s.admissionNumber || '';	
+							var studentClassName = s.studentClassName || '';	
+							var studentEmail = s.studentEmail || '';	
+							var studentPassword = s.studentPassword || '';	
+							var studentYearGroupId = s.studentYearGroupId || '';	
+							var studentClassId = s.studentClassId || '';	
+							var studentPassport = s.studentPassport || '';	
+							var studentFullName = [surname, firstName, middleName].filter(Boolean).join(' ');
 							
 							var tr_str = "<tr>" +
 								"<td>" + (i+1) + "</td>" +
-								"<td>" + surname + "</td>" +
-								"<td>" + firstName + "</td>" +
-								"<td>" + middleName + "</td>" +
-								"<td>" + gender + "</td>" +
-								"<td>" + admissionNumber + "</td>" +
-								"<td>" + studentClassName + "</td>" +
-								"<td>" + studentEmail + "</td>" +
+								"<td>" + escapeHtml(surname) + "</td>" +
+								"<td>" + escapeHtml(firstName) + "</td>" +
+								"<td>" + escapeHtml(middleName) + "</td>" +
+								"<td>" + escapeHtml(gender) + "</td>" +
+								"<td>" + escapeHtml(admissionNumber) + "</td>" +
+								"<td>" + escapeHtml(studentClassName) + "</td>" +
+								"<td>" + escapeHtml(studentEmail) + "</td>" +
 								"<td><center>" + callPictureCheck(studentId, studentPassport, firstName, surname) + "</center></td>" +
-								"<td align='center'><a href='javascript:void(0)' onClick='openEditModal(\""+studentId+"\",\""+surname+"\",\""+firstName+"\",\""+middleName+"\",\""+gender+"\",\""+admissionNumber+"\",\""+studentEmail+"\",\""+studentPassword+"\",\""+studentYearGroupId+"\",\""+studentClassId+"\")' title='Edit this student record' style='cursor:pointer'><i class='fa fa-pencil-square-o'></i></a>&nbsp; &nbsp; &nbsp; &nbsp;<a href='javascript:void(0)' onClick='deleteStudent(\""+studentId+"\",\""+studentFullName+"\")' title='Delete this student' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
-								
+								"<td align='center'>" +
+									"<a href='javascript:void(0)' onClick=\"openEditModal('" + escapeJs(studentId) + "','" + escapeJs(surname) + "','" + escapeJs(firstName) + "','" + escapeJs(middleName) + "','" + escapeJs(gender) + "','" + escapeJs(admissionNumber) + "','" + escapeJs(studentEmail) + "','" + escapeJs(studentPassword) + "','" + escapeJs(studentYearGroupId) + "','" + escapeJs(studentClassId) + "')\" title='Edit this student record' style='cursor:pointer'><i class='fa fa-pencil-square-o'></i></a>" +
+									"&nbsp; &nbsp; &nbsp; &nbsp;" +
+									"<a href='javascript:void(0)' onClick=\"deleteStudent('" + escapeJs(studentId) + "','" + escapeJs(studentFullName) + "')\" title='Delete this student' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a>" +
+								"</td>" +
 								"</tr>";
 
-							$("#example tbody").append(tr_str);
+							rows.push(tr_str);
 						}
+						$("#example tbody").html(rows.join(''));
 						$('#example').DataTable( {
 						"paging":   true,
 						"ordering": true,
@@ -1307,9 +1334,11 @@ session_start();
 						dom: 'lBfrtip',
 						buttons: [
 							'copy', 'csv', 'excel', 'pdf', 'print'
-						],
-						"responsive": true
+						]
 						});
+					},
+					error: function() {
+						$("#example tbody").html('<tr><td colspan="10" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Failed to load student records. Please refresh the page.</td></tr>');
 					}
 			});
 		}
@@ -1618,7 +1647,7 @@ session_start();
             $("#gender1").val(gender);       
             document.getElementById("studentAdmissionNo1").value=admissionNumber;       
             document.getElementById("studentEmail1").value=studentEmail;       
-            document.getElementById("password1").value=password;
+            document.getElementById("password1").value="";
 			$("#yeargroup1").val(studentYearGroupId);
 			
 			var theYearGroup = $("#yeargroup1 option:selected").text();
@@ -1743,11 +1772,7 @@ session_start();
 			}
 			else if(email.length > 1 && !email.match(mailformat))
 			{
-				$('.message7').html('<i class="fa fa-info-circle"></i> ' + " Please enter staff's valid email")
-			}
-			else if (thePassword=="")
-			{
-				$('.message7').html('<i class="fa fa-info-circle"></i> ' + ' Please enter password')
+				$('.message7').html('<i class="fa fa-info-circle"></i> ' + " Please enter student's valid email")
 			}
 			else if (studentYearGroupId=="")
 			{
@@ -1760,16 +1785,16 @@ session_start();
 			else
 			{									
 				var form_data = 
-				  'studentIdToUpdate='+studentIdToUpdate+
-				  '&surname='+surname+
-				  '&firstName='+firstName+
-				  '&middleName='+middleName+
-				  '&gender='+gender+
-				  '&studentAdmissionNo='+studentAdmissionNo+
-				  '&studentEmail='+email+
-				  '&thePassword='+thePassword+
-				  '&studentYearGroupId='+studentYearGroupId+
-				  '&studentClassId='+studentClassId;
+				  'studentIdToUpdate='+encodeURIComponent(studentIdToUpdate)+
+				  '&surname='+encodeURIComponent(surname)+
+				  '&firstName='+encodeURIComponent(firstName)+
+				  '&middleName='+encodeURIComponent(middleName)+
+				  '&gender='+encodeURIComponent(gender)+
+				  '&studentAdmissionNo='+encodeURIComponent(studentAdmissionNo)+
+				  '&studentEmail='+encodeURIComponent(email)+
+				  '&thePassword='+encodeURIComponent(thePassword)+
+				  '&studentYearGroupId='+encodeURIComponent(studentYearGroupId)+
+				  '&studentClassId='+encodeURIComponent(studentClassId);
 				
 				$.ajax({
 					url: "updateStudentData.php",
@@ -1847,15 +1872,21 @@ session_start();
 			});
 		}
 		
+		var xhr_getClasses5 = null;
 		//Fetching class for year group change when viewing students based on selected criteria
 		function getClasses5()
 		{
+			if (xhr_getClasses5) {
+				xhr_getClasses5.abort();
+				xhr_getClasses5 = null;
+			}
 			if (xhr_viewCriteria) {
 				xhr_viewCriteria.abort();
 				xhr_viewCriteria = null;
 			}
 			clearViewStudentsList('Select an arm to list students.');
 			$('#theClass').hide();
+			$('#classes6').val('');
 			$('.message9').html('');
 			$('.message10').html('');
 
@@ -1864,25 +1895,37 @@ session_start();
 			$("#className5").html("<option value=''>Loading arms...</option>");
 
 			if (!selectedYearGroup) {
-				$("#className5").html("<option value=''>... Select Arm ...</option>");
+				$("#className5").html("<option value=''>... Select Year group first ...</option>");
 				return;
 			}
 
-			$.ajax({
+			xhr_getClasses5 = $.ajax({
 				type: "POST",
 				url: "getClassToAddStudent.php",
 				data: { yearGroup : selectedYearGroup, yearGroupName : theYearGroup} 
-				}).done(function(data){
+			}).done(function(data){
 				$("#className5").html(data ? data.replace(/Class/g, 'Arm') : "<option value=''>No arm found</option>");
-			}).fail(function(){
+			}).fail(function(xhr, status){
+				if (status === 'abort') return;
 				$("#className5").html("<option value=''>Could not load arms</option>");
 				$('.message9').html('<i class="fa fa-exclamation-triangle"></i> Could not load arms. Please try again.');
+			}).always(function(){
+				xhr_getClasses5 = null;
 			});
 		}
 		
+		var xhr_getClasses6 = null;
 		//Fetching class for year group change when deleting students based on selected criteria
 		function getClasses6()
 		{
+			if (xhr_getClasses6) {
+				xhr_getClasses6.abort();
+				xhr_getClasses6 = null;
+			}
+			if (typeof xhr_deleteCriteria !== 'undefined' && xhr_deleteCriteria) {
+				xhr_deleteCriteria.abort();
+				xhr_deleteCriteria = null;
+			}
 			var selectedYearGroup = $("#yearGroup6 option:selected").val();
 			var theYearGroup=$("#yearGroup6 option:selected").text();
 			clearDeleteStudentsList('Select an arm to list students for deletion.');
@@ -1890,19 +1933,22 @@ session_start();
 			$("#className6").html("<option value=''>Loading arms...</option>");
 
 			if (!selectedYearGroup) {
-				$("#className6").html("<option value=''>... Select Arm ...</option>");
+				$("#className6").html("<option value=''>... Select Year group first ...</option>");
 				return;
 			}
 
-			$.ajax({
+			xhr_getClasses6 = $.ajax({
 				type: "POST",
 				url: "getClassToAddStudent.php",
 				data: { yearGroup : selectedYearGroup, yearGroupName : theYearGroup} 
-				}).done(function(data){
+			}).done(function(data){
 				$("#className6").html(data ? data.replace(/Class/g, 'Arm') : "<option value=''>No arm found</option>");
-			}).fail(function(){
+			}).fail(function(xhr, status){
+				if (status === 'abort') return;
 				$("#className6").html("<option value=''>Could not load arms</option>");
 				$('.message11').html('<i class="fa fa-exclamation-triangle"></i> Could not load arms. Please try again.');
+			}).always(function(){
+				xhr_getClasses6 = null;
 			});
 		}
 		
@@ -1929,6 +1975,16 @@ session_start();
 		function openDeleteStudentsModal()
 		{
 			if (modal6_delete) {
+				if (typeof xhr_deleteCriteria !== 'undefined' && xhr_deleteCriteria) {
+					xhr_deleteCriteria.abort();
+					xhr_deleteCriteria = null;
+				}
+				if (xhr_getClasses6) {
+					xhr_getClasses6.abort();
+					xhr_getClasses6 = null;
+				}
+				$("#yearGroup6").val('');
+				$("#className6").html("<option value=''>... Select Year group first ...</option>");
 				clearDeleteStudentsList('Select a year group and arm to list students for deletion.');
 				$('.message11').html('');
 				modal6_delete.style.display = "block";
@@ -1951,6 +2007,13 @@ session_start();
 					xhr_viewCriteria.abort();
 					xhr_viewCriteria = null;
 				}
+				if (xhr_getClasses5) {
+					xhr_getClasses5.abort();
+					xhr_getClasses5 = null;
+				}
+				$("#yearGroup5").val('');
+				$("#className5").html("<option value=''>... Select Year group first ...</option>");
+				$("#classes6").val('');
 				clearViewStudentsList('Select a year group and arm to list students.');
 				$('#theClass').hide();
 				$('.message9').html('');
@@ -2019,6 +2082,8 @@ session_start();
 			
 			$('.message9').html('');
 			$('.message10').html('');
+			$('#theClass').hide();
+			$('#classes6').val('');
 			
 			var selectedYearGroupId = $("#yearGroup5 option:selected").val();
 			var selectedClassId = $("#className5 option:selected").val();
@@ -2035,7 +2100,6 @@ session_start();
 			}
 			
 			clearViewStudentsList('Loading students...');
-			$('#theClass').hide();
 			$('.message9').html('<i class="fa fa-spinner fa-spin"></i> Loading students...');
 			
 			xhr_viewCriteria = $.ajax({
@@ -2052,7 +2116,8 @@ session_start();
 					if (len === 0) {
 						clearViewStudentsList('No students found for the selected arm.');
 						$('#theClass').hide();
-						$('.message9').html('<i class="fa fa-info-circle"></i> No students found.');
+						$('#classes6').val('');
+						$('.message9').html('<i class="fa fa-info-circle"></i> No students found for this arm.');
 						return;
 					}
 
@@ -2084,7 +2149,9 @@ session_start();
 					if (status === 'abort') return; // Ignore intentional aborts
 					clearViewStudentsList('Could not load students for this arm.');
 					$('#theClass').hide();
-					$('.message9').html('<i class="fa fa-exclamation-triangle"></i> Error loading students.');
+					$('#classes6').val('');
+					$('.message9').html('<i class="fa fa-exclamation-triangle"></i> ' +
+						(status === 'timeout' ? 'Request timed out. Please try again.' : 'Error loading students. Please try again.'));
 				},
 				complete: function() {
 					xhr_viewCriteria = null;
@@ -2124,8 +2191,13 @@ session_start();
 			return document.querySelectorAll(selector);
 		}
 
+		var xhr_deleteCriteria = null;
 		function viewStudentsForDeletion()
 		{
+			if (xhr_deleteCriteria) {
+				xhr_deleteCriteria.abort();
+				xhr_deleteCriteria = null;
+			}
 			$('.message11').html('');
 			
 			var selectedYearGroupId = $("#yearGroup6 option:selected").val();
@@ -2145,7 +2217,7 @@ session_start();
 			clearDeleteStudentsList('Loading students...');
 			$('.message11').html('<i class="fa fa-spinner fa-spin"></i> Loading students, please wait...');
 			
-			$.ajax({
+			xhr_deleteCriteria = $.ajax({
 				type: 'POST',
 				url: 'getStudentsRecordsBasedOnCriteria.php',
 				data: {selectedYearGroupId: selectedYearGroupId, selectedClassId: selectedClassId},
@@ -2185,10 +2257,14 @@ session_start();
 						' student(s) in this arm. Select checkboxes then click Delete.').fadeIn('slow');
 				},
 				error: function(xhr, status, error) {
+					if (status === 'abort') return;
 					clearDeleteStudentsList('Could not load students for this arm.');
 					$('.message11').html('<i class="fa fa-exclamation-triangle"></i> ' +
 						(status === 'timeout' ? 'Request timed out.' : 'Error loading students.') +
 						' Please try again.').fadeIn('slow');
+				},
+				complete: function() {
+					xhr_deleteCriteria = null;
 				}
 			});
 		}
@@ -2278,13 +2354,17 @@ session_start();
 			var selectedClassId = document.getElementById('classes6').value;
 			var selectedClassName = $("#classes6 option:selected").text();
 			            		
-			if (favorite=="")
+			if (favorite == "")
 			{
-				$('.message10').html('<i class="fa fa-info-circle"></i> Please check at least one student before submitting')
+				$('.message10').html('<i class="fa fa-info-circle"></i> Please check at least one student before submitting');
 			}
 			else if (selectedClassId == "")
 			{
-				$('.message10').html('<i class="fa fa-info-circle"></i> Please select a class')
+				$('.message10').html('<i class="fa fa-info-circle"></i> Please select a destination class');
+			}
+			else if (selectedClassId == classPromotingDemotingFrom)
+			{
+				$('.message10').html('<i class="fa fa-info-circle"></i> The selected destination class is the same as the current class. Please choose a different class.');
 			}
 			else
 			{	

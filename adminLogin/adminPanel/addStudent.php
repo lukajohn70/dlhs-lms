@@ -8,6 +8,7 @@ session_start();
 	else
 	{
 		include "../../db_connection/dlhs_db_connection.php";
+		require_once "../../scripts/password_security_helper.php";
 	
 		//post for adding a student
 		if(isset($_POST['surname']))
@@ -18,7 +19,7 @@ session_start();
 			$gender = ucfirst(strToLower(mysqli_real_escape_string($connection, $_POST['gender'])));
 			$admissionNumber = mysqli_real_escape_string($connection, $_POST['admissionNumber']);
 			$studentEmail = mysqli_real_escape_string($connection, $_POST['studentEmail']);
-			$password = mysqli_real_escape_string($connection, $_POST['password']);
+			$password = mysqli_real_escape_string($connection, dlhs_hash_password((string)$_POST['password']));
 			$yearGroupId = mysqli_real_escape_string($connection, $_POST['yeargroup']);
 			$classId = mysqli_real_escape_string($connection, $_POST['className']);
 			

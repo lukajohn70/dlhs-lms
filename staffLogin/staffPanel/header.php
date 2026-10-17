@@ -1,58 +1,38 @@
 <?php
-	//function to get the number of already taken tests for the notification area.
-	function getPending($connection)
-	{
-		$testStatus=0; //status of not yet started tests.
-		$staffId= isset($_SESSION['staffId']) ? $_SESSION['staffId'] : null;
-		
-		if($staffId){
-			$query41 = "SELECT * FROM tests WHERE status='$testStatus' AND staffId='$staffId'";
-		}else{
-			$query41 = "SELECT * FROM tests WHERE status='$testStatus'";
+	$numberPending = 0;
+	$numberInProgress = 0;
+	$numberTaken = 0;
+
+	$headerStaffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+	$headerWhere = $headerStaffId > 0
+		? "status IN (0, 1, 2) AND staffId = '{$headerStaffId}'"
+		: "status IN (0, 1, 2)";
+
+	if (isset($connection) && $connection instanceof mysqli) {
+		$headerCountsRes = $connection->query("SELECT status, COUNT(*) AS cnt FROM tests WHERE {$headerWhere} GROUP BY status");
+		if ($headerCountsRes) {
+			while ($hRow = $headerCountsRes->fetch_assoc()) {
+				$st = (int) $hRow['status'];
+				if ($st === 0) {
+					$numberPending = (int) $hRow['cnt'];
+				} elseif ($st === 1) {
+					$numberInProgress = (int) $hRow['cnt'];
+				} elseif ($st === 2) {
+					$numberTaken = (int) $hRow['cnt'];
+				}
+			}
 		}
-		$result41 = $connection->query($query41);
-		
-		$totalPendingreturned=$result41->num_rows;
-		return $totalPendingreturned;		
 	}
-	
-	//function to get the number of tests in progress.
-	function getInProgress($connection)
-	{
-		$testStatus=1; //status of not yet started tests.
-		$staffId= isset($_SESSION['staffId']) ? $_SESSION['staffId'] : null;
-		
-		if($staffId){
-			$query42 = "SELECT * FROM tests WHERE status='$testStatus' AND staffId='$staffId'";
-		}else{
-			$query42 = "SELECT * FROM tests WHERE status='$testStatus'";
-		}
-		$result42 = $connection->query($query42);
-		
-		$totalInProgress=$result42->num_rows;
-		return $totalInProgress;			
+
+	if (!function_exists('getPending')) {
+		function getPending($connection) { global $numberPending; return $numberPending; }
 	}
-	
-	//function to get the number of completed and submitted tests for the notification area.
-	function getTaken($connection)
-	{
-		$testStatus=2; //status of not yet started tests.
-		$staffId= isset($_SESSION['staffId']) ? $_SESSION['staffId'] : null;
-		
-		if($staffId){
-			$query43 = "SELECT * FROM tests WHERE status='$testStatus' AND staffId='$staffId'";
-		}else{
-			$query43 = "SELECT * FROM tests WHERE status='$testStatus'";
-		}
-		$result43 = $connection->query($query43);
-		
-		$totalTakenreturned=$result43->num_rows;
-		return $totalTakenreturned;		
+	if (!function_exists('getInProgress')) {
+		function getInProgress($connection) { global $numberInProgress; return $numberInProgress; }
 	}
-	
-	$numberPending=getPending($connection);
-	$numberInProgress=getInProgress($connection);
-	$numberTaken=getTaken($connection);
+	if (!function_exists('getTaken')) {
+		function getTaken($connection) { global $numberTaken; return $numberTaken; }
+	}
 ?>
 
 <header class="header dark-bg" style="position: relative; z-index: 10000;">

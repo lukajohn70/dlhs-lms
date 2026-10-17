@@ -503,8 +503,11 @@ session_start();
 							</div>
 							<div class="item form-group">
 								<div class="col-md-12">
-									<label><span style="color:#000000;">Staff Password: </span> <span class="required">*</span></label><br>
-									<input type="text" name="staffPassword1" required="required" id="staffPassword1" class="form-control"  >
+									<label><span style="color:#000000;">New Password <small style="font-weight:normal; color:#555;">(leave blank to keep current password)</small>: </span></label><br>
+									<div style="display:flex; gap:8px;">
+										<input type="text" name="staffPassword1" id="staffPassword1" class="form-control" placeholder="Leave blank to keep current password, or enter new password">
+										<button type="button" class="btn btn-warning btn-sm" onclick="document.getElementById('staffPassword1').value='1234';" title="Fill default password (1234)" style="white-space:nowrap;"><i class="fa fa-key"></i> Reset to 1234</button>
+									</div>
 								</div>
 							</div>
 
@@ -762,7 +765,7 @@ session_start();
             document.getElementById("middleName1").value=middleName;       
             $("#gender1 option[value="+gender+"]").attr('selected', 'selected');       
             document.getElementById("staffEmail1").value=staffEmail;       
-            document.getElementById("staffPassword1").value=staffPassword;       
+            document.getElementById("staffPassword1").value="";       
                 
             modal1.style.display = "block";
         }
@@ -869,20 +872,16 @@ session_start();
 			{
 				$('.message7').html('<i class="fa fa-info-circle"></i> ' + " Please enter staff's valid email")
 			}
-			else if (thePassword=="")
-			{
-				$('.message7').html('<i class="fa fa-info-circle"></i> ' + ' Please enter password')
-			}
 			else
 			{									
 				var form_data = 
-				  'staffIdToUpdate='+staffIdToUpdate+
-				  '&surname='+surname+
-				  '&firstName='+firstName+
-				  '&middleName='+middleName+
-				  '&gender='+gender+
-				  '&staffEmail='+email+
-				  '&thePassword='+thePassword;
+				  'staffIdToUpdate='+encodeURIComponent(staffIdToUpdate)+
+				  '&surname='+encodeURIComponent(surname)+
+				  '&firstName='+encodeURIComponent(firstName)+
+				  '&middleName='+encodeURIComponent(middleName)+
+				  '&gender='+encodeURIComponent(gender)+
+				  '&staffEmail='+encodeURIComponent(email)+
+				  '&thePassword='+encodeURIComponent(thePassword);
 				
 				$.ajax({
 					url: "updateStaffData.php",

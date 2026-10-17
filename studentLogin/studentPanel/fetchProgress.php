@@ -1,14 +1,21 @@
 <?php
+ini_set('display_errors', '0');
+header('Content-Type: application/json; charset=utf-8');
 session_start();
 	require_once "../../db_connection/dlhs_db_connection.php";
 	require_once "shuffle_options_helper.php";
 	require_once "answer_grading_helper.php";
 	
-	//post for change of password
+	// Check session validity
+	if (!isset($_SESSION['studentId']) || !isset($_SESSION['testId'])) {
+		echo json_encode(array('error' => 'Session expired', 'j' => 1));
+		exit;
+	}
+
 	if(isset($_POST['selectedAnswer']))
 	{    
-		$selectedAnswer = mysqli_real_escape_string($connection, $_POST['selectedAnswer']);
-		$progressValue = mysqli_real_escape_string($connection, $_POST['progressValue'])-1;
+		$selectedAnswer = mysqli_real_escape_string($connection, $_POST['selectedAnswer'] ?? '0');
+		$progressValue = (int)($_POST['progressValue'] ?? 1) - 1;
 		$testId = $_SESSION['testId'];
 		$studentId = $_SESSION['studentId'];
 		
@@ -136,6 +143,7 @@ session_start();
 	
 	$_SESSION['correctOption']=$correctOption;
 	$_SESSION['markForQuestion']=$markForQuestion;
+	session_write_close();
 	
 	
 	//Selecting the selected uption of an already answered question.

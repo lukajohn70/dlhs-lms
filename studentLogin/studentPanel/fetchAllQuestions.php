@@ -6,18 +6,19 @@ if (!isset($_SESSION['studentLast_login'])) {
     exit();
 }
 
+$testId = isset($_SESSION['idOfTest']) ? (int) $_SESSION['idOfTest'] : 0;
+$studentId = isset($_SESSION['studentId']) ? (int) $_SESSION['studentId'] : 0;
+$questionsIdsArray = $_SESSION['questionsIdsArray'] ?? [];
+
+// Release session lock early to prevent blocking concurrent requests (timer, tracking, status)
+session_write_close();
+
 require_once('../../db_connection/dlhs_db_connection.php');
 require_once('shuffle_options_helper.php');
 require_once('../../scripts/question_authoring_helper.php');
 
-$testId = $_SESSION['idOfTest'];
-$studentId = $_SESSION['studentId'];
-
 try {
-    // Get the randomized question order from session (set by exam.php)
-    $questionsIdsArray = $_SESSION['questionsIdsArray'] ?? [];
-    
-    if (empty($questionsIdsArray)) {
+    if (empty($questionsIdsArray) || $testId <= 0 || $studentId <= 0) {
         throw new Exception("Question order not found in session. Please refresh the exam page.");
     }
     
@@ -33,46 +34,66 @@ try {
     }
     
     $tableRow = $tableResult->fetch_assoc();
+    $tableStmt->close();
+
     $questionsTable = $tableRow['tableName'];
     $answersTable = $tableRow['answersTable'];
     $randomizeOptions = $tableRow['randomizeOptions'] ?? 'No';
-    
-    // Fetch questions in the order specified by questionsIdsArray (respects randomization)
-    $questions = [];
-    
-    $stimulusMap = dlhsFetchSharedStimulusMapForQuestions($connection, $testId, $questionsIdsArray);
 
-    foreach ($questionsIdsArray as $questionId) {
-        // Get question data
-        $stmt = $connection->prepare("
-            SELECT 
-                q.questionId,
-                q.question,
-                q.optionA,
-                q.optionB,
-                q.optionC,
-                q.optionD,
-                q.optionE,
-                q.correctOption,
-                a.selectedOption
-            FROM 
-                `$questionsTable` q
-            LEFT JOIN 
-                `$answersTable` a ON q.questionId = a.questionId 
-                AND a.userLoginId = ? 
-                AND a.testId = ?
-            WHERE
-                q.questionId = ?
-        ");
-        
-        $stmt->bind_param("iii", $studentId, $testId, $questionId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        
-        if (!$row) {
-            continue; // Skip if question not found
+    // Validate table names to prevent SQL injection
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $questionsTable) || !preg_match('/^[a-zA-Z0-9_]+$/', $answersTable)) {
+        throw new Exception("Invalid question or answer table configuration");
+    }
+
+    $cleanQuestionIds = array_values(array_filter(array_map('intval', $questionsIdsArray)));
+    if (empty($cleanQuestionIds)) {
+        throw new Exception("No valid questions found for this test.");
+    }
+
+    $idList = implode(',', $cleanQuestionIds);
+    $stimulusMap = dlhsFetchSharedStimulusMapForQuestions($connection, $testId, $cleanQuestionIds);
+
+    // Batch-fetch all questions and existing student answers in a single query
+    $batchQuery = "
+        SELECT 
+            q.questionId,
+            q.question,
+            q.optionA,
+            q.optionB,
+            q.optionC,
+            q.optionD,
+            q.optionE,
+            q.correctOption,
+            a.selectedOption
+        FROM 
+            `$questionsTable` q
+        LEFT JOIN 
+            `$answersTable` a ON q.questionId = a.questionId 
+            AND a.userLoginId = ? 
+            AND a.testId = ?
+        WHERE
+            q.questionId IN ($idList)
+    ";
+
+    $batchStmt = $connection->prepare($batchQuery);
+    $batchStmt->bind_param("ii", $studentId, $testId);
+    $batchStmt->execute();
+    $batchResult = $batchStmt->get_result();
+
+    $rawQuestions = [];
+    while ($r = $batchResult->fetch_assoc()) {
+        $rawQuestions[(int) $r['questionId']] = $r;
+    }
+    $batchStmt->close();
+
+    // Reconstruct questions in the exact order specified by $cleanQuestionIds (respects randomization)
+    $questions = [];
+    foreach ($cleanQuestionIds as $questionId) {
+        if (!isset($rawQuestions[$questionId])) {
+            continue;
         }
+
+        $row = $rawQuestions[$questionId];
         $optionA = htmlspecialchars_decode($row['optionA']);
         $optionB = htmlspecialchars_decode($row['optionB']);
         $optionC = htmlspecialchars_decode($row['optionC']);
@@ -143,3 +164,4 @@ try {
         'message' => 'Error fetching questions: ' . $e->getMessage()
     ]);
 } 
+?>
