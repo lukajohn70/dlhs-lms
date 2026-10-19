@@ -150,6 +150,10 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 		.badge-status-2 {
 			background: #6c757d;
 		}
+		.question-card img {
+			max-width: 100% !important;
+			height: auto !important;
+		}
 	</style>
   </head>
   <body>
@@ -420,19 +424,20 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 						// Populate table
 						response.forEach((test, index) => {
 							const statusBadge = getStatusBadge(test.status);
-							const questionCount = test.questionCount || '?';
+							const questionCount = (test.questionCount !== undefined && test.questionCount !== null) ? test.questionCount : '?';
+							const safeTestId = parseInt(test.testId, 10);
 							
 							const row = `<tr>
 								<td align='center'>${index + 1}</td>
-								<td>${test.testName}</td>
-								<td>${test.teacherName}</td>
-								<td>${test.subjectName}</td>
-								<td>${test.yearGroupName}</td>
-								<td align='center'>${test.testDate}</td>
+								<td>${escapeHtml(test.testName || '')}</td>
+								<td>${escapeHtml(test.teacherName || '')}</td>
+								<td>${escapeHtml(test.subjectName || '')}</td>
+								<td>${escapeHtml(test.yearGroupName || '')}</td>
+								<td align='center'>${escapeHtml(test.testDate || '')}</td>
 								<td align='center'>${statusBadge}</td>
 								<td align='center'><span class="badge" style="background: #667eea;">${questionCount}</span></td>
 								<td align='center'>
-									<button class="btn btn-primary btn-sm" onclick="viewQuestions(${test.testId}, '${escapeHtml(test.testName)}', '${escapeHtml(test.teacherName)}')">
+									<button class="btn btn-primary btn-sm" onclick="viewQuestions(${safeTestId})">
 										<i class="fa fa-eye"></i> View Questions
 									</button>
 								</td>
@@ -475,7 +480,7 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 			return '<span class="badge">Unknown</span>';
 		}
 		
-		function viewQuestions(testId, testName, teacherName) {
+		function viewQuestions(testId, fallbackTestName, fallbackTeacherName) {
 			showLoading();
 			
 			$.ajax({
@@ -487,17 +492,21 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 					hideLoading();
 					
 					if (response.success) {
+						const info = response.testInfo || {};
+						const currentTestName = info.testName || fallbackTestName || 'Test';
+						const currentTeacherName = info.teacherName || fallbackTeacherName || 'Teacher';
+						
 						// Update header with question count
 						let questionCountText = response.questions.length + ' Objective';
-						if (response.testInfo.hasEssay) {
+						if (info.hasEssay) {
 							questionCountText += ' + 1 Essay';
 						}
 						
 						$('#questionsHeader').html(`
-							<i class="fa fa-question-circle"></i> ${testName} - ${teacherName}
+							<i class="fa fa-question-circle"></i> ${escapeHtml(currentTestName)} - ${escapeHtml(currentTeacherName)}
 							<span class="badge pull-right" style="background: #667eea; margin-right: 30px;">${questionCountText}</span>
 							<span class="tools pull-right">
-								<a href="javascript:;" onclick="closeQuestions()"><i class="icon_close"></i></a>
+								<a href="javascript:;" onclick="closeQuestions()" title="Close"><i class="icon_close"></i></a>
 							</span>
 						`);
 						
@@ -509,34 +518,51 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 							questionsHtml += '<h4 style="color: #667eea; margin-bottom: 20px;"><i class="fa fa-check-circle"></i> Objective Questions</h4>';
 							
 							response.questions.forEach((q, index) => {
+								const correctOpt = (q.correctOption || '').toUpperCase();
+								const hasOptionE = q.optionE && String(q.optionE).trim() !== '';
+								
 								questionsHtml += `
 									<div class="question-card panel panel-default">
 										<div class="panel-body">
 											<h5><strong>Question ${index + 1} (${q.mark} marks)</strong></h5>
-											<p style="font-size: 15px; margin: 15px 0;">${q.question}</p>
+											
+											${q.stimulusContent ? `
+												<div style="margin-bottom: 15px; padding: 12px 15px; background: #eef2ff; border-left: 4px solid #667eea; border-radius: 4px;">
+													${q.stimulusTitle ? `<strong style="color: #4338ca;"><i class="fa fa-file-text-o"></i> ${escapeHtml(q.stimulusTitle)}</strong><hr style="margin: 8px 0;">` : ''}
+													<div style="font-size: 14px; line-height: 1.6;">${q.stimulusContent}</div>
+												</div>
+											` : ''}
+											
+											<div style="font-size: 15px; margin: 15px 0;">${q.question}</div>
 											
 											<div style="margin: 10px 0;">
 												<div style="padding: 5px 0;">
 													<span class="option-label">A.</span> ${q.optionA}
-													${q.correctOption == 'A' ? '<span class="correct-answer pull-right">✓ Correct Answer</span>' : ''}
+													${correctOpt === 'A' ? '<span class="correct-answer pull-right"><i class="fa fa-check"></i> Correct Answer</span>' : ''}
 												</div>
 												<div style="padding: 5px 0;">
 													<span class="option-label">B.</span> ${q.optionB}
-													${q.correctOption == 'B' ? '<span class="correct-answer pull-right">✓ Correct Answer</span>' : ''}
+													${correctOpt === 'B' ? '<span class="correct-answer pull-right"><i class="fa fa-check"></i> Correct Answer</span>' : ''}
 												</div>
 												<div style="padding: 5px 0;">
 													<span class="option-label">C.</span> ${q.optionC}
-													${q.correctOption == 'C' ? '<span class="correct-answer pull-right">✓ Correct Answer</span>' : ''}
+													${correctOpt === 'C' ? '<span class="correct-answer pull-right"><i class="fa fa-check"></i> Correct Answer</span>' : ''}
 												</div>
 												<div style="padding: 5px 0;">
 													<span class="option-label">D.</span> ${q.optionD}
-													${q.correctOption == 'D' ? '<span class="correct-answer pull-right">✓ Correct Answer</span>' : ''}
+													${correctOpt === 'D' ? '<span class="correct-answer pull-right"><i class="fa fa-check"></i> Correct Answer</span>' : ''}
 												</div>
+												${hasOptionE ? `
+													<div style="padding: 5px 0;">
+														<span class="option-label">E.</span> ${q.optionE}
+														${correctOpt === 'E' ? '<span class="correct-answer pull-right"><i class="fa fa-check"></i> Correct Answer</span>' : ''}
+													</div>
+												` : ''}
 											</div>
 											
 											${q.solution ? `
-												<div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #667eea;">
-													<strong>Solution:</strong><br>
+												<div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #667eea; border-radius: 3px;">
+													<strong><i class="fa fa-lightbulb-o"></i> Solution / Explanation:</strong><br>
 													${q.solution}
 												</div>
 											` : ''}
@@ -559,7 +585,7 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 											<strong><i class="fa fa-clock-o"></i> Essay Time: ${response.essayQuestion.time || 'Not specified'} minutes</strong>
 										</div>
 										<h5><strong>Essay Question</strong></h5>
-										<p style="font-size: 15px; margin: 15px 0; line-height: 1.6;">${response.essayQuestion.question}</p>
+										<div style="font-size: 15px; margin: 15px 0; line-height: 1.6;">${response.essayQuestion.question}</div>
 										<div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-left: 3px solid #667eea;">
 											<strong><i class="fa fa-info-circle"></i> Note:</strong> This is an open-ended question requiring detailed written response from students.
 										</div>
@@ -577,12 +603,12 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 										<div class="col-md-3">
 											<h5>Test Summary</h5>
 											<p><strong>Objective Questions:</strong> ${response.questions.length}</p>
-											${response.testInfo.hasEssay ? '<p><strong>Essay:</strong> Yes</p>' : ''}
+											${info.hasEssay ? '<p><strong>Essay:</strong> Yes</p>' : ''}
 										</div>
 										<div class="col-md-3">
 											<h5>&nbsp;</h5>
-											<p><strong>Total Marks:</strong> ${totalMarks}</p>
-											${response.testInfo.hasEssay ? `<p><strong>Essay Time:</strong> ${response.testInfo.essayTime || 'N/A'} min</p>` : ''}
+											<p><strong>Total Marks:</strong> ${parseFloat(totalMarks.toFixed(2))}</p>
+											${info.hasEssay ? `<p><strong>Essay Time:</strong> ${info.essayTime || 'N/A'} min</p>` : ''}
 										</div>
 										<div class="col-md-3">
 											<h5>&nbsp;</h5>
@@ -590,8 +616,8 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 										</div>
 										<div class="col-md-3">
 											<h5>&nbsp;</h5>
-											<p><strong>Objective Duration:</strong> ${response.testInfo.duration || 'N/A'} min</p>
-											${response.testInfo.hasEssay ? `<p><strong>Total Time:</strong> ${parseInt(response.testInfo.duration || 0) + parseInt(response.testInfo.essayTime || 0)} min</p>` : ''}
+											<p><strong>Objective Duration:</strong> ${info.duration || 'N/A'} min</p>
+											${info.hasEssay ? `<p><strong>Total Time:</strong> ${parseInt(info.duration || 0) + parseInt(info.essayTime || 0)} min</p>` : ''}
 										</div>
 									</div>
 								</div>
@@ -608,11 +634,11 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 										</div>
 										<div class="col-md-4">
 											<h5>&nbsp;</h5>
-											<p><strong>Essay Time:</strong> ${response.testInfo.essayTime || 'N/A'} minutes</p>
+											<p><strong>Essay Time:</strong> ${info.essayTime || 'N/A'} minutes</p>
 										</div>
 										<div class="col-md-4">
 											<h5>&nbsp;</h5>
-											<p><strong>Total Duration:</strong> ${response.testInfo.essayTime || 'N/A'} minutes</p>
+											<p><strong>Total Duration:</strong> ${info.essayTime || 'N/A'} minutes</p>
 										</div>
 									</div>
 								</div>
@@ -621,6 +647,15 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 						} else {
 							questionsHtml = '<div class="alert alert-info"><i class="fa fa-info-circle"></i> No questions found for this test.</div>';
 						}
+						
+						// Add close button at bottom
+						questionsHtml += `
+							<div class="text-center" style="margin: 30px 0 20px 0;">
+								<button class="btn btn-default" onclick="closeQuestions()">
+									<i class="fa fa-times"></i> Close Questions View
+								</button>
+							</div>
+						`;
 						
 						$('#questionsContent').html(questionsHtml);
 						$('#questionsSection').slideDown();
@@ -661,6 +696,7 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 		}
 		
 		function escapeHtml(text) {
+			if (text === null || text === undefined) return '';
 			const map = {
 				'&': '&amp;',
 				'<': '&lt;',
@@ -668,7 +704,7 @@ $yearGroupsResult = $connection->query($yearGroupsQuery);
 				'"': '&quot;',
 				"'": '&#039;'
 			};
-			return text.replace(/[&<>"']/g, m => map[m]);
+			return String(text).replace(/[&<>"']/g, m => map[m]);
 		}
 	</script>
 

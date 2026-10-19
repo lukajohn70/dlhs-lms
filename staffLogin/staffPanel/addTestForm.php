@@ -917,6 +917,11 @@ session_start();
 		
 		function callTable()	//Declaration of the data table function
 		{
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+
 			$.ajax({
 					url: 'getTests.php',
 					type: 'get',
@@ -927,7 +932,12 @@ session_start();
 					dataType: 'JSON',
 					success: function(response)
 					{
-						var len = response.length;
+						if ($.fn.DataTable.isDataTable('#example')) {
+							$('#example').DataTable().clear().destroy();
+						}
+						$('#example tbody').empty();
+
+						var len = response ? response.length : 0;
 						for(var i=0; i<len; i++){
 							var testId = response[i].testId;
 							var testName = response[i].testName;

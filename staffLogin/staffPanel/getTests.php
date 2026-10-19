@@ -1,11 +1,15 @@
 <?php
-session_start();
-	$staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
-	session_write_close();
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
+$staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+$isAdmin = isset($_SESSION['adminLoggedIn']);
+session_write_close();
 
-	include "../../db_connection/dlhs_db_connection.php";
-	require_once "../../scripts/test_workflow_helper.php";
-	
+include __DIR__ . "/../../db_connection/dlhs_db_connection.php";
+require_once __DIR__ . "/../../scripts/test_workflow_helper.php";
+
+if (!function_exists('getStatus')) {
 	function getStatus($testId, $status, $testName)
 	{
 		if($status == 0)
@@ -22,22 +26,30 @@ session_start();
 			return 'Ended - <i class="fa fa-refresh" aria-hidden="true" style="color:red; cursor:pointer;" title="Click to reschedule test" onclick="rescheduleTest('.$testId.')"></i>';
 		}
 	}
+}
 
-	$selectedTestType = dlhsNormalizeTestType(isset($_GET['testType']) ? $_GET['testType'] : '');
-	$selectedSession = isset($_GET['academicSession']) ? trim((string)$_GET['academicSession']) : '';
-	$return_arr = array();
-	$whereSession = '';
-	if ($selectedSession !== '') {
-		$escSession = mysqli_real_escape_string($connection, $selectedSession);
-		$whereSession = " AND t.academicSession = '$escSession'";
-	}
-	$query = "SELECT t.*, s.subjectName AS joinedSubjectName, yg.yearGroupName AS joinedYearGroupName, ay.academicYear AS joinedAcademicYear
-	          FROM tests t
-	          LEFT JOIN subjects s ON s.subjectId = t.subject
-	          LEFT JOIN yeargroup yg ON yg.yearGroupId = t.yearGroup
-	          LEFT JOIN academic_year ay ON ay.academicYearId = t.academicYearId
-	          WHERE t.staffId = '$staffId'" . $whereSession;
-	$result = $connection->query($query);
+$selectedTestType = dlhsNormalizeTestType(isset($_GET['testType']) ? $_GET['testType'] : '');
+$selectedSession = isset($_GET['academicSession']) ? trim((string)$_GET['academicSession']) : '';
+$return_arr = array();
+$whereSession = '';
+if ($selectedSession !== '') {
+	$escSession = mysqli_real_escape_string($connection, $selectedSession);
+	$whereSession = " AND t.academicSession = '$escSession'";
+}
+
+if ($isAdmin && $staffId === 0) {
+	$whereClause = ($whereSession !== '') ? " WHERE 1=1" . $whereSession : "";
+} else {
+	$whereClause = " WHERE t.staffId = '$staffId'" . $whereSession;
+}
+
+$query = "SELECT t.*, s.subjectName AS joinedSubjectName, yg.yearGroupName AS joinedYearGroupName, ay.academicYearName AS joinedAcademicYear
+          FROM tests t
+          LEFT JOIN subjects s ON s.subjectId = t.subject
+          LEFT JOIN yeargroup yg ON yg.yearGroupId = t.yearGroup
+          LEFT JOIN academic_year ay ON ay.academicYearId = t.academicYearId"
+          . $whereClause;
+$result = $connection->query($query);
 	
 	while($result && ($row = $result->fetch_assoc()))
 	{

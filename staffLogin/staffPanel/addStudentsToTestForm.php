@@ -388,10 +388,11 @@ session_start();
 					placeholder: '... Select Test ...',
 					width: '100%'
 				});
-				// Make studentClass searchable and show placeholder
+				// Make studentClass sleek without search overhead since there are only 1-3 classes
 				$('#studentClass').select2({
 					placeholder: '... Select class ...',
-					width: '100%'
+					width: '100%',
+					minimumResultsForSearch: Infinity
 				});
 			}
 
@@ -402,16 +403,21 @@ session_start();
 	</script>
 	<script>
 		$("#test").on('change', function() {
-			//$('#yearGroup').prop('selectedIndex',0);
-			$('#studentClass').html('');
+			// Clear class dropdown and update Select2
+			$('#studentClass').html('<option value="">...Select class...</option>').trigger('change.select2');
 			$('.message1').html('');
 			$('.message2').html('');
 			$('#result').html('');
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+			$("#theTimeEdit").hide();
+
 			var selectedTestId = $("#test option:selected").val();
 			if(selectedTestId == "")
 			{
-				$('#example').DataTable().clear().destroy();
-				$("#theTimeEdit").hide();
+				return;
 			}
 			else
 			{
@@ -421,21 +427,20 @@ session_start();
 					data: { selectedTestId : selectedTestId},
 					dataType : 'JSON',
 					success: function(response){
-						
-						var len = response.length;
-
+						var len = response ? response.length : 0;
 						if(len > 0)
 						{
-							$('#studentClass').html('<option value="">...Select class...</option>');
+							var classOpts = '<option value="">...Select class...</option>';
 							for(var i=0; i<len; i++){
 								var classId = response[i].classId;
 								var className = response[i].className;
-								$("#studentClass").append('<option value="'+classId+'">'+className+'</option>');
+								classOpts += '<option value="'+classId+'">'+className+'</option>';
 							}
+							$('#studentClass').html(classOpts).trigger('change.select2');
 						}
 						else
 						{
-							$('#studentClass').html('');
+							$('#studentClass').html('<option value="">...Select class...</option>').trigger('change.select2');
 							$('.message2').html('<i class="fa fa-info-circle"></i> No class(es) in selected year group');
 						}
 					}
@@ -561,7 +566,10 @@ session_start();
 			$('.message6').html('');
 			$("#theTimeEdit").hide();
 			
-			$('#example').DataTable().clear().destroy();
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
 			
 			var selectedTestId = $("#test option:selected").val();
 			var selectedClassId = $("#studentClass option:selected").val();
@@ -583,7 +591,12 @@ session_start();
 						dataType: 'JSON',
 						success: function(response)
 						{
-							var len = response.length;
+							if ($.fn.DataTable.isDataTable('#example')) {
+								$('#example').DataTable().clear().destroy();
+							}
+							$('#example tbody').empty();
+
+							var len = response ? response.length : 0;
 		
 							for(var i=0; i<len; i++){
 								var testId = response[i].testId;
@@ -811,7 +824,11 @@ session_start();
 		//View students added to a test called after a delete of a student from a test
 		function viewAdded1(selectedTestId, selectedClassId)
 		{
-			$('#example').DataTable().clear().destroy();
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+
 			$.ajax({
 				url: 'viewStudentsAddedToTest.php',
 				type: 'POST',
@@ -819,7 +836,12 @@ session_start();
 				dataType: 'JSON',
 				success: function(response)
 				{
-					var len = response.length;
+					if ($.fn.DataTable.isDataTable('#example')) {
+						$('#example').DataTable().clear().destroy();
+					}
+					$('#example tbody').empty();
+
+					var len = response ? response.length : 0;
 					for(var i=0; i<len; i++){
 						var testId = response[i].testId;
 						var studentId = response[i].studentId;
