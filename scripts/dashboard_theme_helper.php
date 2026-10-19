@@ -307,6 +307,7 @@ if (!function_exists('dlhsDashboardGetNavItems')) {
                 array('label' => 'Test Access', 'href' => 'addStudentsToTestForm.php', 'icon' => 'fa-users'),
                 array('label' => 'Results', 'href' => 'examineesStatus.php', 'icon' => 'fa-bar-chart'),
                 array('label' => 'Files', 'href' => 'file_management.php', 'icon' => 'fa-folder-open'),
+                array('label' => 'Change Password', 'href' => 'changePassword.php', 'icon' => 'fa-key'),
             );
         }
 
@@ -346,6 +347,7 @@ if (!function_exists('dlhsDashboardGetQuickActions')) {
                 array('label' => 'Add questions', 'href' => 'addQuestionForm.php', 'icon' => 'fa-edit', 'variant' => 'secondary'),
                 array('label' => 'Manage students', 'href' => 'addStudentsToTestForm.php', 'icon' => 'fa-users', 'variant' => 'secondary'),
                 array('label' => 'View results', 'href' => 'examineesStatus.php', 'icon' => 'fa-bar-chart', 'variant' => 'secondary'),
+                array('label' => 'Change password', 'href' => 'changePassword.php', 'icon' => 'fa-key', 'variant' => 'secondary'),
             );
         }
 

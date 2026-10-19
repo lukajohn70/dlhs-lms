@@ -10,6 +10,7 @@ if (!isset($_SESSION['staffLast_login']) || (time() - $_SESSION['staffLast_login
 
 if (isset($_POST['password1'])) {    
     require_once "../../scripts/password_policy.php";
+    require_once "../../scripts/password_security_helper.php";
     require_once "../../db_connection/dlhs_db_connection.php";
     
     $passwordRaw = isset($_POST['password1']) ? (string)$_POST['password1'] : '';
@@ -26,7 +27,7 @@ if (isset($_POST['password1'])) {
         exit;
     }
 
-    $hashedPassword = password_hash($passwordRaw, PASSWORD_DEFAULT);
+    $hashedPassword = dlhs_hash_password($passwordRaw);
     $staffId = (int)$_SESSION['staffId'];
                         
     $stmt = $connection->prepare("UPDATE stafflogin SET password = ? WHERE staffId = ?");

@@ -62,6 +62,7 @@ $(document).ready(function() {
         if (!checkCompliance()) return;
 
         $submit.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Updating...');
+        $('#statusMessage').empty().hide();
         
         $.ajax({
             url: "changePassword1.php",
@@ -73,25 +74,30 @@ $(document).ready(function() {
             success: function(response) {
                 response = $.trim(response);
                 if (response == "1") {
+                    var successHtml = '<div class="alert alert-success" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-check-circle"></i> Password updated successfully! Redirecting to dashboard...</div>';
+                    $('#statusMessage').html(successHtml).fadeIn('slow');
                     $('.message2').html("");
                     $('.message1').html('<i class="fa fa-check"></i> Password successfully changed.').fadeIn('slow');
-                    $submit.prop('disabled', false).html('<i class="fa fa-save"></i> Update Password');
+                    $submit.prop('disabled', true).html('<i class="fa fa-check"></i> Updated!');
                     $pwd1.val("");
                     $pwd2.val("");
-                    checkCompliance();
-                    if (window.location.search.indexOf('force=1') !== -1) {
-                        setTimeout(function() { window.location.href = "index.php"; }, 1500);
-                    }
+                    setTimeout(function() {
+                        window.location.href = "index.php";
+                    }, 1500);
                 } else if (response == "0") {
                     window.location.replace("logout.php");
                 } else {
                     var errorMsg = response.indexOf('3|') === 0 ? response.substring(2) : "Update failed. Please try again.";
+                    var errorHtml = '<div class="alert alert-danger" style="border-radius: 8px;"><i class="fa fa-times-circle"></i> ' + errorMsg + '</div>';
+                    $('#statusMessage').html(errorHtml).fadeIn('slow');
                     $('.message1').html("");
                     $('.message2').html('<i class="fa fa-times"></i> ' + errorMsg).fadeIn('slow');
                     $submit.prop('disabled', false).html('<i class="fa fa-save"></i> Update Password');
                 }
             },
             error: function() {
+                var connErrHtml = '<div class="alert alert-danger" style="border-radius: 8px;"><i class="fa fa-times-circle"></i> Connection error. Please try again.</div>';
+                $('#statusMessage').html(connErrHtml).fadeIn('slow');
                 $('.message1').html("");
                 $('.message2').html('<i class="fa fa-times"></i> Connection error.').fadeIn('slow');
                 $submit.prop('disabled', false).html('<i class="fa fa-save"></i> Update Password');

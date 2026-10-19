@@ -265,6 +265,10 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                 <i class="fa fa-inbox"></i>
                 <span>File Requests</span>
             </a>
+            <a class="nav-link<?php if ($currentPage === 'changePassword.php') echo ' is-active'; ?>" href="changePassword.php" onclick="dlhsToggleSidebar(false)">
+                <i class="fa fa-key"></i>
+                <span>Change Password</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer dlhs-sidepanel-footer">
@@ -275,10 +279,16 @@ $staffName = isset($_SESSION['staffName']) && trim((string) $_SESSION['staffName
                     <p>Staff Portal</p>
                 </div>
             </div>
-            <a class="dlhs-sidepanel-logout" href="logout.php" onclick="dlhsToggleSidebar(false)">
-                <i class="fa fa-power-off"></i>
-                <span>Sign out</span>
-            </a>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <a href="changePassword.php" onclick="dlhsToggleSidebar(false)" style="color: #8be0ff; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-key"></i>
+                    <span>Password</span>
+                </a>
+                <a class="dlhs-sidepanel-logout" href="logout.php" onclick="dlhsToggleSidebar(false)">
+                    <i class="fa fa-power-off"></i>
+                    <span>Sign out</span>
+                </a>
+            </div>
         </div>
     </div>
 </aside>

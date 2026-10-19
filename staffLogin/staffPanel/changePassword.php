@@ -57,8 +57,6 @@ session_start();
 				color: #34495e;
 			}
 		</style>
-	<script src="jQuery3.3.1.js"></script>
-	<script src="changePasswordAjax.js"></script>
 	<script>
 		//function to accept only integer minutes.
 		function isNumber(evt) {
@@ -96,10 +94,10 @@ session_start();
               
               
 				<div class="row">
-					<div class="col-lg-9">
+					<div class="col-lg-8 col-md-10">
 						<section class="panel">
 								<header class="panel-heading">
-									<?php echo isset($_GET['force']) ? 'Default password change required' : 'Please fill required field in the form'; ?>
+									<?php echo isset($_GET['force']) ? 'Default password change required' : 'Change Your Account Password'; ?>
 								</header>
 								<div class="panel-body">
 										<?php if (isset($_GET['force'])) { ?>
@@ -109,52 +107,66 @@ session_start();
 										<?php } ?>
 										<form id="changePasswordForm">
 									<div class="form-group">
-										<label>New password</label>
-										<input type="password" name="password1" class="form-control" id="password1" placeholder="Enter New password" required autocomplete="new-password">
+										<label>New Password</label>
+										<div class="input-group">
+											<input type="password" name="password1" class="form-control" id="password1" placeholder="Enter New password" required autocomplete="new-password">
+											<span class="input-group-btn">
+												<button class="btn btn-default" type="button" onclick="dlhsTogglePwd('password1', 'togglePwdIcon1')">
+													<i class="fa fa-eye" id="togglePwdIcon1"></i>
+												</button>
+											</span>
+										</div>
                                         <div class="password-strength-meter" style="height: 4px; background-color: #eee; margin-top: 5px; border-radius: 2px; overflow: hidden;">
                                             <div id="strengthFill" style="height: 100%; width: 0; transition: width 0.3s ease, background-color 0.3s ease;"></div>
                                         </div>
 									</div>
-										<div class="form-group">
-												<label>Re-enter New password</label>
-												<input type="password" name="password2" class="form-control" id="password2" placeholder="Re-enter New password" required autocomplete="new-password">
-											</div>
+									<div class="form-group">
+										<label>Re-enter New Password</label>
+										<div class="input-group">
+											<input type="password" name="password2" class="form-control" id="password2" placeholder="Re-enter New password" required autocomplete="new-password">
+											<span class="input-group-btn">
+												<button class="btn btn-default" type="button" onclick="dlhsTogglePwd('password2', 'togglePwdIcon2')">
+													<i class="fa fa-eye" id="togglePwdIcon2"></i>
+												</button>
+											</span>
+										</div>
+									</div>
 											
-                                            <ul class="compliance-list" id="complianceList" style="list-style: none; padding-left: 0; margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
-                                                <style>
-                                                    .compliance-item { margin-bottom: 8px; display: flex; align-items: center; font-size: 13px; color: #6c757d; }
-                                                    .compliance-item i { margin-right: 10px; width: 16px; }
-                                                    .compliance-item.met { color: #28a745; font-weight: 600; }
-                                                    .compliance-item.not-met { color: #dc3545; }
-                                                    .compliance-item i.fa-check-circle { display: none; }
-                                                    .compliance-item.met i.fa-check-circle { display: inline-block; }
-                                                    .compliance-item.met i.fa-circle-o { display: none; }
-                                                </style>
-                                                <li class="compliance-item" data-rule="length"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least 8 characters long</li>
-                                                <li class="compliance-item" data-rule="uppercase"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one uppercase letter</li>
-                                                <li class="compliance-item" data-rule="lowercase"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one lowercase letter</li>
-                                                <li class="compliance-item" data-rule="number"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one number</li>
-                                                <li class="compliance-item" data-rule="no-default"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> Not a default password (1234, 4321, etc.)</li>
-                                                <li class="compliance-item" data-rule="no-repeat"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> No simple repeating sequences (e.g. 1111)</li>
-                                                <li class="compliance-item" data-rule="no-sequence"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> No ascending/descending sequences (e.g. abcd)</li>
-                                            <li class="compliance-item" data-rule="match"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> Passwords must match</li>
-                                        </ul>
+                                    <ul class="compliance-list" id="complianceList" style="list-style: none; padding-left: 0; margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <style>
+                                            .compliance-item { margin-bottom: 8px; display: flex; align-items: center; font-size: 13px; color: #6c757d; }
+                                            .compliance-item i { margin-right: 10px; width: 16px; }
+                                            .compliance-item.met { color: #28a745; font-weight: 600; }
+                                            .compliance-item.not-met { color: #dc3545; }
+                                            .compliance-item i.fa-check-circle { display: none; }
+                                            .compliance-item.met i.fa-check-circle { display: inline-block; }
+                                            .compliance-item.met i.fa-circle-o { display: none; }
+                                        </style>
+                                        <li class="compliance-item" data-rule="length"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least 8 characters long</li>
+                                        <li class="compliance-item" data-rule="uppercase"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one uppercase letter</li>
+                                        <li class="compliance-item" data-rule="lowercase"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one lowercase letter</li>
+                                        <li class="compliance-item" data-rule="number"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> At least one number</li>
+                                        <li class="compliance-item" data-rule="no-default"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> Not a default password (1234, 4321, etc.)</li>
+                                        <li class="compliance-item" data-rule="no-repeat"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> No simple repeating sequences (e.g. 1111)</li>
+                                        <li class="compliance-item" data-rule="no-sequence"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> No ascending/descending sequences (e.g. abcd)</li>
+                                        <li class="compliance-item" data-rule="match"><i class="fa fa-circle-o"></i><i class="fa fa-check-circle"></i> Passwords must match</li>
+                                    </ul>
 
-                                        <div style="margin-bottom: 20px;">
-                                            <button type="button" class="btn btn-default" onclick="dlhsGeneratePassword()">
-                                                <i class="fa fa-magic"></i> Generate Secure Password
-                                            </button>
-                                        </div>
+                                    <div style="margin-bottom: 20px;">
+                                        <button type="button" class="btn btn-default" onclick="dlhsGeneratePassword()">
+                                            <i class="fa fa-magic"></i> Generate Secure Password
+                                        </button>
+                                        <div id="genPwdNotice" style="display:none; margin-top:10px; padding:10px 14px; background:#e8f4fd; border:1px solid #b8daff; border-radius:8px; color:#004085; font-size:13px;"></div>
+                                    </div>
 
-										<button type="submit" class="btn btn-primary" id="submit" disabled><i class="fa fa-save"></i> Update Password</button>
+									<button type="submit" class="btn btn-primary" id="submit" disabled><i class="fa fa-save"></i> Update Password</button>
+									<div id="statusMessage" style="margin-top: 15px;"></div>
 									<div class="message2" id="message2" style="color:red; margin-top: 10px;" align="center"></div><div class="message1" style="color:green; font-size:17px; margin-top: 10px;" align="center"></div>
 								</form>
 							</div>
 						</section>
 					</div>					
 				</div>				
-                </div>
-              </div>
               <!-- page end-->
           </section>
       </section>
@@ -169,47 +181,60 @@ session_start();
     <!-- javascripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="changePasswordAjax.js"></script>
     <!-- nice scroll -->
     <script src="js/jquery.scrollTo.min.js"></script>
     <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
 
     <!-- jquery ui -->
     <script src="js/jquery-ui-1.9.2.custom.min.js"></script>
-
-    <!--custom checkbox & radio-->
-    <script type="text/javascript" src="js/ga.js"></script>
-    <!--custom switch-->
-    <script src="js/bootstrap-switch.js"></script>
-    <!--custom tagsinput-->
-    <script src="js/jquery.tagsinput.js"></script>
-    
-    <!-- colorpicker -->
-   
-    <!-- bootstrap-wysiwyg -->
-    <script src="js/jquery.hotkeys.js"></script>
-    <script src="js/bootstrap-wysiwyg.js"></script>
-    <script src="js/bootstrap-wysiwyg-custom.js"></script>
-    <!-- ck editor -->
-    <script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
-    <!-- custom form component script for this page-->
-    <script src="js/form-component.js"></script>
     <!-- custome script for all page -->
     <script src="js/scripts.js"></script>
 	<script>
+		function dlhsTogglePwd(inputId, iconId) {
+			var f = document.getElementById(inputId);
+			var ic = document.getElementById(iconId);
+			if (!f || !ic) return;
+			if (f.type === 'password') {
+				f.type = 'text';
+				ic.className = 'fa fa-eye-slash';
+			} else {
+				f.type = 'password';
+				ic.className = 'fa fa-eye';
+			}
+		}
+
 		function dlhsGeneratePassword() {
-			var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-			var retVal = "";
-			retVal += "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(Math.floor(Math.random() * 26));
-			retVal += "abcdefghijklmnopqrstuvwxyz".charAt(Math.floor(Math.random() * 26));
-			retVal += "0123456789".charAt(Math.floor(Math.random() * 10));
-			retVal += "!@#$%^&*()_+".charAt(Math.floor(Math.random() * 12));
-			for (var i = 0; i < 10; i++) {
-				retVal += charset.charAt(Math.floor(Math.random() * charset.length));
+			var uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+			var lowercase = 'abcdefghjkmnpqrstuvwxyz';
+			var numbers = '23456789';
+			var symbols = '!@#$%^&*()_+';
+			var chars = uppercase + lowercase + numbers + symbols;
+			var retVal = '';
+			retVal += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+			retVal += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+			retVal += numbers.charAt(Math.floor(Math.random() * numbers.length));
+			retVal += symbols.charAt(Math.floor(Math.random() * symbols.length));
+			for (var i = 0; i < 8; i++) {
+				retVal += chars.charAt(Math.floor(Math.random() * chars.length));
 			}
 			retVal = retVal.split('').sort(function(){return 0.5-Math.random()}).join('');
 			$('#password1').val(retVal).attr('type', 'text').trigger('input');
 			$('#password2').val(retVal).attr('type', 'text').trigger('input');
-			dlhsAlert('🔐 Generated Password: ' + retVal + ' — It has been filled into both fields for you.', 'success');
+			$('#togglePwdIcon1').attr('class', 'fa fa-eye-slash');
+			$('#togglePwdIcon2').attr('class', 'fa fa-eye-slash');
+			$('#genPwdNotice').show().html('<i class="fa fa-check-circle text-success"></i> Generated Strong Password: <strong id="genPwdText">' + retVal + '</strong> <button type="button" class="btn btn-xs btn-default" style="margin-left:8px;" onclick="dlhsCopyGenerated()"><i class="fa fa-copy"></i> Copy</button>');
+		}
+
+		function dlhsCopyGenerated() {
+			var pwd = $('#genPwdText').text();
+			if (navigator.clipboard) {
+				navigator.clipboard.writeText(pwd).then(function() {
+					dlhsAlert('Password copied to clipboard: ' + pwd, 'success');
+				});
+			} else {
+				dlhsAlert('Generated password: ' + pwd, 'info');
+			}
 		}
 	</script>
 

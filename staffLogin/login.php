@@ -43,7 +43,8 @@ if (isset($_POST['staffUsername'])) {
             $_SESSION['staffEmail'] = $row['username'];
             $_SESSION['staffName'] = trim($row['firstName'] . " " . $row['surname']);
             $_SESSION['staffLoggedIn'] = "yes";
-            $_SESSION['forcePasswordChange'] = ($password === '4321') ? 1 : 0;
+            $isDefaultPassword = in_array(strtolower($password), array('4321', '1234', 'password', 'admin'));
+            $_SESSION['forcePasswordChange'] = $isDefaultPassword ? 1 : 0;
 
             if (empty($row['passport'])) {
                 $_SESSION['passportNameAndLocation'] = '../../images/dlhslogo3.jpg';
@@ -64,7 +65,7 @@ if (isset($_POST['staffUsername'])) {
                 $logStmt->close();
             }
 
-            echo ($password === '4321') ? 2 : 1;
+            echo $isDefaultPassword ? 2 : 1;
         } else {
             echo 0;
         }
