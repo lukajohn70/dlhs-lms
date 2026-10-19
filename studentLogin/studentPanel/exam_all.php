@@ -1403,7 +1403,7 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 <i class="fa fa-check-circle"></i>
                 <span>All questions are answered. You can submit now.</span>
             </div>
-            <button type="button" class="btn btn-success btn-lg btn-pill exam-submit-trigger" id="fixedSubmitButton">
+            <button type="button" class="btn btn-success btn-lg btn-pill exam-submit-trigger" id="fixedSubmitButton" style="display: none;">
                 <i class="fa fa-check" style="margin-right: 8px;"></i>Submit
             </button>
         </div>
@@ -1944,18 +1944,14 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 $('.progress-fill').css('width', percentage + '%');
             }
 
-            // Update the submit button visibility
+            // Update the submit button visibility - only show when all questions are answered
             function updateSubmitButton() {
-                if (totalQuestions > 0) {
+                const answered = answeredQuestions.size;
+                const unanswered = Math.max(0, totalQuestions - answered);
+                if (totalQuestions > 0 && unanswered === 0) {
                     $('#fixedSubmitButton').show();
                     $('#examSubmitBar').addClass('is-visible');
-                    const answered = answeredQuestions.size;
-                    const unanswered = Math.max(0, totalQuestions - answered);
-                    if (unanswered === 0) {
-                        $('.exam-submit-note').html('<i class="fa fa-check-circle"></i> <span>All ' + totalQuestions + ' questions answered. You can submit now.</span>');
-                    } else {
-                        $('.exam-submit-note').html('<i class="fa fa-info-circle"></i> <span>' + answered + ' of ' + totalQuestions + ' questions answered (' + unanswered + ' unanswered).</span>');
-                    }
+                    $('.exam-submit-note').html('<i class="fa fa-check-circle"></i> <span>All ' + totalQuestions + ' questions answered. You can submit now.</span>');
                 } else {
                     $('#fixedSubmitButton').hide();
                     $('#examSubmitBar').removeClass('is-visible');
@@ -2418,6 +2414,11 @@ trackTestActivity($testId, $testName, $testedTableName, $testTime, $answeredCoun
                 const answered = answeredQuestions.size;
                 const unanswered = Math.max(0, total - answered);
                 const flagged = flaggedQuestions.size;
+
+                if (total > 0 && unanswered > 0) {
+                    showToast('Please answer all questions before submitting (' + unanswered + ' unanswered).');
+                    return;
+                }
 
                 $('#modalTotalQuestions').text(total);
                 $('#modalAnsweredQuestions').text(answered);

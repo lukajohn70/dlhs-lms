@@ -259,6 +259,105 @@ if ($testId > 0) {
                 padding-top: 5rem;
             }
         }
+
+        /* Custom Confirmation Modal */
+        .modal-backdrop-custom {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-card-custom {
+            background: #ffffff;
+            border-radius: 22px;
+            max-width: 480px;
+            width: 100%;
+            padding: 34px 28px;
+            text-align: center;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            animation: modalFadeIn 0.22s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.92) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-icon-custom {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 16px;
+        }
+        .modal-title-custom {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 10px;
+        }
+        .modal-text-custom {
+            font-size: 14.5px;
+            color: #475569;
+            line-height: 1.6;
+            margin: 0 0 20px;
+        }
+        .modal-actions-custom {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .modal-btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn-cancel:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+        }
+        .modal-btn-confirm:hover {
+            background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
+        }
+        .modal-btn-confirm:disabled, .modal-btn-cancel:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -310,6 +409,27 @@ if ($testId > 0) {
         </div>
     </div>
 
+    <!-- Confirm Essay Submission Modal -->
+    <div id="confirmEssayModal" class="modal-backdrop-custom" style="display:none;">
+        <div class="modal-card-custom">
+            <div class="modal-icon-custom">
+                <i class="fa fa-question-circle"></i>
+            </div>
+            <h3 class="modal-title-custom">Submit Essay Section?</h3>
+            <p class="modal-text-custom">
+                Are you sure you want to submit your essay section?<br>
+                Once submitted, you will immediately proceed to the <strong>Objective Questions</strong>.
+            </p>
+            <div id="essayModalMsg"></div>
+            <div class="modal-actions-custom">
+                <button type="button" class="modal-btn-cancel" id="btnCancelEssaySubmit" onclick="closeEssayModal()">Cancel</button>
+                <button type="button" class="modal-btn-confirm" id="btnConfirmEssaySubmit" onclick="executeEssaySubmit()">
+                    <i class="fa fa-check"></i> Yes, Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
 <script>
     var remaining = <?php echo (int) $remainingSeconds; ?>;
     var testId = <?php echo (int) $testId; ?>;
@@ -329,6 +449,7 @@ if ($testId > 0) {
     function autoSubmitEssay() {
         if (autoSubmitted || manualSubmitted) return;
         autoSubmitted = true;
+        closeEssayModal();
         
         $('#submitEssayBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Auto-submitting...');
         $('#msg').html('<span style="color:orange;"><i class="fa fa-info-circle"></i> Time is up! Auto-submitting essay section...</span>');
@@ -344,23 +465,23 @@ if ($testId > 0) {
             dataType: 'JSON',
             success: function(response){
                 if(response.success){
-                    $('#msg').html('<span style="color:green;"><i class="fa fa-check-circle"></i> Essay auto-submitted! Unlocking objectives...</span>');
+                    $('#msg').html('<span style="color:green;"><i class="fa fa-check-circle"></i> Essay auto-submitted! Opening objectives...</span>');
                     $('#submitEssayBtn').html('<i class="fa fa-check"></i> Submitted');
                     setTimeout(function(){
-                        window.location.href = 'postSubmit.php';
-                    }, 2000);
+                        window.location.href = response.nextUrl || 'exam.php';
+                    }, 300);
                 } else {
-                    $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> Auto-submit failed: ' + response.message + '</span>');
+                    $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> Auto-submit: ' + response.message + '. Opening objectives...</span>');
                     setTimeout(function(){
-                        window.location.href = 'postSubmit.php';
-                    }, 3000);
+                        window.location.href = response.nextUrl || 'exam.php';
+                    }, 600);
                 }
             },
             error: function(){
                 $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> Network error during auto-submit. Redirecting...</span>');
                 setTimeout(function(){
-                    window.location.href = 'postSubmit.php';
-                }, 3000);
+                    window.location.href = 'exam.php';
+                }, 600);
             }
         });
     }
@@ -420,53 +541,77 @@ if ($testId > 0) {
         });
     }
 
+    function openEssayModal() {
+        if (manualSubmitted || autoSubmitted) return;
+        if(remaining <= 0){
+            $('#msg').html('<span style="color:red;">Time is up. Your essay can no longer be submitted.</span>');
+            return;
+        }
+        $('#essayModalMsg').empty();
+        $('#btnConfirmEssaySubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Yes, Submit');
+        $('#btnCancelEssaySubmit').prop('disabled', false);
+        $('#confirmEssayModal').fadeIn(200).css('display', 'flex');
+    }
+
+    function closeEssayModal() {
+        if (manualSubmitted) return;
+        $('#confirmEssayModal').fadeOut(150);
+    }
+
+    function executeEssaySubmit() {
+        if (manualSubmitted || autoSubmitted) return;
+        manualSubmitted = true;
+
+        $('#btnConfirmEssaySubmit').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+        $('#btnCancelEssaySubmit').prop('disabled', true);
+        $('#submitEssayBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+        $('#essayModalMsg').html('<div style="color:#0284c7; font-size:13px; margin-bottom:12px;"><i class="fa fa-spinner fa-spin"></i> Submitting essay...</div>');
+        $('#msg').html('<span style="color:#009999;">Submitting...</span>');
+
+        $.ajax({
+            url: 'submitEssay.php',
+            type: 'POST',
+            data: {
+                testId: testId,
+                essayAnswer: 'Essay completed'
+            },
+            dataType: 'JSON',
+            success: function(response){
+                if(response.success){
+                    $('#btnConfirmEssaySubmit').html('<i class="fa fa-check"></i> Submitted!');
+                    $('#essayModalMsg').html('<div style="color:#10b981; font-weight:600; font-size:14px; margin-bottom:12px;"><i class="fa fa-check-circle"></i> Essay submitted! Opening objective section...</div>');
+                    $('#msg').html('<span style="color:green;"><i class="fa fa-check-circle"></i> Essay submitted successfully! Opening objectives...</span>');
+                    $('#submitEssayBtn').html('<i class="fa fa-check"></i> Submitted');
+                    setTimeout(function(){
+                        window.location.href = response.nextUrl || 'exam.php';
+                    }, 250);
+                } else {
+                    manualSubmitted = false;
+                    $('#btnConfirmEssaySubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Yes, Submit');
+                    $('#btnCancelEssaySubmit').prop('disabled', false);
+                    $('#essayModalMsg').html('<div style="color:#ef4444; font-weight:600; font-size:13px; margin-bottom:12px;"><i class="fa fa-exclamation-circle"></i> ' + response.message + '</div>');
+                    $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> ' + response.message + '</span>');
+                    $('#submitEssayBtn').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Submit Essay');
+                }
+            },
+            error: function(){
+                manualSubmitted = false;
+                $('#btnConfirmEssaySubmit').prop('disabled', false).html('<i class="fa fa-check"></i> Yes, Submit');
+                $('#btnCancelEssaySubmit').prop('disabled', false);
+                $('#essayModalMsg').html('<div style="color:#ef4444; font-weight:600; font-size:13px; margin-bottom:12px;"><i class="fa fa-exclamation-circle"></i> Error submitting. Please try again.</div>');
+                $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> Error submitting. Please try again.</span>');
+                $('#submitEssayBtn').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Submit Essay');
+            }
+        });
+    }
+
     $(function(){
         tick();
         loadEssay();
         
-        $('#submitEssayBtn').on('click', function(){
-            if (manualSubmitted || autoSubmitted) return;
-            
-            if(remaining <= 0){
-                $('#msg').html('<span style="color:red;">Time is up. Your essay can no longer be submitted.</span>');
-                return;
-            }
-            
-            if(!confirm('Are you sure you want to submit? This will mark your essay section as complete.')){
-                return;
-            }
-            
-            manualSubmitted = true;
-            $('#submitEssayBtn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
-            $('#msg').html('<span style="color:#009999;">Submitting...</span>');
-            
-            $.ajax({
-                url: 'submitEssay.php',
-                type: 'POST',
-                data: {
-                    testId: testId,
-                    essayAnswer: 'Essay completed'
-                },
-                dataType: 'JSON',
-                success: function(response){
-                    if(response.success){
-                        $('#msg').html('<span style="color:green;"><i class="fa fa-check-circle"></i> Essay submitted successfully!</span>');
-                        $('#submitEssayBtn').html('<i class="fa fa-check"></i> Submitted');
-                        setTimeout(function(){
-                            window.location.href = 'postSubmit.php';
-                        }, 2000);
-                    } else {
-                        manualSubmitted = false;
-                        $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> ' + response.message + '</span>');
-                        $('#submitEssayBtn').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Submit Essay');
-                    }
-                },
-                error: function(){
-                    manualSubmitted = false;
-                    $('#msg').html('<span style="color:red;"><i class="fa fa-exclamation-circle"></i> Error submitting. Please try again.</span>');
-                    $('#submitEssayBtn').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Submit Essay');
-                }
-            });
+        $('#submitEssayBtn').on('click', function(e){
+            e.preventDefault();
+            openEssayModal();
         });
     });
 </script>

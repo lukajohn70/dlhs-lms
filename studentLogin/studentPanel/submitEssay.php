@@ -1,8 +1,10 @@
 <?php
 ini_set('display_errors', '0');
-session_start();
-require_once "../../db_connection/dlhs_db_connection.php";
-require_once "../../scripts/essay_timer_helper.php";
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . "/../../db_connection/dlhs_db_connection.php";
+require_once __DIR__ . "/../../scripts/essay_timer_helper.php";
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -15,6 +17,11 @@ if (isset($_POST['testId']) && $_POST['testId'] !== '') {
 } elseif (isset($_SESSION['idOfTest'])) {
     $testId = (int) $_SESSION['idOfTest'];
 }
+
+if ($testId > 0) {
+    $_SESSION['testId'] = $testId;
+    $_SESSION['idOfTest'] = $testId;
+}
 session_write_close();
 
 if ($studentId <= 0 || $testId <= 0) {
@@ -22,7 +29,7 @@ if ($studentId <= 0 || $testId <= 0) {
     exit;
 }
 
-$testStmt = $connection->prepare("SELECT essayTime, duration FROM tests WHERE testId = ? LIMIT 1");
+$testStmt = $connection->prepare("SELECT essayTime, duration, tableName, examineesTableName FROM tests WHERE testId = ? LIMIT 1");
 if (!$testStmt) {
     echo json_encode(array('success' => false, 'message' => 'Unable to load test settings.'));
     exit;
@@ -53,31 +60,51 @@ if ($isExpired) {
     exit;
 }
 
-$createTableQuery = "CREATE TABLE IF NOT EXISTS essay_answers (
-    answerId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    testId INT NOT NULL,
-    studentId INT NOT NULL,
-    essayAnswer TEXT NOT NULL,
-    submittedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_test_student (testId, studentId)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8";
-$connection->query($createTableQuery);
+// Fast parameterized check & save into essay_answers
+$checkStmt = $connection->prepare("SELECT answerId FROM essay_answers WHERE testId = ? AND studentId = ? LIMIT 1");
+$existingAnswerId = 0;
+if ($checkStmt) {
+    $checkStmt->bind_param('ii', $testId, $studentId);
+    $checkStmt->execute();
+    $checkRes = $checkStmt->get_result();
+    if ($checkRes && ($checkRow = $checkRes->fetch_assoc())) {
+        $existingAnswerId = (int) $checkRow['answerId'];
+    }
+    $checkStmt->close();
+}
 
-$essayAnswerEscaped = $connection->real_escape_string($essayAnswer);
-$checkQuery = "SELECT * FROM essay_answers WHERE testId='{$testId}' AND studentId='{$studentId}'";
-$checkResult = $connection->query($checkQuery);
-
-if ($checkResult && $checkResult->num_rows > 0) {
-    $updateQuery = "UPDATE essay_answers SET essayAnswer='{$essayAnswerEscaped}', submittedAt=CURRENT_TIMESTAMP WHERE testId='{$testId}' AND studentId='{$studentId}'";
-    $result = $connection->query($updateQuery);
+$result = false;
+if ($existingAnswerId > 0) {
+    $saveStmt = $connection->prepare("UPDATE essay_answers SET essayAnswer = ?, submittedAt = CURRENT_TIMESTAMP WHERE answerId = ?");
+    if ($saveStmt) {
+        $saveStmt->bind_param('si', $essayAnswer, $existingAnswerId);
+        $result = $saveStmt->execute();
+        $saveStmt->close();
+    }
 } else {
-    $insertQuery = "INSERT INTO essay_answers (testId, studentId, essayAnswer) VALUES ('{$testId}', '{$studentId}', '{$essayAnswerEscaped}')";
-    $result = $connection->query($insertQuery);
+    $saveStmt = $connection->prepare("INSERT INTO essay_answers (testId, studentId, essayAnswer, submittedAt) VALUES (?, ?, ?, CURRENT_TIMESTAMP)");
+    if ($saveStmt) {
+        $saveStmt->bind_param('iis', $testId, $studentId, $essayAnswer);
+        $result = $saveStmt->execute();
+        $saveStmt->close();
+    }
+}
+
+// Determine destination: direct to exam.php if objective questions exist
+$nextUrl = 'exam.php';
+if (!empty($testRow['examineesTableName']) && !empty($testRow['tableName'])) {
+    $nextUrl = 'exam.php';
+} else {
+    $nextUrl = 'index.php';
 }
 
 if ($result) {
     dlhsMarkEssaySubmitted($connection, $testId, $studentId);
-    echo json_encode(array('success' => true, 'message' => 'Essay submitted successfully!'));
+    echo json_encode(array(
+        'success' => true,
+        'message' => 'Essay submitted successfully!',
+        'nextUrl' => $nextUrl
+    ));
 } else {
     echo json_encode(array('success' => false, 'message' => 'Failed to submit essay: ' . $connection->error));
 }

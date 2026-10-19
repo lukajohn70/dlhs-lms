@@ -124,7 +124,7 @@ $testTime = 0;
 				
 		$testTime = $row['duration'] * 60;
 		
-		$query2 = "SELECT * FROM $questionsTableName";
+		$query2 = "SELECT questionId FROM $questionsTableName ORDER BY questionId ASC";
 		$stmt2 = $connection->prepare($query2);
 		$stmt2->execute();
 		$result2 = $stmt2->get_result();
@@ -175,7 +175,7 @@ $testTime = 0;
 		{
 			$arrayQuestionsIds = [];							//Array to hold all the questions Ids
 			
-			$query2 = "SELECT * FROM $questionsTableName";
+			$query2 = "SELECT questionId FROM $questionsTableName";
 			$stmt2 = $connection->prepare($query2);
 			$stmt2->execute();
 			$result2 = $stmt2->get_result();
@@ -210,7 +210,7 @@ $testTime = 0;
 			// If questArray is missing or corrupted, rebuild from the questions table as a fallback
 			if($arrayQuestionsIds === false || !is_array($arrayQuestionsIds) || count($arrayQuestionsIds) == 0) {
 				$arrayQuestionsIds = array();
-				$queryQ = "SELECT * FROM $questionsTableName";
+				$queryQ = "SELECT questionId FROM $questionsTableName ORDER BY questionId ASC";
 				$stmtQ = $connection->prepare($queryQ);
 				if($stmtQ) {
 					$stmtQ->execute();
