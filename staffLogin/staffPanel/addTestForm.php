@@ -448,7 +448,7 @@ session_start();
 									<div class="form-group" style="min-width:240px; max-width:300px; margin-bottom:0;">
 										<label style="font-weight:600; font-size:12px;">Filter by Academic Session</label>
 										<select class="form-control" id="sessionFilter">
-											<option value="">... All Sessions ...</option>
+											<option value="" selected>... All Sessions ...</option>
 											<?php foreach ($academicSessions as $academicSessionRow) { ?>
 											<?php $sName = isset($academicSessionRow['sessionName']) ? $academicSessionRow['sessionName'] : ''; ?>
 											<option value="<?php echo htmlspecialchars($sName); ?>">
