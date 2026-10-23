@@ -39,7 +39,11 @@ if (!function_exists('dlhsEnsureAllFileManagementTablesExist')) {
             (4, 'Multimedia', 'Videos, audio clips, and educational animations'),
             (5, 'Resources', 'General reference documents and worksheets'),
             (6, 'Exams', 'Mock papers and exam prep files'),
-            (7, 'Syllabus', 'Course syllabus and learning plans')");
+            (7, 'Syllabus', 'Course syllabus and learning plans'),
+            (8, 'Lesson Plans', 'Weekly and termly lesson plans and schemes of work'),
+            (9, 'Administrative', 'Circulars, memos, policies, and official reports'),
+            (10, 'Departmental', 'Subject meetings, syllabi, and departmental guides'),
+            (11, 'Assessments & Marksheets', 'Score sheets, grading guides, and assessment drafts')");
 
         // 2. Create file_uploads table
         $connection->query("CREATE TABLE IF NOT EXISTS `file_uploads` (
@@ -125,11 +129,40 @@ if (!function_exists('dlhsEnsureAllFileManagementTablesExist')) {
           KEY `idx_access_logs_file` (`fileId`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Safely add isPublishedToStudents column if it doesn't already exist
-        $colCheck = $connection->query("SHOW COLUMNS FROM `file_uploads` LIKE 'isPublishedToStudents'");
-        if ($colCheck && $colCheck->num_rows === 0) {
-            $connection->query("ALTER TABLE `file_uploads` ADD COLUMN `isPublishedToStudents` TINYINT(1) NOT NULL DEFAULT 0");
+        // 7. Create file_staff_assignments table for teacher-to-teacher and admin-to-teacher targeted file sharing
+        $connection->query("CREATE TABLE IF NOT EXISTS `file_staff_assignments` (
+          `assignmentId` INT NOT NULL AUTO_INCREMENT,
+          `fileId` INT NOT NULL,
+          `staffId` INT NOT NULL,
+          `assignedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (`assignmentId`),
+          UNIQUE KEY `uniq_file_staff` (`fileId`, `staffId`),
+          KEY `idx_file_staff_file` (`fileId`),
+          KEY `idx_file_staff_staff` (`staffId`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Safely add columns to file_uploads for teacher & admin file sharing
+        $columnsToEnsure = [
+            'isPublishedToStudents' => "ALTER TABLE `file_uploads` ADD COLUMN `isPublishedToStudents` TINYINT(1) NOT NULL DEFAULT 0",
+            'uploaderType'          => "ALTER TABLE `file_uploads` ADD COLUMN `uploaderType` VARCHAR(20) NOT NULL DEFAULT 'staff'",
+            'targetScope'           => "ALTER TABLE `file_uploads` ADD COLUMN `targetScope` VARCHAR(30) NOT NULL DEFAULT 'students'",
+            'adminStatus'           => "ALTER TABLE `file_uploads` ADD COLUMN `adminStatus` VARCHAR(20) NOT NULL DEFAULT 'pending'",
+            'adminNotes'            => "ALTER TABLE `file_uploads` ADD COLUMN `adminNotes` TEXT NULL",
+            'adminReviewedAt'       => "ALTER TABLE `file_uploads` ADD COLUMN `adminReviewedAt` DATETIME NULL",
+            'adminReviewedBy'       => "ALTER TABLE `file_uploads` ADD COLUMN `adminReviewedBy` INT NULL"
+        ];
+
+        foreach ($columnsToEnsure as $colName => $alterSql) {
+            $colCheck = $connection->query("SHOW COLUMNS FROM `file_uploads` LIKE '{$colName}'");
+            if ($colCheck && $colCheck->num_rows === 0) {
+                @$connection->query($alterSql);
+            }
         }
+
+        // Ensure uploadedFor is at least VARCHAR(50)
+        @$connection->query("ALTER TABLE `file_uploads` MODIFY COLUMN `uploadedFor` VARCHAR(50) NOT NULL");
+        // Ensure subjectId can default to 0 for administrative / general shares
+        @$connection->query("ALTER TABLE `file_uploads` MODIFY COLUMN `subjectId` INT DEFAULT 0");
 
         return true;
     }

@@ -6,6 +6,12 @@ session_start();
 		header('location:../index.php');
 	}
 	include "../../db_connection/dlhs_db_connection.php";
+	require_once "../../scripts/test_workflow_helper.php";
+	dlhsEnsureTestsCustomTypeColumn($connection);
+	dlhsEnsureTestsMockPaperColumn($connection);
+	$configuredTestTypes = dlhsGetConfiguredTestTypes($connection);
+	$academicSessions = dlhsGetAcademicSessions($connection, false);
+	$currentAcademicSession = dlhsGetCurrentAcademicSessionName($connection);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,8 +140,8 @@ session_start();
 		.modal1, .modal2 {
             display: none; /* Hidden by default */
             position: fixed; /* Stay in place */
-            z-index: 1; /* Sit on top */
-            padding-top: 100px; /* Location of the box */
+            z-index: 1200; /* Sit on top */
+            padding-top: 40px; /* Location of the box */
             left: 0;
             top: 0;
             width: 100%; /* Full width */
@@ -156,7 +162,7 @@ session_start();
             overflow: visible !important;
         }
 			
-			.modal-content {
+		.modal-content {
             border-radius:7px;
             background-color: #fefefe;
             margin: auto;
@@ -164,23 +170,210 @@ session_start();
             border: 1px solid #888;
             width: 60%;
             color:black;
-            }
+        }
 
-            /* The Close Button */
-            .close1{
+		#myModal1 .modal-content {
+            border-radius:16px;
+            background-color: #fefefe;
+            margin: auto;
+            padding: 0;
+            border: 1px solid rgba(0,0,0,0.08);
+            width: 78%;
+			max-width: 1080px;
+			box-shadow: 0 20px 45px rgba(0,0,0,0.18);
+            color:black;
+			overflow: hidden;
+			position: relative;
+        }
+
+        /* The Close Button */
+        .close1{
             color: #ffffff;
             float: right;
 			padding-right:20px;
 			padding-top:20px;
             font-size: 28px;
             font-weight: bold;
-            }
+        }
 
-            .close1:hover, .close1:focus {
+		#myModal1 .close1 {
+            color: #ffffff;
+            position: absolute;
+			right: 22px;
+			top: 18px;
+            font-size: 28px;
+            font-weight: bold;
+			z-index: 4;
+			float: none;
+			padding: 0;
+        }
+
+        .close1:hover, .close1:focus {
             color: red;
             text-decoration: none;
             cursor: pointer;
-            }
+        }
+
+		#myModal1 .close1:hover, #myModal1 .close1:focus {
+            color: #ffd700;
+        }
+
+		.custom-test-type-group {
+			display: none;
+			padding: 12px;
+			border-radius: 8px;
+			background: #fff7e6;
+			border: 1px solid #f4d28f;
+			margin-top: 10px;
+		}
+
+		.custom-test-type-group small {
+			display: block;
+			margin-top: 6px;
+			color: #8a5a00;
+		}
+
+		.edit-test-shell {
+			background: linear-gradient(180deg, #f8fbff 0%, #eef5fb 100%);
+			border-radius: 16px;
+			overflow: hidden;
+		}
+
+		.edit-test-header {
+			padding: 24px 28px;
+			background: linear-gradient(135deg, #003366 0%, #0a5a8c 100%);
+			color: #fff;
+		}
+
+		.edit-test-header h3 {
+			margin: 0;
+			font-size: 24px;
+			font-weight: 700;
+			letter-spacing: 0.02em;
+		}
+
+		.edit-test-header p {
+			margin: 8px 0 0;
+			color: rgba(255,255,255,0.82);
+			font-size: 13px;
+		}
+
+		.edit-test-body {
+			padding: 26px 28px 30px;
+		}
+
+		.edit-section {
+			background: #ffffff;
+			border: 1px solid rgba(0, 51, 102, 0.08);
+			border-radius: 14px;
+			padding: 20px 22px 8px;
+			margin-bottom: 18px;
+			box-shadow: 0 6px 20px rgba(0, 51, 102, 0.05);
+		}
+
+		.edit-section-title {
+			margin: 0 0 16px;
+			font-size: 14px;
+			font-weight: 700;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: #003366;
+		}
+
+		.edit-form-grid {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 18px 20px;
+		}
+
+		.edit-form-grid .field-span-2 {
+			grid-column: span 2;
+		}
+
+		.edit-form-grid .field-span-3 {
+			grid-column: span 3;
+		}
+
+		.edit-field label {
+			display: block;
+			margin-bottom: 8px;
+			color: #193b5a;
+			font-weight: 600;
+		}
+
+		.edit-field .form-control {
+			min-height: 42px;
+			border-radius: 10px;
+			border: 1px solid #cdd9e5;
+			box-shadow: none;
+		}
+
+		.edit-field .form-control:focus {
+			border-color: #0a5a8c;
+			box-shadow: 0 0 0 3px rgba(10, 90, 140, 0.12);
+		}
+
+		.edit-highlight {
+			background: linear-gradient(180deg, #fffaf0 0%, #fff5df 100%);
+			border-color: #f0d08d;
+		}
+
+		.edit-actions {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			padding-top: 6px;
+		}
+
+		.edit-actions .btn {
+			min-width: 130px;
+			border-radius: 999px;
+			padding: 10px 18px;
+			font-weight: 600;
+		}
+
+		@media (max-width: 991px) {
+			#myModal1 .modal-content {
+				width: 94%;
+			}
+			.edit-form-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+			.edit-form-grid .field-span-3 {
+				grid-column: span 2;
+			}
+		}
+
+		@media (max-width: 767px) {
+			.modal1, .modal2 {
+				padding-top: 16px;
+			}
+			.edit-test-header {
+				padding: 18px 20px;
+			}
+			.edit-test-body {
+				padding: 18px 16px 22px;
+			}
+			.edit-section {
+				padding: 16px 14px 4px;
+			}
+			.edit-form-grid {
+				grid-template-columns: 1fr;
+				gap: 14px;
+			}
+			.edit-form-grid .field-span-2,
+			.edit-form-grid .field-span-3 {
+				grid-column: span 1;
+			}
+			.edit-actions {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.edit-actions .btn {
+				width: 100%;
+			}
+		}
 			
 			body{
 			overflow-x:hidden;
@@ -523,123 +716,149 @@ session_start();
 	<div id="myModal1" class="modal1"> <!--Start of Edit modal-->
 		<div class="modal-content">
 			<span class="close1">&times;</span>
-			<div style="padding:15px; color:#fff; margin:10px 10px 0px 10px; background-color:#009999;"><center style="font-size:22px;">Edit Test</center></div>
-            <div style="background-color:#E9F1EA; padding:15px; color:#fff; margin:0px 10px 0px 10px;">
-                <form method="post" id="editTestForm">
-                    <div class="item form-group">
-						<div class="col-md-12">
-							<label><span style="color:#000000;">Test name: </span> <span class="required" style="color:red;">*</span></label><br>
-							<input type="hidden" name="testId" required="required" id="testId">
-							<input type="text" name="testName1" required="required" maxlength = "20" id="testName1" class="form-control">
+			<div class="edit-test-shell">
+				<div class="edit-test-header">
+					<h3>Edit Test</h3>
+					<p>Update the selected test details below. Conditional fields such as mock paper and custom test type will appear automatically when needed.</p>
+				</div>
+				<div class="edit-test-body">
+					<form method="post" id="editTestForm">
+						<input type="hidden" name="testId" required="required" id="testId">
+						<input type="hidden" name="startHour1" id="startHour1" value="8">
+						<input type="hidden" name="startMinute1" id="startMinute1" value="0">
+						<input type="hidden" name="amOrPm1" id="amOrPm1" value="AM">
+						<input type="hidden" name="reviewOption1" id="reviewOption1">
+
+						<div class="edit-section">
+							<div class="edit-section-title">Test Identity</div>
+							<div class="edit-form-grid">
+								<div class="edit-field field-span-3">
+									<label><span>Generated test name: </span> <span class="required" style="color:red;">*</span></label>
+									<input type="text" name="testName1" required="required" maxlength="120" id="testName1" class="form-control" readonly>
+								</div>
+								<div class="edit-field">
+									<label><span>Test date: </span> <span class="required" style="color:red;">*</span></label>
+									<input type="date" name="testDate1" required="required" id="testDate1" class="form-control">
+								</div>
+								<div class="edit-field">
+									<label><span>Duration in minutes: </span> <span class="required" style="color:red;">*</span></label>
+									<input type="text" name="testDuration1" required="required" onkeypress="javascript:return onlyNumberKey(event)" id="testDuration1" class="form-control" placeholder="e.g. 50">
+								</div>
+								<div class="edit-field">
+									<label><span>Academic session: </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="academicSession1" id="academicSession1" required>
+										<option value="">... Select Session ...</option>
+										<?php foreach ($academicSessions as $academicSessionRow) { ?>
+										<?php $sessionName = isset($academicSessionRow['sessionName']) ? $academicSessionRow['sessionName'] : ''; ?>
+										<option value="<?php echo htmlspecialchars($sessionName); ?>">
+											<?php echo htmlspecialchars($sessionName); ?><?php echo !empty($academicSessionRow['isCurrentSession']) ? ' (Current)' : ''; ?>
+										</option>
+										<?php } ?>
+									</select>
+								</div>
+							</div>
 						</div>
-						<div class="col-md-12">
-							<label><span style="color:#000000;">Test date: </span> <span class="required" style="color:red;">*</span></label><br>
-							<input type="date" name="testDate1" required="required" id="testDate1" class="form-control">
-						</div>
-						<div class="col-md-12">
-							<label><span style="color:#000000;">Duration (In Minutes:<em> e.g., 50</em>)</span> <span class="required" style="color:red;">*</span></label><br>
-							<input type="text" name="testDuration1" required="required" onkeypress="javascript:return isNumber(event)" id="testDuration1" class="form-control">
-						</div>
-						<div class="row form-group">
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Start time (<em>Select hour</em>): </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="startHour1" id="startHour1" required >
-											<option value="">... Select Hour ...</option>
-											<?php
-											
-											$hour="select * from hour";
-											$result1 = $connection->query($hour);
-											while($row1 = $result1->fetch_array(MYSQLI_NUM)){
+
+						<div class="edit-section">
+							<div class="edit-section-title">Academic Setup</div>
+							<div class="edit-form-grid">
+								<div class="edit-field">
+									<label><span>Subject: </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="subject_composite1" id="subject_composite1" required onchange="dlhsHandleSubjectChange('edit')">
+										<option value="">... Select Subject ...</option>
+										<?php
+										$subjectsQuery = "SELECT s.subjectId, s.subjectName, yg.yearGroupId, yg.yearGroupName 
+														  FROM subjects s 
+														  CROSS JOIN yeargroup yg 
+														  ORDER BY s.subjectName ASC, yg.yearGroupName ASC";
+										$res = $connection->query($subjectsQuery);
+										if ($res) {
+											while($row = $res->fetch_assoc()){
+												$val = $row['subjectId'] . '|' . $row['yearGroupId'];
+												$label = $row['subjectName'] . ' ' . $row['yearGroupName'];
 											?>
-											<option value="<?php echo $row1[0]; ?>"><?php echo $row1[1]; ?></option>
-											<?php } ?>
-										</select>
-							</div>
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Start time (<em>Select minute</em>): </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="startMinute1" id="startMinute1" required >
-											<option value="">... Select Minute ...</option>
-											<?php
-											
-											$minutes="select * from minutes";
-											$result1 = $connection->query($minutes);
-											while($row1 = $result1->fetch_array(MYSQLI_NUM)){
-											?>
-											<option value="<?php echo $row1[0]; ?>"><?php echo $row1[1]; ?></option>
-											<?php } ?>
-										</select>
-							</div>
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Start time (<em>AM or PM?</em>) </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="amOrPm1" id="amOrPm1" required >
-											<option value="">... Set as AM or PM ...</option>
-											<option value="AM">AM</option>
-											<option value="PM">PM</option>
-										</select>
+											<option value="<?php echo $val; ?>"><?php echo htmlspecialchars($label); ?></option>
+											<?php }
+										}
+										?>
+									</select>
+									<input type="hidden" name="subjectId1" id="subjectId1">
+									<input type="hidden" name="yearGroup1" id="yearGroup1">
+								</div>
+								<div class="edit-field">
+									<label><span>Class (Arm): </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="classId1" id="classId1" required onchange="updateGeneratedEditName()">
+										<option value="">... Select Class ...</option>
+									</select>
+								</div>
 							</div>
 						</div>
-						<div class="row form-group">
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Subject: </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="subjectId1" id="subjectId1" required >
-											<option value="">... Select Subject ...</option>
-											<?php
-											
-											$subjects="select * from subjects ORDER BY subjectName ASC";
-											$result1 = $connection->query($subjects);
-											while($row1 = $result1->fetch_array(MYSQLI_NUM)){
-											?>
-											<option value="<?php echo $row1[0]; ?>"><?php echo $row1[1]; ?></option>
-											<?php } ?>
-										</select>
-							</div>
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Year group: </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="yearGroup1" id="yearGroup1" required >
-											<option value="">... Select Year group ...</option>
-											<?php
-											
-											$yearGroup="select * from yeargroup";
-											$result2 = $connection->query($yearGroup);
-											while($row2 = $result2->fetch_array(MYSQLI_NUM)){
-											?>
-											<option value="<?php echo $row2[0]; ?>"><?php echo $row2[1]; ?></option>
-											<?php } ?>
-										</select>
-							</div>
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Allow Review after test? </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="reviewOption1" id="reviewOption1" required >
-									<option value="">... Review option after test ...</option>
-									<option value="Yes">Yes</option>
-									<option value="No">No</option>
-								</select>
+
+						<div class="edit-section">
+							<div class="edit-section-title">Test Type And Delivery</div>
+							<div class="edit-form-grid">
+								<div class="edit-field">
+									<label><span>Type of test: </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="testType1" id="testType1" required>
+										<option value="">... Select Test Type ...</option>
+										<?php foreach ($configuredTestTypes as $configuredTestType) { ?>
+										<option value="<?php echo htmlspecialchars($configuredTestType); ?>"><?php echo htmlspecialchars($configuredTestType); ?></option>
+										<?php } ?>
+									</select>
+								</div>
+								<div class="edit-field edit-highlight" id="customTestTypeGroup1" style="display:none;">
+									<label><span>Enter kind of test: </span> <span class="required" style="color:red;">*</span></label>
+									<input type="text" class="form-control" name="customTestType1" id="customTestType1" placeholder="e.g. MIDTERM, PRACTICAL, QUIZ">
+									<small>This custom label replaces OTHER in the generated test name.</small>
+								</div>
+								<div class="edit-field edit-highlight" id="mockPaperGroup1" style="display:none;">
+									<label><span>Mock paper: </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="mockPaperLabel1" id="mockPaperLabel1">
+										<option value="">... Select Mock Paper ...</option>
+										<option value="PAPER 1">PAPER 1</option>
+										<option value="PAPER 2">PAPER 2</option>
+										<option value="PAPER 3">PAPER 3</option>
+									</select>
+									<small>Select the paper for this mock exam.</small>
+								</div>
+								<div class="edit-field">
+									<label><span>Does test have essay? </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="essayOption1" id="essayOption1" required>
+										<option value="">... Select Essay option ...</option>
+										<option value="Yes">Yes</option>
+										<option value="No">No</option>
+									</select>
+								</div>
+								<div class="edit-field" id="addEssayTime1"></div>
+								<div class="edit-field">
+									<label><span>Randomize Questions? </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="randomizeQuestions1" id="randomizeQuestions1" required>
+										<option value="">... Select option ...</option>
+										<option value="Yes">Yes - Randomize</option>
+										<option value="No">No - Keep Original Order</option>
+									</select>
+								</div>
+								<div class="edit-field">
+									<label><span>Randomize Options? </span> <span class="required" style="color:red;">*</span></label>
+									<select class="form-control" name="randomizeOptions1" id="randomizeOptions1" required>
+										<option value="">... Select option ...</option>
+										<option value="Yes">Yes - Randomize Options</option>
+										<option value="No">No - Keep Original Order</option>
+									</select>
+								</div>
 							</div>
 						</div>
-						<div class="row form-group">
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;">
-								<label><span style="color:#000000;">Does Test have essay? </span> <span class="required" style="color:red;">*</span></label><br>
-								<select class="form-control" name="essayOption1" id="essayOption1" required >
-									<option value="">... Select Essay option ...</option>
-									<option value="Yes">Yes</option>
-									<option value="No">No</option>
-								</select>
+
+						<div class="edit-section">
+							<div class="edit-actions">
+								<button class="btn btn-default" type="reset">Reset</button>
+								<button type="button" class="btn btn-success" onclick="editTestDetails()">Update</button>
 							</div>
-							<div class="col-md-4" style="padding-right:32px; padding-left:32px;" id="addEssayTime1"></div>
+							<div class="message3" id="message3" style="color:red; margin-top:12px;" align="center"></div>
 						</div>
-					</div>
-					<div class="item form-group">
-						<div class="col-md-12">
-							<button class="btn btn-primary" type="reset">Reset</button>
-							<button type="button" class="btn btn-success" onclick="editTestDetails()">Update</button>
-							<div class="message3" id="message3" style="color:red;" align="center"></div>
-						</div>
-					</div>
-                </form>
+					</form>
+				</div>
 			</div>
-			<br>
-			<br>
-			<hr>
 		</div>	<!-- End of modal content-->
 	</div><!-- End of edit modal-->
 	
@@ -1004,8 +1223,11 @@ session_start();
 			}
 		}
 		
+		window.allTestsMap = {};
+
 		function callTable()	//Declaration of the data table function
 		{
+			window.allTestsMap = {};
 			$.ajax({
 					url: 'getAllTests.php',
 					type: 'get',
@@ -1032,6 +1254,8 @@ session_start();
 							var essayTime = response[i].essayTime;
 							var status = response[i].status;
 							
+							window.allTestsMap[testId] = response[i];
+
 							var startMinuteToDisplay = "";
 							if(startMinute.length == 1)
 							{
@@ -1065,7 +1289,7 @@ session_start();
 								"<td width='10' style='font-size:13px;'><center>" + reviewOptionTODisplay + getReviewFlagging(testId, theReviewOption) + "</center></td>" +
 								"<td width='7'><center>" + teacherName + "</center></td>" +
 								"<td width='10'><center>" + getStatus(testId, testName, status) + "</center></td>" +
-								"<td align='center' width='7'><a onClick='openEditModal(\""+testId+"\",\""+testName+"\",\""+testDate+"\",\""+duration+"\",\""+startHour+"\",\""+startMinute+"\",\""+isAmOrPm+"\",\""+subjectId+"\",\""+yearGroupId+"\",\""+theReviewOption+"\",\""+essayOption+"\",\""+essayTime+"\")' title='Edit this test' style='cursor:pointer'><i class='fa fa-pencil-square-o'></i></a> &nbsp; &nbsp;<a onClick='openEditTimeModal(\""+testId+"\",\""+testName+"\",\""+testDate+"\",\""+duration+"\",\""+startHour+"\",\""+startMinute+"\",\""+isAmOrPm+"\")' title='Edit test time before it starts' style='cursor:pointer'><i class='fa fa-clock-o'></i></a> &nbsp; &nbsp;<a onClick='deleteTest(\""+testId+"\",\""+testName+"\")' title='Delete this test' style='cursor:pointer'><i class='fa fa-trash' style='color:red;'></i></a></td>" +
+								"<td align='center' width='7'><a onClick='openEditModal(\""+testId+"\")' title='Edit this test' style='cursor:pointer'><i class='fa fa-pencil-square-o'></i></a> &nbsp; &nbsp;<a onClick='openEditTimeModal(\""+testId+"\")' title='Edit test time before it starts' style='cursor:pointer'><i class='fa fa-clock-o'></i></a> &nbsp; &nbsp;<a onClick='deleteTest(\""+testId+"\")' title='Delete this test' style='cursor:pointer'><i class='fa fa-trash' style='color:red;'></i></a></td>" +
 								
 								"</tr>";
 
@@ -1096,35 +1320,182 @@ session_start();
 		//calling the data table function
 		callTable();
 		
+		function getSelectedTestTypeLabel(mode) {
+			var testType = mode === 'create' ? $('#testType').val() : $('#testType1').val();
+			if (!testType) return '';
+			if (testType === 'OTHER') {
+				var custom = mode === 'create' ? $.trim($('#customTestType').val()) : $.trim($('#customTestType1').val());
+				return custom ? custom.toUpperCase() : 'OTHER';
+			}
+			if (testType === 'MOCK') {
+				var paper = mode === 'create' ? $.trim($('#mockPaperLabel').val()) : $.trim($('#mockPaperLabel1').val());
+				return paper ? ('MOCK ' + paper.toUpperCase()) : 'MOCK';
+			}
+			return testType;
+		}
+
+		function toggleCustomTestTypeField(mode) {
+			var testType = mode === 'create' ? $('#testType').val() : $('#testType1').val();
+			var customGroup = mode === 'create' ? $('#customTestTypeGroup1') : $('#customTestTypeGroup1');
+			var mockGroup = mode === 'create' ? $('#mockPaperGroup1') : $('#mockPaperGroup1');
+			if (testType === 'OTHER') {
+				customGroup.show();
+				mockGroup.hide();
+			} else if (testType === 'MOCK') {
+				customGroup.hide();
+				mockGroup.show();
+			} else {
+				customGroup.hide();
+				mockGroup.hide();
+			}
+		}
+
+		function updateGeneratedEditName()
+		{
+			var sessionText = $('#academicSession1').val() ? $('#academicSession1 option:selected').val() : '';
+			var subjectText = $('#subject_composite1').val() ? $('#subject_composite1 option:selected').text() : '';
+			var armText = $('#classId1').val() && $('#classId1').val() !== 'all' ? $('#classId1 option:selected').text() : ($('#classId1').val() === 'all' ? 'ALL' : '');
+			var testTypeText = getSelectedTestTypeLabel('edit');
+			
+			var generatedName = $.trim([sessionText, subjectText, armText, testTypeText].filter(Boolean).join(' '));
+			if (generatedName !== '') {
+				$('#testName1').val(generatedName);
+			}
+		}
+
+		function dlhsHandleSubjectChange(mode) {
+			var compositeVal = mode === 'create' ? $('#subject_composite').val() : $('#subject_composite1').val();
+			var classDropdown = mode === 'create' ? $('#classId') : $('#classId1');
+			var subjectHidden = mode === 'create' ? $('#subject') : $('#subjectId1');
+			var yearGroupHidden = mode === 'create' ? $('#yearGroup') : $('#yearGroup1');
+
+			if (!compositeVal) {
+				subjectHidden.val('');
+				yearGroupHidden.val('');
+				classDropdown.html('<option value="">... Select Class ...</option>');
+				updateGeneratedEditName();
+				return;
+			}
+
+			var parts = compositeVal.split('|');
+			var sId = parts[0];
+			var ygId = parts[1];
+
+			subjectHidden.val(sId);
+			yearGroupHidden.val(ygId);
+
+			classDropdown.html('<option value="">... Loading ...</option>');
+
+			$.ajax({
+				url: 'getTeacherAssignedClassesAndSubjects.php',
+				type: 'GET',
+				data: { type: 'classesBySubject', subjectId: sId, yearGroupId: ygId },
+				dataType: 'json',
+				success: function(response) {
+					var options = '<option value="">... Select Class ...</option>';
+					if (response && response.success && response.data && response.data.length > 0) {
+						if (response.data.length > 1) {
+							options += '<option value="all">ALL ASSIGNED ARMS</option>';
+						}
+						response.data.forEach(function(item) {
+							options += '<option value="' + item.classId + '">' + item.className + '</option>';
+						});
+					}
+					classDropdown.html(options);
+					updateGeneratedEditName();
+				}
+			});
+		}
+
 		//function call to open modal for editing a category
 		function openEditModal(testId, testName, testDate, duration, startHour, startMinute, isAmOrPm, subjectId, yearGroupId, theReviewOption, essayOption, essayTime)
         {
             var modal1 = document.getElementById("myModal1");
+			var test = (window.allTestsMap && window.allTestsMap[testId]) ? window.allTestsMap[testId] : null;
+
+			if (test) {
+				testName = test.testName;
+				testDate = test.testDate;
+				duration = test.duration;
+				startHour = test.startHour;
+				startMinute = test.startMinute;
+				isAmOrPm = test.isAmOrPm;
+				subjectId = test.subjectId;
+				yearGroupId = test.yearGroupId;
+				theReviewOption = test.reviewOption;
+				essayOption = test.essayOption;
+				essayTime = test.essayTime;
+			}
+
 			document.getElementById("testId").value = testId;  
-			document.getElementById("testName1").value = testName;  
-			document.getElementById("testDate1").value = testDate;  
-			document.getElementById("testDuration1").value = duration;  
-			$("#startHour1 option[value="+startHour+"]").attr('selected', 'selected');
-			startMinute1="";
-			if(startMinute==0)
-			{
-				startMinute1=60;
-			}
-			else
-			{
-				startMinute1=startMinute;
-			}
+			document.getElementById("testName1").value = testName || '';  
+			document.getElementById("testDate1").value = testDate || '';  
+			document.getElementById("testDuration1").value = duration || '';  
 			
-			$("#startMinute1 option[value="+startMinute1+"]").attr('selected', 'selected');
-			$("#amOrPm1 option[value="+isAmOrPm+"]").attr('selected', 'selected');
-			$("#subjectId1 option[value="+subjectId+"]").attr('selected', 'selected');
-			$("#yearGroup1 option[value="+yearGroupId+"]").attr('selected', 'selected');
-			$("#reviewOption1 option[value="+theReviewOption+"]").attr('selected', 'selected');
-			$("#essayOption1 option[value="+essayOption+"]").attr('selected', 'selected');
+			$('#startHour1').val(startHour || '8');
+			$('#startMinute1').val(startMinute || '0');
+			$('#amOrPm1').val(isAmOrPm || 'AM');
+
+			var academicSession = test ? (test.academicSession || '') : '';
+			var testType = test ? (test.testType || '') : '';
+			var customTestType = test ? (test.customTestType || '') : '';
+			var mockPaperLabel = test ? (test.mockPaperLabel || '') : '';
+			var randomizeQuestions = test ? (test.randomizeQuestions || 'No') : 'No';
+			var randomizeOptions = test ? (test.randomizeOptions || 'No') : 'No';
+
+			$("#academicSession1").val(academicSession);
+			$("#testType1").val(testType);
+			$("#customTestType1").val(customTestType ? decodeURIComponent(customTestType) : '');
+			$("#mockPaperLabel1").val(mockPaperLabel ? decodeURIComponent(mockPaperLabel) : '');
+			toggleCustomTestTypeField('edit');
+
+			$("#reviewOption1").val(theReviewOption || 'No');
+			$("#essayOption1").val(essayOption || 'No');
+			$("#randomizeQuestions1").val(randomizeQuestions);
+			$("#randomizeOptions1").val(randomizeOptions);
+
+			var targetClassId = test ? test.classId : '';
+
+			if (yearGroupId && subjectId) {
+				var compositeVal = subjectId + '|' + yearGroupId;
+				$("#subject_composite1").val(compositeVal);
+				$("#subjectId1").val(subjectId);
+				$("#yearGroup1").val(yearGroupId);
+
+				$.ajax({
+					url: 'getTeacherAssignedClassesAndSubjects.php',
+					type: 'GET',
+					data: { type: 'classesBySubject', subjectId: subjectId, yearGroupId: yearGroupId },
+					dataType: 'json',
+					success: function(classResponse) {
+						var options = '<option value="">... Select Class ...</option>';
+						if (classResponse && classResponse.success && classResponse.data && classResponse.data.length > 0) {
+							if (classResponse.data.length > 1) {
+								options += '<option value="all">ALL ASSIGNED ARMS</option>';
+							}
+							classResponse.data.forEach(function(item) {
+								options += '<option value="' + item.classId + '">' + item.className + '</option>';
+							});
+						}
+						$("#classId1").html(options);
+						if (targetClassId && targetClassId !== '0') {
+							$("#classId1").val(targetClassId);
+						} else if (targetClassId === 0 || targetClassId === '0') {
+							if ($("#classId1 option[value='all']").length > 0) {
+								$("#classId1").val('all');
+							}
+						}
+						updateGeneratedEditName();
+					}
+				});
+			} else {
+				updateGeneratedEditName();
+			}
+
 			if(essayOption == "Yes")
 			{
-				$("#addEssayTime1").html('<label><span style="color:#000000;">Essay time in minutes:</span> <span class="required" style="color:red;">*</span></label><br><input type="text" class="form-control" name="essayTime1" id="essayTime1" onkeypress="javascript:return isNumber(event)" placeholder="Enter the essay duration in minutes">');
-				document.getElementById("essayTime1").value = essayTime;
+				$("#addEssayTime1").html('<label><span style="color:#000000;">Essay time in minutes:</span> <span class="required" style="color:red;">*</span></label><br><input type="text" class="form-control" name="essayTime1" id="essayTime1" onkeypress="javascript:return onlyNumberKey(event)" placeholder="Enter the essay duration in minutes">');
+				document.getElementById("essayTime1").value = essayTime || '';
 			}
 			else
 			{
@@ -1151,6 +1522,15 @@ session_start();
 		//function call to open modal for editing test time of all or selected students
 		function openEditTimeModal(testId, testName, testDate, duration, startHour, startMinute, isAmOrPm)
         {
+			if (arguments.length === 1 && window.allTestsMap && window.allTestsMap[testId]) {
+				var tObj = window.allTestsMap[testId];
+				testName = tObj.testName;
+				testDate = tObj.testDate;
+				duration = tObj.duration;
+				startHour = tObj.startHour;
+				startMinute = tObj.startMinute;
+				isAmOrPm = tObj.isAmOrPm;
+			}
 			$('.message1').html('');
 			$('.message2').html('');
 			$('.message3').html('');
@@ -1507,89 +1887,106 @@ session_start();
 			$('.message11').html('');
 			$('.message12').html('');
 			
-			var confirmIt=confirm("Are you sure you wish to update this test?");
-			if(confirmIt == true)
+			var testId = $('input[name=testId]').val();
+			var testName = $('input[name=testName1]').val();
+			var testDate = $('input[name=testDate1]').val();
+			var testDuration = $('input[name=testDuration1]').val();
+			var startHour = $('#startHour1').val() || '8';
+			var startMinute = $('#startMinute1').val() || '0';
+			var amOrPm = $('#amOrPm1').val() || 'AM';
+			var subjectId = document.getElementById('subjectId1').value;
+			var yearGroupId = document.getElementById('yearGroup1').value;
+			var classId = $('#classId1').val() || '0';
+			var academicSession = document.getElementById('academicSession1').value;
+			var testType = document.getElementById('testType1').value;
+			var customTestType = $.trim(document.getElementById('customTestType1').value);
+			var mockPaperLabel = $.trim(document.getElementById('mockPaperLabel1').value);
+			var reviewOption = document.getElementById('reviewOption1').value || 'No';
+			var essayOption = document.getElementById('essayOption1').value;
+			var randomizeQuestions = document.getElementById('randomizeQuestions1').value;
+			var randomizeOptions = document.getElementById('randomizeOptions1').value;
+			
+			var theEssayTime = "";
+			if(essayOption == "Yes")
 			{
-				$('.message3').html("");
-				$('.message4').html("");
-				
-				var testId = $('input[name=testId]').val();
-				var testName = $('input[name=testName1]').val();
-				var testDate = $('input[name=testDate1]').val();
-				var testDuration = $('input[name=testDuration1]').val();
-				var startHour = document.getElementById('startHour1').value;
-				var startMinute = document.getElementById('startMinute1').value;
-				var amOrPm = document.getElementById('amOrPm1').value;
-				var subjectId = document.getElementById('subjectId1').value;
-				var yearGroupId = document.getElementById('yearGroup1').value;
-				var reviewOption = document.getElementById('reviewOption1').value;
-				var essayOption = document.getElementById('essayOption1').value;
-				
-				var theEssayTime = "";
-				if(essayOption == "Yes")
-				{
-					var theEssayTime = document.getElementById('essayTime1').value;					 
-				}
-																						 
-				if (testName=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please enter test name')
-				}
-				else if (testDate=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test date')
-				}
-				else if (testDuration=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please set test duration in minutes')
-				}
-				else if (startHour=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test start hour')
-				}
-				else if (startMinute=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test start minute')
-				}
-				else if(amOrPm=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + " Please set time as AM or PM")
-				}
-				else if (subjectId=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test subject')
-				}
-				else if (yearGroupId=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test year group')
-				}
-				else if (reviewOption=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> ' + ' Please select test review option')
-				}
-				else if (essayOption=="")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> Please select essay option')
-				}
-				else if (essayOption =="Yes" && theEssayTime == "")
-				{
-					$('.message3').html('<i class="fa fa-info-circle"></i> Please enter essay time in minutes')
-				}
-				else
-				{						
-					var form_data = 
-					  'testId='+testId+
-					  '&testName='+testName+
-					  '&testDate='+testDate+
-					  '&testDuration='+testDuration+
-					  '&startHour='+startHour+
-					  '&startMinute='+startMinute+
-					  '&amOrPm='+amOrPm+
-					  '&subjectId='+subjectId+
-					  '&yearGroupId='+yearGroupId+
-					  '&reviewOption='+reviewOption+
-					  '&essayOption='+essayOption+
-					  '&theEssayTime='+theEssayTime;
+				theEssayTime = document.getElementById('essayTime1') ? document.getElementById('essayTime1').value : '';					 
+			}
+			
+			if (testDate=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select test date');
+			}
+			else if (testDuration=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please set test duration in minutes');
+			}
+			else if (subjectId=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select test subject');
+			}
+			else if (yearGroupId=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select test year group');
+			}
+			else if (academicSession=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select academic session');
+			}
+			else if (testType=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select test type');
+			}
+			else if (testType=="OTHER" && customTestType=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please enter the kind of test for OTHER');
+			}
+			else if (testType=="MOCK" && mockPaperLabel=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select the mock paper');
+			}
+			else if (essayOption=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select essay option');
+			}
+			else if (essayOption =="Yes" && theEssayTime == "")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please enter essay time in minutes');
+			}
+			else if (randomizeQuestions=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select question randomization option');
+			}
+			else if (randomizeOptions=="")
+			{
+				$('.message3').html('<i class="fa fa-info-circle"></i> Please select answer option randomization');
+			}
+			else
+			{
+				var doUpdate = function() {
+					$('.message3').html("");
+					$('.message4').html("");
+					
+					var form_data = {
+						testId: testId,
+						testName: testName,
+						testDate: testDate,
+						testDuration: testDuration,
+						startHour: startHour,
+						startMinute: startMinute,
+						amOrPm: amOrPm,
+						subjectId: subjectId,
+						yearGroupId: yearGroupId,
+						classId: classId,
+						academicSession: academicSession,
+						testType: testType,
+						customTestType: customTestType,
+						mockPaperLabel: mockPaperLabel,
+						reviewOption: reviewOption,
+						essayOption: essayOption,
+						theEssayTime: theEssayTime,
+						randomizeQuestions: randomizeQuestions,
+						randomizeOptions: randomizeOptions
+					};
 							  
 					$.ajax({
 						url: "editTest.php",
@@ -1598,28 +1995,71 @@ session_start();
 						success: function (html) {
 							if (html==0)	//If session is expired.
 							{                              
-								 window.location.replace("logout.php");
+								window.location.replace("logout.php");
 							}
 							else if (html==1)	
 							{                              
-								 $('.message3').html("");
-								 $('.message4').html('<i class="fa fa-check"></i> ' + testName + ' successfully updated.').fadeIn('slow');
-								 var modal1 = document.getElementById("myModal1");
-								 modal1.style.display = "none";
-								 $('#example').DataTable().clear().destroy();
-								 callTable();
+								$('.message3').html("");
+								$('.message4').html('<i class="fa fa-check"></i> ' + testName + ' successfully updated.').fadeIn('slow');
+								var modal1 = document.getElementById("myModal1");
+								modal1.style.display = "none";
+								$('#example').DataTable().clear().destroy();
+								callTable();
 							}
-							else if (html==2)	//If deletion is unsuccessful	
+							else if (html==2)	//If update is unsuccessful	
 							{                              
-								 $('.message4').html("");
-								 $('.message3').html('<i class="fa fa-times"></i> Could not update test. Please try again.').fadeIn('slow');
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Could not update test. Please try again.').fadeIn('slow');
+							}
+							else if (html==3)
+							{
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Please select a valid test type.').fadeIn('slow');
+							}
+							else if (html==4)
+							{
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Please select a valid academic session.').fadeIn('slow');
+							}
+							else if (html==5)
+							{
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Unable to generate the test name from the selected fields.').fadeIn('slow');
+							}
+							else if (html==6)
+							{
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Please enter the kind of test for OTHER.').fadeIn('slow');
+							}
+							else if (html==7)
+							{
+								$('.message4').html("");
+								$('.message3').html('<i class="fa fa-times"></i> Please select the mock paper.').fadeIn('slow');
 							}
 						}				
 					});
+				};
+
+				if (confirm("Are you sure you wish to update this test?")) {
+					doUpdate();
 				}
 			}
 		}	
 		//End of edit test
+
+		$(document).ready(function() {
+			$('#academicSession1, #subject_composite1, #testType1, #customTestType1, #mockPaperLabel1').on('change keyup', function(){
+				toggleCustomTestTypeField('edit');
+				updateGeneratedEditName();
+			});
+			$('#essayOption1').on('change', function() {
+				if($(this).val() == "Yes") {
+					$("#addEssayTime1").html('<label><span style="color:#000000;">Essay time in minutes:</span> <span class="required" style="color:red;">*</span></label><br><input type="text" class="form-control" name="essayTime1" id="essayTime1" onkeypress="javascript:return onlyNumberKey(event)" placeholder="Enter the essay duration in minutes">');
+				} else {
+					$("#addEssayTime1").html('');
+				}
+			});
+		});
 		
 		//Start of add/subtract test time
 		function addOrSubtractTestTime()

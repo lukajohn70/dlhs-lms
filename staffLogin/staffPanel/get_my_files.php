@@ -2,34 +2,111 @@
 session_start();
 require_once "userExpiredSession.php";
 require_once "../../db_connection/dlhs_db_connection.php";
+require_once "../../scripts/file_assignment_helper.php";
+
+// Ensure tables and columns exist
+dlhsEnsureAllFileManagementTablesExist($connection);
 
 // Check if user is logged in
 if (!isset($_SESSION['staffLoggedIn']) || $_SESSION['staffLoggedIn'] !== "yes") {
-    echo '<div class="alert alert-danger">Not authorized</div>';
+    echo json_encode(['success' => false, 'message' => 'Not authorized']);
     exit();
 }
 
-$staffId = $_SESSION['staffId'];
+$staffId = (int)$_SESSION['staffId'];
 
-// Get files uploaded by this staff member
-$query = "SELECT f.*, c.categoryName, s.subjectName 
-          FROM file_uploads f 
-          LEFT JOIN file_categories c ON f.categoryId = c.categoryId 
-          LEFT JOIN subjects s ON f.subjectId = s.subjectId 
-          WHERE f.uploadedBy = $staffId 
-          ORDER BY f.created_at DESC";
+// 1. Files uploaded / shared by this staff member (Sent Files)
+$sentQuery = "SELECT f.*, c.categoryName, s.subjectName,
+                     (SELECT COUNT(*) FROM file_staff_assignments WHERE fileId = f.fileId) as recipientStaffCount,
+                     (SELECT COUNT(*) FROM file_student_assignments WHERE fileId = f.fileId) as recipientStudentCount,
+                     cl.className as targetClassName,
+                     yg.yearGroupName
+              FROM file_uploads f 
+              LEFT JOIN file_categories c ON f.categoryId = c.categoryId 
+              LEFT JOIN subjects s ON f.subjectId = s.subjectId 
+              LEFT JOIN classes cl ON f.targetClassId = cl.classId
+              LEFT JOIN yeargroup yg ON cl.classYearGroup = yg.yearGroupId
+              WHERE f.uploadedBy = $staffId 
+                AND (f.uploaderType = 'staff' OR f.uploaderType IS NULL OR f.uploaderType = '')
+                AND f.isActive = 1
+              ORDER BY f.created_at DESC";
 
-$result = $connection->query($query);
+$sentResult = $connection->query($sentQuery);
+$sentFiles = [];
+$adminPendingCount = 0;
+$adminReviewedCount = 0;
 
-$files = [];
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $files[] = $row;
+if ($sentResult && $sentResult->num_rows > 0) {
+    while ($row = $sentResult->fetch_assoc()) {
+        if ($row['uploadedFor'] === 'admin') {
+            if ($row['adminStatus'] === 'reviewed' || $row['adminStatus'] === 'acknowledged') {
+                $adminReviewedCount++;
+            } else {
+                $adminPendingCount++;
+            }
+        }
+        $sentFiles[] = $row;
+    }
+}
+
+// 2. Files shared with this staff member (Received Files)
+$receivedQuery = "SELECT f.*, c.categoryName, s.subjectName,
+                         CASE 
+                             WHEN f.uploaderType = 'admin' THEN 'School Administration'
+                             ELSE CONCAT(st.surname, ' ', st.firstName)
+                         END as senderName,
+                         st.username as senderEmail,
+                         st.passport as senderPassport,
+                         f.uploaderType as senderType
+                  FROM file_uploads f 
+                  LEFT JOIN file_categories c ON f.categoryId = c.categoryId 
+                  LEFT JOIN subjects s ON f.subjectId = s.subjectId 
+                  LEFT JOIN stafflogin st ON f.uploadedBy = st.staffId
+                  WHERE f.isActive = 1
+                    AND (
+                        -- Admin shared to all teachers
+                        (f.uploaderType = 'admin' AND f.uploadedFor = 'all_teachers')
+                        -- Admin shared to this specific teacher
+                        OR (f.uploaderType = 'admin' AND f.fileId IN (SELECT fileId FROM file_staff_assignments WHERE staffId = $staffId))
+                        -- Other teacher shared to all teachers
+                        OR (f.uploaderType = 'staff' AND f.uploadedBy != $staffId AND f.uploadedFor = 'all_teachers')
+                        -- Other teacher shared to subject department
+                        OR (f.uploaderType = 'staff' AND f.uploadedBy != $staffId AND f.uploadedFor = 'subject_teachers' AND f.subjectId IN (
+                            SELECT DISTINCT subjectId FROM subject_teacher_assignment WHERE teacherId = $staffId
+                        ))
+                        -- Other teacher shared specifically to this teacher
+                        OR (f.uploaderType = 'staff' AND f.uploadedBy != $staffId AND f.fileId IN (SELECT fileId FROM file_staff_assignments WHERE staffId = $staffId))
+                    )
+                  ORDER BY f.created_at DESC";
+
+$receivedResult = $connection->query($receivedQuery);
+$receivedFiles = [];
+$fromAdminCount = 0;
+$fromTeachersCount = 0;
+
+if ($receivedResult && $receivedResult->num_rows > 0) {
+    while ($row = $receivedResult->fetch_assoc()) {
+        if ($row['uploaderType'] === 'admin') {
+            $fromAdminCount++;
+        } else {
+            $fromTeachersCount++;
+        }
+        $receivedFiles[] = $row;
     }
 }
 
 echo json_encode([
-    'success' => true,
-    'files' => $files
+    'success'       => true,
+    'sentFiles'     => $sentFiles,
+    'receivedFiles' => $receivedFiles,
+    'files'         => $sentFiles, // backwards compatibility
+    'stats'         => [
+        'totalSent'     => count($sentFiles),
+        'totalReceived' => count($receivedFiles),
+        'fromAdmin'     => $fromAdminCount,
+        'fromTeachers'  => $fromTeachersCount,
+        'adminPending'  => $adminPendingCount,
+        'adminReviewed' => $adminReviewedCount
+    ]
 ]);
 ?>

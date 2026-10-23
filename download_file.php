@@ -118,12 +118,39 @@ $file = $result->fetch_assoc();
 // Check access permissions
 $hasAccess = false;
 
-if ($userType === 'admin' || $userType === 'staff') {
-    // Admins and staff can access all files
+if ($userType === 'admin') {
+    // Admin has full access to all files
     $hasAccess = true;
+} elseif ($userType === 'staff') {
+    $uploaderId = (int)$file['uploadedBy'];
+    $uploaderType = $file['uploaderType'] ?? 'staff';
+
+    if ($file['uploadedFor'] === 'admin') {
+        // Only uploader teacher can access their submission to admin
+        $hasAccess = ($uploaderType === 'staff' && $uploaderId === (int)$userId);
+    } elseif ($file['uploadedFor'] === 'specific_teachers') {
+        if ($uploaderType === 'staff' && $uploaderId === (int)$userId) {
+            $hasAccess = true;
+        } else {
+            $assignCheck = $connection->query("SELECT 1 FROM file_staff_assignments WHERE fileId = $fileId AND staffId = " . (int)$userId . " LIMIT 1");
+            $hasAccess = ($assignCheck && $assignCheck->num_rows > 0);
+        }
+    } elseif ($file['uploadedFor'] === 'subject_teachers') {
+        if ($uploaderType === 'staff' && $uploaderId === (int)$userId) {
+            $hasAccess = true;
+        } else {
+            $sId = (int)$file['subjectId'];
+            $subCheck = $connection->query("SELECT 1 FROM subject_teacher_assignment WHERE teacherId = " . (int)$userId . " AND subjectId = $sId LIMIT 1");
+            $hasAccess = ($subCheck && $subCheck->num_rows > 0);
+        }
+    } else {
+        $hasAccess = true;
+    }
 } elseif ($userType === 'student') {
-    // Students can access files targeted to them
-    if ($file['uploadedFor'] === 'all') {
+    // Ensure student cannot access teacher/admin shared files
+    if (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin']))) {
+        $hasAccess = false;
+    } elseif ($file['uploadedFor'] === 'all') {
         $hasAccess = true;
     } elseif ($file['uploadedFor'] === 'specific_class') {
         // Check if student is in the target class

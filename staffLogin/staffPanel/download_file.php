@@ -11,6 +11,10 @@ if (isset($_SESSION['staffLoggedIn']) && $_SESSION['staffLoggedIn'] === "yes") {
     $isAuthorized = true;
     $userId = (int)$_SESSION['staffId'];
     $userType = 'staff';
+} elseif (isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === "yes") {
+    $isAuthorized = true;
+    $userId = isset($_SESSION['adminId']) && is_numeric($_SESSION['adminId']) ? (int)$_SESSION['adminId'] : 1;
+    $userType = 'admin';
 } elseif (isset($_SESSION['studentLoggedIn']) && $_SESSION['studentLoggedIn'] === "yes") {
     $isAuthorized = true;
     $userId = (int)$_SESSION['studentId'];
@@ -43,6 +47,35 @@ if (!$result || $result->num_rows === 0) {
 }
 
 $file = $result->fetch_assoc();
+
+// Role-based access checks
+if ($userType === 'student') {
+    if (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin']))) {
+        header("HTTP/1.1 403 Forbidden");
+        echo "<h1>403 Forbidden</h1><p>You do not have permission to download this staff-restricted file.</p>";
+        exit();
+    }
+} elseif ($userType === 'staff') {
+    $uploaderId = (int)$file['uploadedBy'];
+    $uploaderType = $file['uploaderType'] ?? 'staff';
+    
+    // If it's a file sent to admin by a teacher, only that teacher (or admin) can access
+    if ($file['uploadedFor'] === 'admin' && ($uploaderType === 'staff' && $uploaderId !== $userId)) {
+        header("HTTP/1.1 403 Forbidden");
+        echo "<h1>403 Forbidden</h1><p>This file is a private submission to School Administration.</p>";
+        exit();
+    }
+    
+    // If it's targeted to specific teachers, check if this teacher is assigned or is the uploader
+    if ($file['uploadedFor'] === 'specific_teachers' && ($uploaderType !== 'staff' || $uploaderId !== $userId)) {
+        $assignCheck = $connection->query("SELECT 1 FROM file_staff_assignments WHERE fileId = $fileId AND staffId = $userId LIMIT 1");
+        if (!$assignCheck || $assignCheck->num_rows === 0) {
+            header("HTTP/1.1 403 Forbidden");
+            echo "<h1>403 Forbidden</h1><p>You do not have access to this targeted document.</p>";
+            exit();
+        }
+    }
+}
 $filePathDb = $file['filePath'];
 
 // Resolve the actual file path on disk

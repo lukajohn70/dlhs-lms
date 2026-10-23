@@ -407,6 +407,11 @@ $adminName = isset($_SESSION['adminName']) && trim((string) $_SESSION['adminName
                 <span>Question Document Hub</span>
             </a>
 
+            <a class="nav-link<?php if ($currentPage === 'file_management.php') echo ' is-active'; ?>" href="file_management.php" onclick="dlhsToggleSidebar(false)">
+                <i class="fa fa-share-alt"></i>
+                <span>File Sharing Hub</span>
+            </a>
+
 
 
             <div class="nav-item has-submenu<?php echo $isResultProcessing ? ' is-open' : ''; ?>">

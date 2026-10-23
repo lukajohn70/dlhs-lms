@@ -340,7 +340,13 @@ session_start();
 				dataType: 'JSON',
 				success: function(response)
 				{
-					var len = response.length;
+					if ($.fn.DataTable.isDataTable('#example')) {
+						$('#example').DataTable().clear().destroy();
+					}
+					$('#example tbody').empty();
+
+					var len = response ? response.length : 0;
+					var rows = [];
 					for(var i=0; i<len; i++){
 						var questionId = response[i].questionId;
 						var question = response[i].question;
@@ -354,7 +360,7 @@ session_start();
 						var markForQuestion = response[i].markForQuestion;										
 						var solvedSolution = response[i].solvedSolution;										
 						
-							var tr_str = "<tr>" +
+						rows.push("<tr>" +
 								"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
 								"<td width='3%'><center>" + (i+1) + "</center></td>" +
 							"<td width='30%'>" + question + "</td>" +
@@ -367,15 +373,15 @@ session_start();
 							"<td width='7%'><center>" + correctOption + "</center></td>" +
 							"<td width='6%'><center>" + markForQuestion + "</center></td>" +
 							"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+selectedTestId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+selectedTestId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
-							
-							"</tr>";
-							$("#example tbody").append(tr_str);
+							"</tr>");
 					}
+					$('#example tbody').html(rows.join(''));
 					$('#example').DataTable( {
 						"paging":   true,
 						"ordering": true,
 						"info":     true,
 						"responsive": true,
+						"deferRender": true,
 						dom: 'lBfrtip',
 						buttons: [
 							{
@@ -398,11 +404,7 @@ session_start();
 								extend: 'print',
 								exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
 							}
-						],
-						rowReorder: {
-							selector: 'td:nth-child(2)'
-						},
-						"responsive": true
+						]
 					});
 					if(len > 0)
 					{
@@ -538,7 +540,11 @@ session_start();
 		//calling refresh table after a question delete is successfully
 		function refreshQuestionsTable(testId, questionId)
 		{
-			$('#example').DataTable().clear().destroy();
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+
 			$.ajax({
 				url: 'getTestQuestion.php',
 				type: 'POST',
@@ -546,7 +552,8 @@ session_start();
 				dataType: 'JSON',
 				success: function(response)
 				{
-					var len = response.length;
+					var len = response ? response.length : 0;
+					var rows = [];
 					for(var i=0; i<len; i++){
 						var questionId = response[i].questionId;
 						var question = response[i].question;
@@ -560,7 +567,7 @@ session_start();
 						var markForQuestion = response[i].markForQuestion;										
 						var solvedSolution = response[i].solvedSolution;										
 						
-						var tr_str = "<tr>" +
+						rows.push("<tr>" +
 							"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
 							"<td width='3%'><center>" + (i+1) + "</center></td>" +
 							"<td width='25%'>" + question + "</td>" +
@@ -573,15 +580,15 @@ session_start();
 							"<td width='7%'><center>" + correctOption + "</center></td>" +
 							"<td width='5%'><center>" + markForQuestion + "</center></td>" +
 							"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+testId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+testId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
-							
-							"</tr>";
-							$("#example tbody").append(tr_str);
+							"</tr>");
 					}
+					$('#example tbody').html(rows.join(''));
 					$('#example').DataTable( {
 						"paging":   true,
 						"ordering": true,
 						"info":     true,
 						"responsive": true,
+						"deferRender": true,
 						dom: 'lBfrtip',
 						buttons: [
 							{
@@ -604,11 +611,7 @@ session_start();
 								extend: 'print',
 								exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
 							}
-						],
-						rowReorder: {
-							selector: 'td:nth-child(2)'
-						},
-						"responsive": true
+						]
 					});
 					if(response.length > 0)
 					{

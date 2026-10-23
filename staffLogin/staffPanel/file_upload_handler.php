@@ -4,7 +4,7 @@ require_once "userExpiredSession.php";
 require_once "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/file_assignment_helper.php";
 
-// Ensure all database tables exist
+// Ensure all database tables and columns exist
 dlhsEnsureAllFileManagementTablesExist($connection);
 
 // Check if user is logged in
@@ -13,10 +13,10 @@ if (!isset($_SESSION['staffLoggedIn']) || $_SESSION['staffLoggedIn'] !== "yes") 
     exit();
 }
 
-$staffId = $_SESSION['staffId'];
+$staffId = (int)$_SESSION['staffId'];
 
 // Configuration
-$maxFileSize = 100 * 1024 * 1024; // 100MB (increased for videos/slides)
+$maxFileSize = 100 * 1024 * 1024; // 100MB
 $allowedTypes = [
     // Documents
     'pdf' => 'application/pdf',
@@ -27,6 +27,8 @@ $allowedTypes = [
     'xls' => 'application/vnd.ms-excel',
     'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'txt' => 'text/plain',
+    'zip' => 'application/zip',
+    'rar' => 'application/x-rar-compressed',
     // Images
     'jpg' => 'image/jpeg',
     'jpeg' => 'image/jpeg',
@@ -44,52 +46,83 @@ $allowedTypes = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uploadType = isset($_POST['uploadType']) ? $_POST['uploadType'] : 'file';
     $subjectId = isset($_POST['subject']) ? intval($_POST['subject']) : 0;
-    $title = mysqli_real_escape_string($connection, $_POST['title']);
-    $description = mysqli_real_escape_string($connection, $_POST['description']);
-    $uploadedFor = mysqli_real_escape_string($connection, $_POST['uploadedFor']);
+    $categoryId = isset($_POST['categoryId']) ? intval($_POST['categoryId']) : 5; // Default 5: Resources
+    $title = mysqli_real_escape_string($connection, trim($_POST['title'] ?? ''));
+    $description = mysqli_real_escape_string($connection, trim($_POST['description'] ?? ''));
+    $uploadedFor = mysqli_real_escape_string($connection, trim($_POST['uploadedFor'] ?? 'all'));
+    
+    // Determine Target Scope
+    if ($uploadedFor === 'admin') {
+        $targetScope = 'admin';
+        $adminStatus = 'pending';
+        $isPublishedToStudents = 0;
+    } elseif (in_array($uploadedFor, ['all_teachers', 'subject_teachers', 'specific_teachers'])) {
+        $targetScope = 'teachers';
+        $adminStatus = 'not_applicable';
+        $isPublishedToStudents = 0;
+    } else {
+        $targetScope = 'students';
+        $adminStatus = 'not_applicable';
+        $isPublishedToStudents = 1;
+    }
+
     $targetClassId = !empty($_POST['targetClass']) ? intval($_POST['targetClass']) : null;
     $targetClasses = isset($_POST['targetClasses']) && is_array($_POST['targetClasses']) ? array_filter(array_map('intval', $_POST['targetClasses'])) : [];
-    $selectedStudents = isset($_POST['selectedStudents']) ? $_POST['selectedStudents'] : [];
+    $selectedStudents = isset($_POST['selectedStudents']) && is_array($_POST['selectedStudents']) ? array_filter(array_map('intval', $_POST['selectedStudents'])) : [];
+    $selectedTeachers = isset($_POST['selectedTeachers']) && is_array($_POST['selectedTeachers']) ? array_filter(array_map('intval', $_POST['selectedTeachers'])) : [];
     
     $uploadedFiles = [];
     $errors = [];
 
     // Helper function to insert assignments and log access
-    $processPostInsert = function($fileId) use ($connection, $staffId, $uploadedFor, $selectedStudents) {
+    $processPostInsert = function($fileId) use ($connection, $staffId, $uploadedFor, $selectedStudents, $selectedTeachers) {
         if ($uploadedFor === 'specific_students' && !empty($selectedStudents)) {
             foreach ($selectedStudents as $studentId) {
                 $studentId = intval($studentId);
-                $assignmentQuery = "INSERT INTO file_student_assignments (fileId, studentId) VALUES ($fileId, $studentId)";
+                $assignmentQuery = "INSERT IGNORE INTO file_student_assignments (fileId, studentId) VALUES ($fileId, $studentId)";
+                $connection->query($assignmentQuery);
+            }
+        } elseif ($uploadedFor === 'specific_teachers' && !empty($selectedTeachers)) {
+            foreach ($selectedTeachers as $tId) {
+                $tId = intval($tId);
+                $assignmentQuery = "INSERT IGNORE INTO file_staff_assignments (fileId, staffId) VALUES ($fileId, $tId)";
                 $connection->query($assignmentQuery);
             }
         }
+
         $logQuery = "INSERT INTO file_access_logs (fileId, userId, userType, action, ipAddress, userAgent) 
                     VALUES ($fileId, $staffId, 'staff', 'upload', '" . $_SERVER['REMOTE_ADDR'] . "', '" . 
-                    mysqli_real_escape_string($connection, $_SERVER['HTTP_USER_AGENT']) . "')";
+                    mysqli_real_escape_string($connection, $_SERVER['HTTP_USER_AGENT'] ?? '') . "')";
         $connection->query($logQuery);
     };
 
     if ($uploadType === 'link' && !empty($_POST['youtubeLink'])) {
         $youtubeLink = mysqli_real_escape_string($connection, trim($_POST['youtubeLink']));
         
-        $classesToTarget = ($uploadedFor === 'multiple_classes' && !empty($targetClasses)) ? $targetClasses : [ $targetClassId ];
-        $actualAudience = ($uploadedFor === 'multiple_classes') ? 'specific_class' : $uploadedFor;
+        if ($targetScope === 'students' && $uploadedFor === 'multiple_classes' && !empty($targetClasses)) {
+            $classesToTarget = $targetClasses;
+            $actualAudience = 'specific_class';
+        } else {
+            $classesToTarget = [ $targetClassId ];
+            $actualAudience = $uploadedFor;
+        }
 
         foreach ($classesToTarget as $clsId) {
-            $cVal = $clsId ? (int)$clsId : 'NULL';
+            $cVal = ($clsId && $targetScope === 'students') ? (int)$clsId : 'NULL';
             $query = "INSERT INTO file_uploads (
                 fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
-                uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
+                uploadedBy, uploaderType, uploadedFor, targetScope, targetClassId, title, description, 
+                isAssignment, isPublishedToStudents, adminStatus
             ) VALUES (
-                'youtube_link', '$youtubeLink', '$youtubeLink', 0, 'youtube', 5, $subjectId,
-                $staffId, '$actualAudience', $cVal, 
-                '$title', '$description', 0, 1
+                'youtube_link', '$youtubeLink', '$youtubeLink', 0, 'youtube', $categoryId, $subjectId,
+                $staffId, 'staff', '$actualAudience', '$targetScope', $cVal, 
+                '$title', '$description', 0, $isPublishedToStudents, '$adminStatus'
             )";
             
             if ($connection->query($query)) {
                 $fileId = $connection->insert_id;
                 $uploadedFiles[] = [
-                    'id' => $fileId,
+                    'id'   => $fileId,
                     'name' => 'YouTube Link',
                     'path' => $youtubeLink
                 ];
@@ -101,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif ($uploadType === 'file' && isset($_FILES['files'])) {
         $files = $_FILES['files'];
-        // Use absolute path from dirname with robust checks and diagnostics
+        // Use absolute path from dirname
         $uploadDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR;
         
         $dirExists = is_dir($uploadDir);
@@ -115,23 +148,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$dirExists) {
             echo json_encode([
                 'success' => false, 
-                'message' => 'Upload directory does not exist and could not be created: ' . $uploadDir . '. Please check parent folder permissions.'
+                'message' => 'Upload directory does not exist and could not be created: ' . $uploadDir
             ]);
             exit();
         }
         
         if (!is_writable($uploadDir)) {
             @chmod($uploadDir, 0777);
-            if (!is_writable($uploadDir)) {
-                $currentUser = function_exists('posix_getpwuid') && function_exists('posix_geteuid') 
-                    ? posix_getpwuid(posix_geteuid())['name'] 
-                    : get_current_user();
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Upload directory is not writable: ' . $uploadDir . '. Executing process user: ' . $currentUser . '. Please check directory permissions.'
-                ]);
-                exit();
-            }
         }
         
         // Process each file
@@ -144,11 +167,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                 if (!array_key_exists($fileExt, $allowedTypes)) {
-                    $errors[] = "File '$fileName' has an invalid extension ($fileExt).";
+                    $errors[] = "File '$fileName' has an unsupported extension ($fileExt).";
                     continue;
                 }
                 
-                // Sanitise filename — strip special chars but keep extension
+                // Sanitise filename
                 $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileName);
                 $newFileName = time() . '_' . $i . '_' . $safeName;
                 $filePath = $uploadDir . $newFileName;
@@ -160,18 +183,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $escapedFilePathDB   = mysqli_real_escape_string($connection, $filePathForDB);
                     $escapedFileType     = mysqli_real_escape_string($connection, $fileType);
 
-                    $classesToTarget = ($uploadedFor === 'multiple_classes' && !empty($targetClasses)) ? $targetClasses : [ $targetClassId ];
-                    $actualAudience = ($uploadedFor === 'multiple_classes') ? 'specific_class' : $uploadedFor;
+                    if ($targetScope === 'students' && $uploadedFor === 'multiple_classes' && !empty($targetClasses)) {
+                        $classesToTarget = $targetClasses;
+                        $actualAudience = 'specific_class';
+                    } else {
+                        $classesToTarget = [ $targetClassId ];
+                        $actualAudience = $uploadedFor;
+                    }
 
                     foreach ($classesToTarget as $clsId) {
-                        $cVal = $clsId ? (int)$clsId : 'NULL';
+                        $cVal = ($clsId && $targetScope === 'students') ? (int)$clsId : 'NULL';
                         $query = "INSERT INTO file_uploads (
                             fileName, originalName, filePath, fileSize, fileType, categoryId, subjectId, 
-                            uploadedBy, uploadedFor, targetClassId, title, description, isAssignment, isPublishedToStudents
+                            uploadedBy, uploaderType, uploadedFor, targetScope, targetClassId, title, description, 
+                            isAssignment, isPublishedToStudents, adminStatus
                         ) VALUES (
-                            '$escapedNewFileName', '$escapedFileName', '$escapedFilePathDB', $fileSize, '$escapedFileType', 5, $subjectId,
-                            $staffId, '$actualAudience', $cVal, 
-                            '$title', '$description', 0, 1
+                            '$escapedNewFileName', '$escapedFileName', '$escapedFilePathDB', $fileSize, '$escapedFileType', $categoryId, $subjectId,
+                            $staffId, 'staff', '$actualAudience', '$targetScope', $cVal, 
+                            '$title', '$description', 0, $isPublishedToStudents, '$adminStatus'
                         )";
                         
                         if ($connection->query($query)) {
@@ -187,8 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 } else {
-                    $lastErr = error_get_last();
-                    $errors[] = "Failed to move uploaded file '$fileName' to '$filePath'. Check permissions on: $uploadDir. Error: " . ($lastErr ? $lastErr['message'] : 'Unknown') . " (is_uploaded: " . (is_uploaded_file($fileTmpName) ? 'yes' : 'no') . ")";
+                    $errors[] = "Failed to move uploaded file '$fileName'. Check permissions on upload folder.";
                 }
             } else {
                 $errors[] = "Upload error code {$files['error'][$i]} for file: " . $files['name'][$i];
@@ -198,29 +226,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Return response
     if (count($uploadedFiles) > 0) {
-        $response = [
-            'success' => true,
-            'message' => count($uploadedFiles) . ' item(s) shared successfully',
-            'files' => $uploadedFiles
-        ];
+        $msg = count($uploadedFiles) . " file(s) shared successfully!";
+        if ($targetScope === 'admin') {
+            $msg = "File submitted to School Administration successfully!";
+        } elseif ($uploadedFor === 'all_teachers') {
+            $msg = "File broadcast to all teachers successfully!";
+        } elseif ($uploadedFor === 'specific_teachers') {
+            $msg = "File shared with selected teachers successfully!";
+        } elseif ($uploadedFor === 'subject_teachers') {
+            $msg = "File shared with subject department colleagues!";
+        }
         
-        if (count($errors) > 0) {
-            $response['warnings'] = $errors;
-        }
+        echo json_encode([
+            'success' => true,
+            'message' => $msg,
+            'files'   => $uploadedFiles,
+            'errors'  => $errors
+        ]);
     } else {
-        $errorMsg = 'No items were uploaded successfully.';
-        if (!empty($errors)) {
-            $errorMsg .= ' Details: ' . implode(' | ', $errors);
-        }
-        $response = [
+        echo json_encode([
             'success' => false,
-            'message' => $errorMsg,
-            'errors' => $errors
-        ];
+            'message' => !empty($errors) ? implode('; ', $errors) : 'No files were uploaded.'
+        ]);
     }
-    
-    echo json_encode($response);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    exit();
 }
 ?>

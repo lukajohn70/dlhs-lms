@@ -612,7 +612,11 @@ session_start();
 				<div style="padding:15px; color:#fff; margin:10px 10px 0px 10px; background-color:#009999;"><center style="font-size:22px;">Preview questions (<font id="toViewTestName" style="color:#ffffff; font-size:18px;"></font>)</center></div>
 				<div style="background-color:#E9F1EA; padding:15px; margin:0px 10px 0px 10px;">
 				<div class="message4" style="color:green; font-size:18px;" align="center"></div>
-								<div class="table-responsive">
+								<div id="previewQuestionsLoader" style="display:none; text-align:center; padding:50px 20px;">
+									<i class="fa fa-circle-o-notch fa-spin fa-3x" style="color:#003366;"></i>
+									<div style="margin-top:14px; font-size:16px; font-weight:600; color:#003366;">Loading questions, please wait...</div>
+								</div>
+								<div id="previewQuestionsTableWrap" class="table-responsive">
 									<div style="margin-bottom:10px;">
 										<button type="button" class="btn btn-danger" id="btnDeleteSelected" onclick="deleteSelected()"><i class="fa fa-trash"></i> Delete selected</button>
 										<button type="button" class="btn btn-danger" id="btnDeleteAll" style="margin-left:8px;" onclick="deleteAll()"><i class="fa fa-trash"></i> Delete all</button>
@@ -1438,71 +1442,80 @@ session_start();
 			if(selectedTestId == "")
 			{
 				dlhsAlert("Please select test first", "error");
-			}
-			else
-			{
-				let testName = $('#testName option:selected').text();
-				$('#example').DataTable().clear().destroy();
-				$.ajax({
-					url: 'getTestQuestion.php',
-					type: 'POST',
-					data: {testId : selectedTestId},
-					dataType: 'JSON',
-					success: function(response)
-					{
-						var len = response.length;
-						for(var i=0; i<len; i++){
-							var questionId = response[i].questionId;
-							var question = response[i].question;
-							var stimulusLabel = response[i].stimulusLabel || '';
-							var optionA = response[i].optionA;
-							var optionB = response[i].optionB;
-							var optionC = response[i].optionC;						
-							var optionD = response[i].optionD;												
-							var optionE = response[i].optionE;												
-							var correctOption = response[i].correctOption;										
-							var markForQuestion = response[i].markForQuestion;										
-							var solvedSolution = response[i].solvedSolution;										
-							
-									var tr_str = "<tr>" +
-										"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
-										"<td width='3%'><center>" + (i+1) + "</center></td>" +
-								"<td width='30%'>" + question + "</td>" +
-								"<td width='10%'><center>" + stimulusLabel + "</center></td>" +
-								"<td width='10%'><center>" + optionA + "</center></td>" +
-								"<td width='10%'><center>" + optionB + "</center></td>" +
-								"<td width='10%'><center>" + optionC + "</center></td>" +
-								"<td width='10%'><center>" + optionD + "</center></td>" +
-								"<td width='10%'><center>" + (optionE || '') + "</center></td>" +
-								"<td width='7%'><center>" + correctOption + "</center></td>" +
-								"<td width='6%'><center>" + markForQuestion + "</center></td>" +
-								"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+selectedTestId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+selectedTestId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
-								
-								"</tr>";
-								$("#example tbody").append(tr_str);
-						}
-						$('#example').DataTable( {
-							"paging":   true,
-							"ordering": true,
-							"info":     true,
-							"responsive": true,
-							dom: 'lBfrtip',
-							buttons: [
-								'copy', 'csv', 'excel', 'pdf', 'print'
-							],
-							rowReorder: {
-								selector: 'td:nth-child(2)'
-							},
-							"responsive": true
-						});
-						$('#toViewTestName').html(testName);
-						
-					}
-				});
-				var modal1 = document.getElementById("myModal1");				
-				modal1.style.display = "block";
+				return;
 			}
 			
+			let testName = $('#testName option:selected').text();
+			$('#toViewTestName').html(testName);
+
+			var modal1 = document.getElementById("myModal1");				
+			modal1.style.display = "block";
+
+			$('#previewQuestionsLoader').show();
+			$('#previewQuestionsTableWrap').hide();
+
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+
+			$.ajax({
+				url: 'getTestQuestion.php',
+				type: 'POST',
+				data: {testId : selectedTestId},
+				dataType: 'JSON',
+				success: function(response)
+				{
+					var len = response ? response.length : 0;
+					var rowsHtml = '';
+					for(var i=0; i<len; i++){
+						var item = response[i];
+						var questionId = item.questionId;
+						var question = item.question;
+						var stimulusLabel = item.stimulusLabel || '';
+						var optionA = item.optionA;
+						var optionB = item.optionB;
+						var optionC = item.optionC;						
+						var optionD = item.optionD;												
+						var optionE = item.optionE;												
+						var correctOption = item.correctOption;										
+						var markForQuestion = item.markForQuestion;										
+						
+						rowsHtml += "<tr>" +
+							"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
+							"<td width='3%'><center>" + (i+1) + "</center></td>" +
+							"<td width='30%'>" + question + "</td>" +
+							"<td width='10%'><center>" + stimulusLabel + "</center></td>" +
+							"<td width='10%'><center>" + optionA + "</center></td>" +
+							"<td width='10%'><center>" + optionB + "</center></td>" +
+							"<td width='10%'><center>" + optionC + "</center></td>" +
+							"<td width='10%'><center>" + optionD + "</center></td>" +
+							"<td width='10%'><center>" + (optionE || '') + "</center></td>" +
+							"<td width='7%'><center>" + correctOption + "</center></td>" +
+							"<td width='6%'><center>" + markForQuestion + "</center></td>" +
+							"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+selectedTestId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+selectedTestId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
+							"</tr>";
+					}
+					$('#example tbody').html(rowsHtml);
+					$('#previewQuestionsLoader').hide();
+					$('#previewQuestionsTableWrap').show();
+
+					$('#example').DataTable( {
+						"paging":   true,
+						"ordering": true,
+						"info":     true,
+						"responsive": true,
+						"deferRender": true,
+						dom: 'lBfrtip',
+						buttons: [
+							'copy', 'csv', 'excel', 'pdf', 'print'
+						]
+					});
+				},
+				error: function() {
+					$('#previewQuestionsLoader').html('<div style="color:#d9534f; padding:20px;"><i class="fa fa-exclamation-triangle fa-2x"></i><div style="margin-top:10px;">Failed to load questions. Please try again.</div></div>');
+				}
+			});
 		}
 		//calling the data table function
 		var modal1 = document.getElementById("myModal1");	
@@ -1523,7 +1536,14 @@ session_start();
 		function refreshQuestionsTable(testId)
 		{
 			$('.message4').html('');
-			$('#example').DataTable().clear().destroy();
+			$('#previewQuestionsLoader').show();
+			$('#previewQuestionsTableWrap').hide();
+
+			if ($.fn.DataTable.isDataTable('#example')) {
+				$('#example').DataTable().clear().destroy();
+			}
+			$('#example tbody').empty();
+
 			$.ajax({
 				url: 'getTestQuestion.php',
 				type: 'POST',
@@ -1531,51 +1551,54 @@ session_start();
 				dataType: 'JSON',
 				success: function(response)
 				{
-					var len = response.length;
-						for(var i=0; i<len; i++){
-							var questionId = response[i].questionId;
-							var question = response[i].question;
-							var stimulusLabel = response[i].stimulusLabel || '';
-							var optionA = response[i].optionA;
-							var optionB = response[i].optionB;
-							var optionC = response[i].optionC;						
-							var optionD = response[i].optionD;												
-							var optionE = response[i].optionE;												
-							var correctOption = response[i].correctOption;										
-							var markForQuestion = response[i].markForQuestion;										
-							var solvedSolution = response[i].solvedSolution;										
-							
-									var tr_str = "<tr>" +
-										"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
-										"<td width='3%'><center>" + (i+1) + "</center></td>" +
-								"<td width='30%'>" + question + "</td>" +
-								"<td width='10%'><center>" + stimulusLabel + "</center></td>" +
-								"<td width='10%'><center>" + optionA + "</center></td>" +
-								"<td width='10%'><center>" + optionB + "</center></td>" +
-								"<td width='10%'><center>" + optionC + "</center></td>" +
-								"<td width='10%'><center>" + optionD + "</center></td>" +
-								"<td width='10%'><center>" + (optionE || '') + "</center></td>" +
-								"<td width='7%'><center>" + correctOption + "</center></td>" +
-								"<td width='6%'><center>" + markForQuestion + "</center></td>" +
-								"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+testId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+testId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
-								
-								"</tr>";
-								$("#example tbody").append(tr_str);
-						}
-						$('#example').DataTable( {
-							"paging":   true,
-							"ordering": true,
-							"info":     true,
-							"responsive": true,
-							dom: 'lBfrtip',
-							buttons: [
-								'copy', 'csv', 'excel', 'pdf', 'print'
-							],
-							rowReorder: {
-								selector: 'td:nth-child(2)'
-							},
-							"responsive": true
-						});
+					var len = response ? response.length : 0;
+					var rowsHtml = '';
+					for(var i=0; i<len; i++){
+						var item = response[i];
+						var questionId = item.questionId;
+						var question = item.question;
+						var stimulusLabel = item.stimulusLabel || '';
+						var optionA = item.optionA;
+						var optionB = item.optionB;
+						var optionC = item.optionC;						
+						var optionD = item.optionD;												
+						var optionE = item.optionE;												
+						var correctOption = item.correctOption;										
+						var markForQuestion = item.markForQuestion;										
+						
+						rowsHtml += "<tr>" +
+							"<td width='3%'><center><input type='checkbox' class='row-select' data-question-id='"+questionId+"'></center></td>" +
+							"<td width='3%'><center>" + (i+1) + "</center></td>" +
+							"<td width='30%'>" + question + "</td>" +
+							"<td width='10%'><center>" + stimulusLabel + "</center></td>" +
+							"<td width='10%'><center>" + optionA + "</center></td>" +
+							"<td width='10%'><center>" + optionB + "</center></td>" +
+							"<td width='10%'><center>" + optionC + "</center></td>" +
+							"<td width='10%'><center>" + optionD + "</center></td>" +
+							"<td width='10%'><center>" + (optionE || '') + "</center></td>" +
+							"<td width='7%'><center>" + correctOption + "</center></td>" +
+							"<td width='6%'><center>" + markForQuestion + "</center></td>" +
+							"<td align='center' width='12%'><a onclick='beforeSubmitToEditTest(\""+testId+"\",\""+questionId+"\")' title='Edit this question' style='cursor:pointer;'><i class='fa fa-pencil-square-o' aria-hidden='true' style='color:blue;'></i></a> &nbsp; &nbsp;<a onClick='deleteQuestion(\""+testId+"\",\""+questionId+"\")' title='Delete this question' style='cursor:pointer;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a></td>" +
+							"</tr>";
+					}
+					$('#example tbody').html(rowsHtml);
+					$('#previewQuestionsLoader').hide();
+					$('#previewQuestionsTableWrap').show();
+
+					$('#example').DataTable( {
+						"paging":   true,
+						"ordering": true,
+						"info":     true,
+						"responsive": true,
+						"deferRender": true,
+						dom: 'lBfrtip',
+						buttons: [
+							'copy', 'csv', 'excel', 'pdf', 'print'
+						]
+					});
+				},
+				error: function() {
+					$('#previewQuestionsLoader').html('<div style="color:#d9534f; padding:20px;"><i class="fa fa-exclamation-triangle fa-2x"></i><div style="margin-top:10px;">Failed to refresh questions.</div></div>');
 				}
 			});
 		}
