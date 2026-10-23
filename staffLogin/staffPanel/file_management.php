@@ -129,7 +129,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             border-radius: 12px;
             padding: 20px 22px;
             color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 15px rgba(0, 174, 239, 0.08);
             margin-bottom: 15px;
             position: relative;
             overflow: hidden;
@@ -137,7 +137,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
         }
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 22px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0, 174, 239, 0.15);
         }
         .stat-card i.stat-bg-icon {
             position: absolute;
@@ -157,22 +157,22 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             opacity: 0.92;
             font-weight: 500;
         }
-        .stat-card-blue   { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
-        .stat-card-green  { background: linear-gradient(135deg, #688a7e 0%, #446459 100%); }
-        .stat-card-orange { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); }
-        .stat-card-purple { background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%); }
+        .stat-card-blue   { background: linear-gradient(135deg, #020b1a 0%, #1e3c72 100%); }
+        .stat-card-cyan   { background: linear-gradient(135deg, #00AEEF 0%, #0077b6 100%); }
+        .stat-card-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .stat-card-emerald{ background: linear-gradient(135deg, #0acca2 0%, #059669 100%); }
 
         /* Premium Cards */
         .premium-card {
             background: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(104, 138, 126, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 174, 239, 0.06);
+            border: 1px solid rgba(0, 174, 239, 0.15);
             margin-bottom: 25px;
             overflow: hidden;
         }
         .premium-card-header {
-            background: linear-gradient(135deg, #688a7e 0%, #4f6e63 100%);
+            background: linear-gradient(135deg, #00AEEF 0%, #0077b6 100%);
             color: white;
             padding: 16px 22px;
             font-weight: 600;
@@ -185,37 +185,37 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             padding: 22px;
         }
         .upload-area {
-            border: 2px dashed #688a7e;
+            border: 2px dashed #00AEEF;
             border-radius: 8px;
             padding: 30px 18px;
             text-align: center;
             margin-bottom: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: rgba(104, 138, 126, 0.03);
+            background: rgba(0, 174, 239, 0.03);
         }
         .upload-area:hover, .upload-area.dragover {
-            background: rgba(104, 138, 126, 0.08);
-            border-color: #4f6e63;
+            background: rgba(0, 174, 239, 0.08);
+            border-color: #0077b6;
         }
         .upload-area i {
             font-size: 38px;
-            color: #688a7e;
+            color: #00AEEF;
             margin-bottom: 8px;
         }
         .form-control {
             border-radius: 6px;
-            border: 1px solid #ccc;
+            border: 1px solid #cbd5e1;
             padding: 8px 12px;
             height: auto;
             font-size: 13px;
         }
         .form-control:focus {
-            border-color: #688a7e;
-            box-shadow: 0 0 0 3px rgba(104, 138, 126, 0.15);
+            border-color: #00AEEF;
+            box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.15);
         }
         .btn-premium {
-            background: linear-gradient(135deg, #688a7e 0%, #4f6e63 100%);
+            background: linear-gradient(135deg, #00AEEF 0%, #0077b6 100%);
             color: white;
             border: none;
             border-radius: 6px;
@@ -224,11 +224,11 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             font-size: 14px;
             width: 100%;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(104, 138, 126, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 174, 239, 0.25);
         }
         .btn-premium:hover {
             color: white;
-            box-shadow: 0 6px 14px rgba(104, 138, 126, 0.3);
+            box-shadow: 0 6px 16px rgba(0, 174, 239, 0.35);
             transform: translateY(-1px);
         }
 
@@ -250,9 +250,9 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             transition: all 0.2s;
         }
         .nav-tabs-custom li.active a, .nav-tabs-custom li a:hover {
-            color: #4f6e63 !important;
-            background: #f0f7f4 !important;
-            border-bottom: 3px solid #688a7e !important;
+            color: #00AEEF !important;
+            background: #f0f9ff !important;
+            border-bottom: 3px solid #00AEEF !important;
         }
 
         /* Filter Pills */
@@ -271,9 +271,9 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
             display: inline-block;
         }
         .filter-pill.active, .filter-pill:hover {
-            background: #688a7e;
+            background: #00AEEF;
             color: white;
-            border-color: #688a7e;
+            border-color: #00AEEF;
         }
 
         /* Checklist Panels */
@@ -320,12 +320,12 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
         }
         .file-card-box:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-            border-color: #cbd5e1;
+            box-shadow: 0 6px 18px rgba(0, 174, 239, 0.09);
+            border-color: #00AEEF;
         }
         .file-card-icon {
             font-size: 32px;
-            color: #688a7e;
+            color: #00AEEF;
             margin-right: 12px;
         }
 
@@ -343,14 +343,29 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
         .spinner {
             width: 45px;
             height: 45px;
-            border: 4px solid rgba(104, 138, 126, 0.2);
-            border-top: 4px solid #688a7e;
+            border: 4px solid rgba(0, 174, 239, 0.2);
+            border-top: 4px solid #00AEEF;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        .view-btn {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-btn.active, .view-btn:hover {
+            background: #00AEEF;
+            color: white;
+            border-color: #00AEEF;
         }
     </style>
 </head>
@@ -586,7 +601,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
 
                               <!-- Progress -->
                               <div class="progress" id="uploadProgress" style="display: none; height: 10px; margin-top: 15px; border-radius: 4px; overflow: hidden;">
-                                  <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%; background-color: #688a7e;"></div>
+                                  <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 0%; background-color: #00AEEF;"></div>
                               </div>
                           </div>
                       </div>
@@ -615,7 +630,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
                                   <li role="presentation">
                                       <a href="#tabSent" aria-controls="tabSent" role="tab" data-toggle="tab">
                                           <i class="fa fa-paper-plane"></i> Files I've Shared 
-                                          <span class="badge" id="badgeSentTab" style="background-color: #688a7e; margin-left: 5px;">0</span>
+                                          <span class="badge" id="badgeSentTab" style="background-color: #00AEEF; margin-left: 5px;">0</span>
                                       </a>
                                   </li>
                               </ul>
@@ -632,6 +647,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
                                               <span class="filter-pill active" onclick="setReceivedFilter('all', this)">All</span>
                                               <span class="filter-pill" onclick="setReceivedFilter('admin', this)"><i class="fa fa-shield"></i> From Admin</span>
                                               <span class="filter-pill" onclick="setReceivedFilter('teachers', this)"><i class="fa fa-user"></i> From Colleagues</span>
+                                              <span class="filter-pill" onclick="setReceivedFilter('students', this)"><i class="fa fa-graduation-cap"></i> From Students</span>
                                               <span class="filter-pill" onclick="setReceivedFilter('subject', this)">Departmental</span>
                                           </div>
                                       </div>

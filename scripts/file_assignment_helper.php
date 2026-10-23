@@ -146,6 +146,7 @@ if (!function_exists('dlhsEnsureAllFileManagementTablesExist')) {
             'isPublishedToStudents' => "ALTER TABLE `file_uploads` ADD COLUMN `isPublishedToStudents` TINYINT(1) NOT NULL DEFAULT 0",
             'uploaderType'          => "ALTER TABLE `file_uploads` ADD COLUMN `uploaderType` VARCHAR(20) NOT NULL DEFAULT 'staff'",
             'targetScope'           => "ALTER TABLE `file_uploads` ADD COLUMN `targetScope` VARCHAR(30) NOT NULL DEFAULT 'students'",
+            'targetStaffId'         => "ALTER TABLE `file_uploads` ADD COLUMN `targetStaffId` INT DEFAULT NULL",
             'adminStatus'           => "ALTER TABLE `file_uploads` ADD COLUMN `adminStatus` VARCHAR(20) NOT NULL DEFAULT 'pending'",
             'adminNotes'            => "ALTER TABLE `file_uploads` ADD COLUMN `adminNotes` TEXT NULL",
             'adminReviewedAt'       => "ALTER TABLE `file_uploads` ADD COLUMN `adminReviewedAt` DATETIME NULL",

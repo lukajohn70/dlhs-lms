@@ -222,10 +222,10 @@ function handleFiles(files) {
     
     Array.from(files).forEach(file => {
         const fileDiv = document.createElement('div');
-        fileDiv.style.cssText = 'padding: 8px 12px; background: rgba(104, 138, 126, 0.05); border: 1px solid rgba(104, 138, 126, 0.15); border-radius: 6px; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;';
+        fileDiv.style.cssText = 'padding: 8px 12px; background: rgba(0, 174, 239, 0.05); border: 1px solid rgba(0, 174, 239, 0.15); border-radius: 6px; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;';
         fileDiv.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
-                <i class="${getFileIconClass(file.name)}" style="color: #688a7e; font-size: 16px;"></i>
+                <i class="${getFileIconClass(file.name)}" style="color: #00AEEF; font-size: 16px;"></i>
                 <span style="font-weight: 500;">${escapeHtml(file.name)}</span>
             </div>
             <span class="text-muted" style="font-size: 11px;">${formatFileSize(file.size)}</span>
@@ -520,6 +520,8 @@ function filterReceivedFiles() {
             matchesFilter = (file.uploaderType === 'admin');
         } else if (receivedFilter === 'teachers') {
             matchesFilter = (file.uploaderType === 'staff');
+        } else if (receivedFilter === 'students') {
+            matchesFilter = (file.uploaderType === 'student');
         } else if (receivedFilter === 'subject') {
             matchesFilter = (file.uploadedFor === 'subject_teachers');
         }
@@ -598,13 +600,18 @@ function renderReceivedTable(files) {
     files.forEach(file => {
         let senderHtml = '';
         if (file.uploaderType === 'admin') {
-            senderHtml = '<span class="label label-primary" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);"><i class="fa fa-shield"></i> Administration</span>';
+            senderHtml = '<span class="label label-primary" style="background: linear-gradient(135deg, #0077b6 0%, #00AEEF 100%);"><i class="fa fa-shield"></i> Administration</span>';
+        } else if (file.uploaderType === 'student') {
+            let className = file.studentClass ? ` <small class="text-muted">(${escapeHtml(file.studentClass)})</small>` : '';
+            senderHtml = `<span class="label label-info" style="background-color: #0284c7;"><i class="fa fa-graduation-cap"></i> Student</span><br><strong>${escapeHtml(file.senderName)}</strong>${className}`;
         } else {
             senderHtml = `<strong>${escapeHtml(file.senderName)}</strong>`;
         }
 
         let scopeHtml = '<span class="label label-default">Staff Broadcast</span>';
-        if (file.uploadedFor === 'subject_teachers') {
+        if (file.uploaderType === 'student') {
+            scopeHtml = '<span class="label label-warning" style="background-color: #f59e0b;"><i class="fa fa-file-text-o"></i> Submission</span>';
+        } else if (file.uploadedFor === 'subject_teachers') {
             scopeHtml = '<span class="label label-info">Department</span>';
         } else if (file.uploadedFor === 'specific_teachers') {
             scopeHtml = '<span class="label label-success">Direct to You</span>';
@@ -642,9 +649,15 @@ function renderReceivedGrid(files) {
 
     let html = '<div class="row">';
     files.forEach(file => {
-        let senderBadge = file.uploaderType === 'admin'
-            ? '<span class="label label-primary"><i class="fa fa-shield"></i> Administration</span>'
-            : `<span class="label label-default">${escapeHtml(file.senderName)}</span>`;
+        let senderBadge = '';
+        if (file.uploaderType === 'admin') {
+            senderBadge = '<span class="label label-primary"><i class="fa fa-shield"></i> Administration</span>';
+        } else if (file.uploaderType === 'student') {
+            let className = file.studentClass ? ` (${escapeHtml(file.studentClass)})` : '';
+            senderBadge = `<span class="label label-warning" style="background-color: #f59e0b;"><i class="fa fa-graduation-cap"></i> Student: ${escapeHtml(file.senderName)}${className}</span>`;
+        } else {
+            senderBadge = `<span class="label label-default">${escapeHtml(file.senderName)}</span>`;
+        }
 
         html += '<div class="col-md-6" style="margin-bottom: 15px;">';
         html += '<div class="file-card-box">';
@@ -731,7 +744,7 @@ function renderSentTable(files) {
                 statusHtml = `<span class="badge" onclick="toggleVisibility(${file.fileId})" style="cursor: pointer; background-color: #94a3b8;" title="Click to Publish"><i class="fa fa-eye-slash"></i> Hidden</span>`;
             }
         } else {
-            statusHtml = '<span class="badge" style="background-color: #688a7e;"><i class="fa fa-check"></i> Active</span>';
+            statusHtml = '<span class="badge" style="background-color: #00AEEF;"><i class="fa fa-check"></i> Active</span>';
         }
 
         html += '<tr>';
@@ -740,7 +753,7 @@ function renderSentTable(files) {
         html += `<td>${escapeHtml(file.subjectName || 'General')} <br><small class="text-muted">${escapeHtml(file.categoryName || '')}</small></td>`;
         html += `<td>${statusHtml}</td>`;
         html += `<td>${formatFileSize(file.fileSize)}</td>`;
-        html += `<td><span class="badge" style="background: #688a7e;">${file.downloadCount || 0}</span></td>`;
+        html += `<td><span class="badge" style="background: #0077b6;">${file.downloadCount || 0}</span></td>`;
         html += `<td>
             <button class="btn btn-default btn-action-sm" onclick="previewFile(${file.fileId})" title="Preview"><i class="fa fa-eye"></i></button>
             <a href="../../download_file.php?fileId=${file.fileId}" class="btn btn-primary btn-action-sm" title="Download"><i class="fa fa-download"></i></a>

@@ -125,7 +125,10 @@ if ($userType === 'admin') {
     $uploaderId = (int)$file['uploadedBy'];
     $uploaderType = $file['uploaderType'] ?? 'staff';
 
-    if ($file['uploadedFor'] === 'admin') {
+    if ($uploaderType === 'student') {
+        // Teacher can download student submission if targeted to them
+        $hasAccess = (isset($file['targetStaffId']) && (int)$file['targetStaffId'] === (int)$userId);
+    } elseif ($file['uploadedFor'] === 'admin') {
         // Only uploader teacher can access their submission to admin
         $hasAccess = ($uploaderType === 'staff' && $uploaderId === (int)$userId);
     } elseif ($file['uploadedFor'] === 'specific_teachers') {
@@ -147,8 +150,11 @@ if ($userType === 'admin') {
         $hasAccess = true;
     }
 } elseif ($userType === 'student') {
-    // Ensure student cannot access teacher/admin shared files
-    if (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin']))) {
+    // If uploaded by a student, only the uploader student can access (STRICTLY NO STUDENT-TO-STUDENT SHARING)
+    if (($file['uploaderType'] ?? 'staff') === 'student') {
+        $hasAccess = ((int)$file['uploadedBy'] === (int)$userId);
+    } elseif (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin', 'specific_staff']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin', 'staff']))) {
+        // Ensure student cannot access teacher/admin/staff restricted files
         $hasAccess = false;
     } elseif ($file['uploadedFor'] === 'all') {
         $hasAccess = true;

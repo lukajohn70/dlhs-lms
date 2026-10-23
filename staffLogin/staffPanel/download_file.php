@@ -50,7 +50,14 @@ $file = $result->fetch_assoc();
 
 // Role-based access checks
 if ($userType === 'student') {
-    if (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin']))) {
+    // If uploaded by student, only that student can access (STRICTLY NO STUDENT-TO-STUDENT SHARING)
+    if (($file['uploaderType'] ?? 'staff') === 'student') {
+        if ((int)$file['uploadedBy'] !== (int)$userId) {
+            header("HTTP/1.1 403 Forbidden");
+            echo "<h1>403 Forbidden</h1><p>Students cannot access files of other students.</p>";
+            exit();
+        }
+    } elseif (in_array($file['uploadedFor'], ['all_teachers', 'subject_teachers', 'specific_teachers', 'admin', 'specific_staff']) || (isset($file['targetScope']) && in_array($file['targetScope'], ['teachers', 'admin', 'staff']))) {
         header("HTTP/1.1 403 Forbidden");
         echo "<h1>403 Forbidden</h1><p>You do not have permission to download this staff-restricted file.</p>";
         exit();
@@ -59,15 +66,18 @@ if ($userType === 'student') {
     $uploaderId = (int)$file['uploadedBy'];
     $uploaderType = $file['uploaderType'] ?? 'staff';
     
-    // If it's a file sent to admin by a teacher, only that teacher (or admin) can access
-    if ($file['uploadedFor'] === 'admin' && ($uploaderType === 'staff' && $uploaderId !== $userId)) {
+    if ($uploaderType === 'student') {
+        // Teacher can download student submission if targeted to them
+        if (isset($file['targetStaffId']) && (int)$file['targetStaffId'] !== (int)$userId) {
+            header("HTTP/1.1 403 Forbidden");
+            echo "<h1>403 Forbidden</h1><p>This student submission was targeted to a different teacher.</p>";
+            exit();
+        }
+    } elseif ($file['uploadedFor'] === 'admin' && ($uploaderType === 'staff' && $uploaderId !== $userId)) {
         header("HTTP/1.1 403 Forbidden");
         echo "<h1>403 Forbidden</h1><p>This file is a private submission to School Administration.</p>";
         exit();
-    }
-    
-    // If it's targeted to specific teachers, check if this teacher is assigned or is the uploader
-    if ($file['uploadedFor'] === 'specific_teachers' && ($uploaderType !== 'staff' || $uploaderId !== $userId)) {
+    } elseif ($file['uploadedFor'] === 'specific_teachers' && ($uploaderType !== 'staff' || $uploaderId !== $userId)) {
         $assignCheck = $connection->query("SELECT 1 FROM file_staff_assignments WHERE fileId = $fileId AND staffId = $userId LIMIT 1");
         if (!$assignCheck || $assignCheck->num_rows === 0) {
             header("HTTP/1.1 403 Forbidden");

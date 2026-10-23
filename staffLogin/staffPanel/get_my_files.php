@@ -49,19 +49,25 @@ if ($sentResult && $sentResult->num_rows > 0) {
     }
 }
 
-// 2. Files shared with this staff member (Received Files)
+// 2. Files shared with this staff member (Received Files from Admin, Colleagues, and Students)
 $receivedQuery = "SELECT f.*, c.categoryName, s.subjectName,
                          CASE 
                              WHEN f.uploaderType = 'admin' THEN 'School Administration'
+                             WHEN f.uploaderType = 'student' THEN CONCAT(stud.surname, ' ', stud.firstName, ' (', COALESCE(cls.className, 'Student'), ')')
                              ELSE CONCAT(st.surname, ' ', st.firstName)
                          END as senderName,
-                         st.username as senderEmail,
+                         CASE
+                             WHEN f.uploaderType = 'student' THEN COALESCE(cls.className, 'Student')
+                             ELSE st.username
+                         END as senderEmail,
                          st.passport as senderPassport,
                          f.uploaderType as senderType
                   FROM file_uploads f 
                   LEFT JOIN file_categories c ON f.categoryId = c.categoryId 
                   LEFT JOIN subjects s ON f.subjectId = s.subjectId 
-                  LEFT JOIN stafflogin st ON f.uploadedBy = st.staffId
+                  LEFT JOIN stafflogin st ON (f.uploaderType = 'staff' AND f.uploadedBy = st.staffId)
+                  LEFT JOIN studentlogin stud ON (f.uploaderType = 'student' AND f.uploadedBy = stud.studentId)
+                  LEFT JOIN classes cls ON f.targetClassId = cls.classId
                   WHERE f.isActive = 1
                     AND (
                         -- Admin shared to all teachers
@@ -76,6 +82,8 @@ $receivedQuery = "SELECT f.*, c.categoryName, s.subjectName,
                         ))
                         -- Other teacher shared specifically to this teacher
                         OR (f.uploaderType = 'staff' AND f.uploadedBy != $staffId AND f.fileId IN (SELECT fileId FROM file_staff_assignments WHERE staffId = $staffId))
+                        -- Student submitted directly to this teacher
+                        OR (f.uploaderType = 'student' AND f.targetStaffId = $staffId)
                     )
                   ORDER BY f.created_at DESC";
 
@@ -83,11 +91,14 @@ $receivedResult = $connection->query($receivedQuery);
 $receivedFiles = [];
 $fromAdminCount = 0;
 $fromTeachersCount = 0;
+$fromStudentsCount = 0;
 
 if ($receivedResult && $receivedResult->num_rows > 0) {
     while ($row = $receivedResult->fetch_assoc()) {
         if ($row['uploaderType'] === 'admin') {
             $fromAdminCount++;
+        } elseif ($row['uploaderType'] === 'student') {
+            $fromStudentsCount++;
         } else {
             $fromTeachersCount++;
         }
@@ -105,6 +116,7 @@ echo json_encode([
         'totalReceived' => count($receivedFiles),
         'fromAdmin'     => $fromAdminCount,
         'fromTeachers'  => $fromTeachersCount,
+        'fromStudents'  => $fromStudentsCount,
         'adminPending'  => $adminPendingCount,
         'adminReviewed' => $adminReviewedCount
     ]

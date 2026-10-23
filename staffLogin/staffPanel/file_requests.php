@@ -101,7 +101,7 @@ if ($yearGroupsResult) {
             background: #ffffff;
             border-radius: 14px;
             box-shadow: var(--card-shadow);
-            border: 1px solid rgba(104, 138, 126, 0.15);
+            border: 1px solid rgba(0, 174, 239, 0.15);
             margin-bottom: 25px;
             overflow: hidden;
             transition: var(--transition);
@@ -136,7 +136,7 @@ if ($yearGroupsResult) {
             font-weight: 600;
             font-size: 14px;
             transition: var(--transition);
-            box-shadow: 0 4px 10px rgba(104, 138, 126, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 174, 239, 0.2);
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -146,7 +146,7 @@ if ($yearGroupsResult) {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(104, 138, 126, 0.3);
+            box-shadow: 0 6px 15px rgba(0, 174, 239, 0.3);
             text-decoration: none;
         }
 
@@ -205,7 +205,7 @@ if ($yearGroupsResult) {
         .request-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            border-color: rgba(104, 138, 126, 0.25);
+            border-color: rgba(0, 174, 239, 0.25);
         }
 
         .request-title {
@@ -232,7 +232,7 @@ if ($yearGroupsResult) {
         }
 
         .badge-submissions {
-            background: rgba(104, 138, 126, 0.12);
+            background: rgba(0, 174, 239, 0.12);
             color: var(--primary-dark);
             padding: 4px 10px;
             border-radius: 20px;
@@ -261,7 +261,7 @@ if ($yearGroupsResult) {
 
         .form-control:focus {
             border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(104, 138, 126, 0.15);
+            box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.15);
         }
 
         /* Submissions Table Dashboard */
@@ -504,7 +504,7 @@ if ($yearGroupsResult) {
                     </div>
                     <div class="premium-card-body">
                         <!-- Instructions Box -->
-                        <div id="requestInstructionsBox" style="background: rgba(104, 138, 126, 0.05); border-left: 4px solid var(--primary-light); padding: 15px 20px; border-radius: 4px; margin-bottom: 25px; display: none;">
+                        <div id="requestInstructionsBox" style="background: rgba(0, 174, 239, 0.05); border-left: 4px solid var(--primary-light); padding: 15px 20px; border-radius: 4px; margin-bottom: 25px; display: none;">
                             <strong style="color: var(--primary-dark);"><i class="fa fa-align-left"></i> Instructions:</strong><br>
                             <span id="requestInstructionsText" style="color: #555; font-size: 13.5px; white-space: pre-wrap;"></span>
                         </div>
