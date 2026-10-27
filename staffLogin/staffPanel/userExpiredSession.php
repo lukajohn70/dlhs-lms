@@ -1,34 +1,45 @@
 <?php
-	date_default_timezone_set('Africa/Lagos'); //set choice timezone
-	
-		if (isset($_SESSION['forcePasswordChange']) && (int) $_SESSION['forcePasswordChange'] === 1 && basename($_SERVER['PHP_SELF']) !== 'changePassword.php') {
-			$redirectUrl = isset($_SESSION['adminLoggedIn']) ? "../../adminLogin/adminPanel/changePassword.php?force=1" : "changePassword.php?force=1";
-			header("location:$redirectUrl");
-			exit;
-		}
+date_default_timezone_set('Africa/Lagos'); // set choice timezone
 
-	// If an admin is accessing staff pages, bypass staff session timeout
-		if (isset($_SESSION['adminLoggedIn'])) {
-			return;
-		}
+// If an admin is accessing staff pages, bypass staff session timeout
+if (isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes') {
+    return;
+}
 
-		$isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
-			|| (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-			|| (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false && isset($_POST['uploadType']));
-		
-		if(!isset($_SESSION['staffLast_login']) || (time() - $_SESSION['staffLast_login']) > 3600)
-		{
-			if ($isAjax) {
-				http_response_code(401);
-				header('Content-Type: application/json');
-				echo json_encode(['success' => false, 'sessionExpired' => true, 'message' => 'Your session has expired. Please log in again.']);
-				exit;
-			}
-			header("location:logout.php");
-			exit;
-		}
-		else
-		{
-			$_SESSION['staffLast_login']=time();
-		}
+$isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+    || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+    || (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false && isset($_POST['uploadType']));
+
+if (isset($_SESSION['forcePasswordChange']) && (int) $_SESSION['forcePasswordChange'] === 1 && basename($_SERVER['PHP_SELF']) !== 'changePassword.php') {
+    if ($isAjax) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'forcePasswordChange' => true,
+            'message' => 'You must change your default password before you can use this feature. Please visit the Change Password page.'
+        ]);
+        exit;
+    }
+    $redirectUrl = isset($_SESSION['adminLoggedIn']) ? "../../adminLogin/adminPanel/changePassword.php?force=1" : "changePassword.php?force=1";
+    header("location:$redirectUrl");
+    exit;
+}
+
+if (!isset($_SESSION['staffLoggedIn']) || $_SESSION['staffLoggedIn'] !== 'yes' || !isset($_SESSION['staffLast_login']) || (time() - $_SESSION['staffLast_login']) > 3600) {
+    if ($isAjax) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'sessionExpired' => true,
+            'message' => 'Your session has expired or you are not logged in. Please refresh and log in again.'
+        ]);
+        exit;
+    }
+    header("location:logout.php");
+    exit;
+} else {
+    $_SESSION['staffLast_login'] = time();
+}
 ?>

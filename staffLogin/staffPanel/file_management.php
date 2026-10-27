@@ -746,7 +746,7 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
       const allAssignedClasses = <?php echo json_encode($allClasses); ?>;
       const teacherAssignments = <?php echo json_encode($teacherAssignments); ?>;
   </script>
-  <script src="js/premium_modal.js"></script>
-  <script src="file_management.js"></script>
+  <script src="js/premium_modal.js?v=<?php echo filemtime(__DIR__ . '/js/premium_modal.js'); ?>"></script>
+  <script src="file_management.js?v=<?php echo filemtime(__DIR__ . '/file_management.js'); ?>"></script>
 </body>
 </html>

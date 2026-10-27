@@ -573,6 +573,6 @@ $studentName = $_SESSION['studentName'] ?? 'Student';
   <script src="js/jquery.scrollTo.min.js"></script>
   <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
   <script src="js/custom.js"></script>
-  <script src="student_files.js"></script>
+  <script src="student_files.js?v=<?php echo filemtime(__DIR__ . '/student_files.js'); ?>"></script>
 </body>
 </html>
