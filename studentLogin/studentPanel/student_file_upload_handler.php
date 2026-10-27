@@ -1,17 +1,34 @@
 <?php
+ob_start();
 session_start();
 require_once "userExpiredSession.php";
 require_once "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/file_assignment_helper.php";
 
+header('Content-Type: application/json; charset=utf-8');
+
 dlhsEnsureAllFileManagementTablesExist($connection);
 
 if (!isset($_SESSION['studentLoggedIn']) || $_SESSION['studentLoggedIn'] !== "yes") {
-    echo json_encode(['success' => false, 'message' => 'Not authorized']);
+    while (ob_get_level()) { ob_end_clean(); }
+    http_response_code(401);
+    echo json_encode(['success' => false, 'sessionExpired' => true, 'message' => 'Your student session has expired. Please log in again.']);
     exit();
 }
 
 $studentId = (int)$_SESSION['studentId'];
+
+// Detect if post_max_size was exceeded
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+    while (ob_get_level()) { ob_end_clean(); }
+    http_response_code(413);
+    $serverLimit = ini_get('post_max_size') ?: 'Unknown';
+    echo json_encode([
+        'success' => false,
+        'message' => "The uploaded file exceeds the server post limit ({$serverLimit}). Please upload a smaller file."
+    ]);
+    exit();
+}
 
 // Get student's classId
 $studentQuery = "SELECT classId FROM studentlogin WHERE studentId = $studentId";
@@ -23,73 +40,102 @@ if ($studentResult && $studentResult->num_rows > 0) {
 }
 
 $allowedTypes = [
-    'pdf' => 'application/pdf',
-    'doc' => 'application/msword',
+    'pdf'  => 'application/pdf',
+    'doc'  => 'application/msword',
     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'ppt' => 'application/vnd.ms-powerpoint',
+    'ppt'  => 'application/vnd.ms-powerpoint',
     'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'xls' => 'application/vnd.ms-excel',
+    'xls'  => 'application/vnd.ms-excel',
     'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'txt' => 'text/plain',
-    'zip' => 'application/zip',
-    'rar' => 'application/x-rar-compressed',
-    'jpg' => 'image/jpeg',
+    'txt'  => 'text/plain',
+    'zip'  => 'application/zip',
+    'rar'  => 'application/x-rar-compressed',
+    'jpg'  => 'image/jpeg',
     'jpeg' => 'image/jpeg',
-    'png' => 'image/png',
-    'gif' => 'image/gif',
-    'mp4' => 'video/mp4',
-    'mp3' => 'audio/mpeg'
+    'png'  => 'image/png',
+    'gif'  => 'image/gif',
+    'mp4'  => 'video/mp4',
+    'mp3'  => 'audio/mpeg'
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $targetStaffId = isset($_POST['targetStaffId']) ? intval($_POST['targetStaffId']) : 0;
-    $subjectId = isset($_POST['subjectId']) ? intval($_POST['subjectId']) : 0;
-    $title = mysqli_real_escape_string($connection, trim($_POST['title'] ?? ''));
-    $description = mysqli_real_escape_string($connection, trim($_POST['description'] ?? ''));
+    try {
+        $targetStaffId = isset($_POST['targetStaffId']) ? intval($_POST['targetStaffId']) : 0;
+        $subjectId     = isset($_POST['subjectId']) ? intval($_POST['subjectId']) : 0;
+        $title         = mysqli_real_escape_string($connection, trim($_POST['title'] ?? ''));
+        $description   = mysqli_real_escape_string($connection, trim($_POST['description'] ?? ''));
 
-    if ($targetStaffId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Please select a teacher to submit this file to.']);
-        exit();
-    }
+        if ($targetStaffId <= 0) {
+            while (ob_get_level()) { ob_end_clean(); }
+            echo json_encode(['success' => false, 'message' => 'Please select a teacher to submit this file to.']);
+            exit();
+        }
 
-    // Verify recipient is a valid staff member
-    $staffCheck = $connection->query("SELECT staffId FROM stafflogin WHERE staffId = $targetStaffId LIMIT 1");
-    if (!$staffCheck || $staffCheck->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid teacher selected. Students can only send files to teachers.']);
-        exit();
-    }
+        // Verify recipient is a valid staff member
+        $staffCheck = $connection->query("SELECT staffId FROM stafflogin WHERE staffId = $targetStaffId LIMIT 1");
+        if (!$staffCheck || $staffCheck->num_rows === 0) {
+            while (ob_get_level()) { ob_end_clean(); }
+            echo json_encode(['success' => false, 'message' => 'Invalid teacher selected. Students can only send files to teachers.']);
+            exit();
+        }
 
-    if (empty($title)) {
-        echo json_encode(['success' => false, 'message' => 'Please provide a title for your document.']);
-        exit();
-    }
+        if (empty($title)) {
+            while (ob_get_level()) { ob_end_clean(); }
+            echo json_encode(['success' => false, 'message' => 'Please provide a title for your document.']);
+            exit();
+        }
 
-    if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
-        echo json_encode(['success' => false, 'message' => 'Please select a file to upload.']);
-        exit();
-    }
+        if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
+            while (ob_get_level()) { ob_end_clean(); }
+            echo json_encode(['success' => false, 'message' => 'Please select a file to upload.']);
+            exit();
+        }
 
-    $files = $_FILES['files'];
-    $uploadDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR;
+        $files = $_FILES['files'];
+        $uploadDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR;
 
-    if (!is_dir($uploadDir)) {
-        @mkdir($uploadDir, 0777, true);
-    }
-    @chmod($uploadDir, 0777);
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0777, true);
+        }
+        @chmod($uploadDir, 0777);
 
-    $uploadedFiles = [];
-    $errors = [];
+        $uploadedFiles = [];
+        $errors = [];
 
-    for ($i = 0; $i < count($files['name']); $i++) {
-        if ($files['error'][$i] === UPLOAD_ERR_OK) {
-            $fileName = $files['name'][$i];
-            $fileSize = $files['size'][$i];
+        for ($i = 0; $i < count($files['name']); $i++) {
+            $fileName    = $files['name'][$i];
+            $fileError   = $files['error'][$i];
+            $fileSize    = $files['size'][$i];
             $fileTmpName = $files['tmp_name'][$i];
-            $fileType = $files['type'][$i];
+            $fileType    = $files['type'][$i];
+
+            if ($fileError !== UPLOAD_ERR_OK) {
+                switch ($fileError) {
+                    case UPLOAD_ERR_INI_SIZE:
+                        $iniSize = ini_get('upload_max_filesize') ?: '2M';
+                        $errors[] = "File '$fileName' exceeds server upload limit ({$iniSize}).";
+                        break;
+                    case UPLOAD_ERR_FORM_SIZE:
+                        $errors[] = "File '$fileName' exceeds form size limit.";
+                        break;
+                    case UPLOAD_ERR_PARTIAL:
+                        $errors[] = "File '$fileName' was only partially uploaded.";
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        $errors[] = "No file was attached.";
+                        break;
+                    case UPLOAD_ERR_CANT_WRITE:
+                        $errors[] = "Server failed to write '$fileName' to disk.";
+                        break;
+                    default:
+                        $errors[] = "Upload failed for '$fileName' with error code $fileError.";
+                }
+                continue;
+            }
 
             $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             if (!array_key_exists($fileExt, $allowedTypes)) {
-                $errors[] = "File '$fileName' has an unsupported format ($fileExt).";
+                $errors[] = "File '$fileName' has an unsupported format (.$fileExt).";
                 continue;
             }
 
@@ -105,8 +151,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (move_uploaded_file($fileTmpName, $destPath)) {
                 $escapedOrigName = mysqli_real_escape_string($connection, $fileName);
-                $escapedNewName = mysqli_real_escape_string($connection, $newFileName);
-                $escapedDbPath = mysqli_real_escape_string($connection, $dbPath);
+                $escapedNewName  = mysqli_real_escape_string($connection, $newFileName);
+                $escapedDbPath   = mysqli_real_escape_string($connection, $dbPath);
                 $escapedFileType = mysqli_real_escape_string($connection, $fileType);
 
                 $query = "INSERT INTO file_uploads (
@@ -123,32 +169,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fileId = $connection->insert_id;
                     $uploadedFiles[] = ['id' => $fileId, 'name' => $fileName];
 
-                    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
                     $ua = mysqli_real_escape_string($connection, $_SERVER['HTTP_USER_AGENT'] ?? '');
-                    $connection->query("INSERT INTO file_access_logs (fileId, userId, userType, action, ipAddress, userAgent)
-                                        VALUES ($fileId, $studentId, 'student', 'submit_to_teacher', '$ip', '$ua')");
+                    @$connection->query("INSERT INTO file_access_logs (fileId, userId, userType, action, ipAddress, userAgent)
+                                         VALUES ($fileId, $studentId, 'student', 'submit_to_teacher', '$ip', '$ua')");
                 } else {
                     $errors[] = "Database error for '$fileName': " . $connection->error;
                 }
             } else {
-                $errors[] = "Failed to upload '$fileName'.";
+                $errors[] = "Failed to upload '$fileName' to server storage.";
             }
         }
-    }
 
-    if (count($uploadedFiles) > 0) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'Document submitted to teacher successfully!',
-            'files'   => $uploadedFiles,
-            'errors'  => $errors
-        ]);
-    } else {
+        while (ob_get_level()) { ob_end_clean(); }
+
+        if (count($uploadedFiles) > 0) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Document submitted to teacher successfully!',
+                'files'   => $uploadedFiles,
+                'errors'  => $errors
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => !empty($errors) ? implode('; ', $errors) : 'No files uploaded. Please check file format and size.'
+            ]);
+        }
+        exit();
+
+    } catch (\Throwable $e) {
+        while (ob_get_level()) { ob_end_clean(); }
+        http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => !empty($errors) ? implode('; ', $errors) : 'No files uploaded.'
+            'message' => 'Server error while processing submission: ' . $e->getMessage()
         ]);
+        exit();
     }
-    exit();
 }
 ?>

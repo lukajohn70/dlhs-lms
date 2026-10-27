@@ -438,7 +438,37 @@ function uploadFiles() {
         error: function(xhr, status, error) {
             hideLoading();
             $('#uploadProgress').hide();
-            showPremiumModal('A network error occurred. Please check connection and try again.', 'Error', 'error');
+            
+            let errorMsg = 'A network error occurred. Please check connection and try again.';
+            let errorTitle = 'Sharing Failed';
+
+            if (xhr.status === 413) {
+                errorMsg = 'The file you are uploading exceeds the server upload limit (upload_max_filesize / post_max_size in php.ini). Please choose a smaller file or increase limits in php.ini.';
+                errorTitle = 'File Too Large';
+            } else if (xhr.status === 401 || (xhr.responseJSON && xhr.responseJSON.sessionExpired)) {
+                errorMsg = 'Your session has expired. Please refresh the page and log in again.';
+                errorTitle = 'Session Expired';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    if (parsed.message) {
+                        errorMsg = parsed.message;
+                    }
+                } catch(e) {
+                    const cleanText = xhr.responseText.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                    if (cleanText.length > 0 && cleanText.length < 300) {
+                        errorMsg = cleanText;
+                    } else if (cleanText.length >= 300) {
+                        errorMsg = cleanText.substring(0, 250) + '...';
+                    }
+                }
+            } else if (error) {
+                errorMsg = 'Error: ' + error;
+            }
+
+            showPremiumModal(errorMsg, errorTitle, 'error');
         }
     });
 }

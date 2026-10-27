@@ -11,9 +11,19 @@
 		if (isset($_SESSION['adminLoggedIn'])) {
 			return;
 		}
+
+		$isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+			|| (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+			|| (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false && isset($_POST['uploadType']));
 		
 		if(!isset($_SESSION['staffLast_login']) || (time() - $_SESSION['staffLast_login']) > 3600)
 		{
+			if ($isAjax) {
+				http_response_code(401);
+				header('Content-Type: application/json');
+				echo json_encode(['success' => false, 'sessionExpired' => true, 'message' => 'Your session has expired. Please log in again.']);
+				exit;
+			}
 			header("location:logout.php");
 			exit;
 		}
