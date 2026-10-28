@@ -398,7 +398,7 @@ if ($staffRes) {
                           <i class="fa fa-cloud-upload" style="font-size: 38px; color: #00AEEF; margin-bottom: 8px;"></i>
                           <h5 style="margin: 0 0 4px 0; font-weight: 600;">Drag & Drop Document Here</h5>
                           <p style="color: #64748b; font-size: 12px; margin: 0;">or click to browse files (PDF, Word, Excel, PowerPoint, Zip, etc. Max: 100MB)</p>
-                          <input type="file" id="adminFileInput" name="files[]" style="display: none;" multiple>
+                          <input type="file" id="adminFileInput" name="files[]" style="display: none;" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods,.odp,.zip,.rar,.7z,.tar,.gz,.jpg,.jpeg,.png,.gif,.webp,.svg,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.webm,.mkv,.mov,.avi">
                       </div>
                       <div id="adminFilePreview" style="margin-bottom: 15px;"></div>
 

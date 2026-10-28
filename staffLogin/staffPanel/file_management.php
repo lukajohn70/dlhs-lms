@@ -448,8 +448,8 @@ if ($colleaguesResult && $colleaguesResult->num_rows > 0) {
                                   <div class="upload-area" id="uploadArea">
                                       <i class="fa fa-cloud-upload"></i>
                                       <h5 style="margin: 5px 0 2px 0; font-weight: 600;">Drag & Drop File Here</h5>
-                                      <p style="color: #888; font-size: 12px; margin: 0;">or click to browse files (PDF, Word, Excel, PPT, Zip, etc. Max: 100MB)</p>
-                                      <input type="file" id="fileInput" name="files[]" style="display: none;" multiple>
+                                      <p style="color: #888; font-size: 12px; margin: 0;">or click to browse files (PDF, Word, Excel, PPT, Zip, Images, Audio, Video. Max: 100MB)</p>
+                                      <input type="file" id="fileInput" name="files[]" style="display: none;" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods,.odp,.zip,.rar,.7z,.tar,.gz,.jpg,.jpeg,.png,.gif,.webp,.svg,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.webm,.mkv,.mov,.avi">
                                   </div>
                                   
                                   <!-- YouTube Link Input -->

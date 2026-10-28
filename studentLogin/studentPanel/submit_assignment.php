@@ -14,13 +14,23 @@ $studentId = $_SESSION['studentId'];
 // Configuration
 $maxFileSize = 25 * 1024 * 1024; // 25MB for submissions
 $allowedTypes = [
-    'pdf' => 'application/pdf',
-    'doc' => 'application/msword',
+    'pdf'  => 'application/pdf',
+    'doc'  => 'application/msword',
     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'jpg' => 'image/jpeg',
+    'ppt'  => 'application/vnd.ms-powerpoint',
+    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'xls'  => 'application/vnd.ms-excel',
+    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'csv'  => 'text/csv',
+    'txt'  => 'text/plain',
+    'rtf'  => 'application/rtf',
+    'zip'  => 'application/zip',
+    'rar'  => 'application/x-rar-compressed',
+    'jpg'  => 'image/jpeg',
     'jpeg' => 'image/jpeg',
-    'png' => 'image/png',
-    'gif' => 'image/gif'
+    'png'  => 'image/png',
+    'gif'  => 'image/gif',
+    'webp' => 'image/webp'
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['submissionFile'])) {
@@ -54,14 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['submissionFile'])) {
         exit();
     }
     
-    // if ($file['size'] > $maxFileSize) {
-    //     echo json_encode(['success' => false, 'message' => 'File too large. Maximum size is 25MB']);
-    //     exit();
-    // }
+    if ($file['size'] > $maxFileSize) {
+        echo json_encode(['success' => false, 'message' => 'File too large. Maximum allowed size is 25MB']);
+        exit();
+    }
     
     $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if (!array_key_exists($fileExt, $allowedTypes) || $file['type'] !== $allowedTypes[$fileExt]) {
-        echo json_encode(['success' => false, 'message' => 'Invalid file type. Allowed: PDF, DOC, DOCX, Images']);
+    if (!array_key_exists($fileExt, $allowedTypes)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid file format (.'.$fileExt.'). Allowed: PDF, Word, PowerPoint, Excel, CSV, Text, ZIP, Images']);
         exit();
     }
     

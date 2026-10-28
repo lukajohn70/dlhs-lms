@@ -93,10 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['requestFile'])) {
     // Validate size
     $maxSizeMB = $request['maxFileSizeMB'] ? intval($request['maxFileSizeMB']) : 10;
     $maxSizeBytes = $maxSizeMB * 1024 * 1024;
-    // if ($file['size'] > $maxSizeBytes) {
-    //     echo json_encode(['success' => false, 'message' => 'File is too large. Maximum size is ' . $maxSizeMB . ' MB.']);
-    //     exit();
-    // }
+    if ($file['size'] > $maxSizeBytes) {
+        echo json_encode(['success' => false, 'message' => 'File is too large. Maximum size allowed for this request is ' . $maxSizeMB . ' MB.']);
+        exit();
+    }
 
     // Validate extension
     $allowedExts = array_map('trim', explode(',', strtolower($request['allowedTypes'])));

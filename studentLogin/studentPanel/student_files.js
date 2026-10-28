@@ -251,6 +251,24 @@ function setupDropzone() {
 function handleFileSelected(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+        const ALLOWED_EXTS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'csv', 'txt', 'rtf', 'odt', 'ods', 'odp', 'zip', 'rar', '7z', 'tar', 'gz', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'avi', 'mov', 'mkv', 'mp3', 'wav', 'm4a', 'aac', 'ogg'];
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!ALLOWED_EXTS.includes(ext)) {
+            alert(`"${file.name}" has an unsupported format (.${ext}). Allowed formats: PDF, Word, Excel, PowerPoint, Text, ZIP, Images, Audio, Video.`);
+            input.value = '';
+            $('#selectedFileInfo').hide().empty();
+            return;
+        }
+
+        if (file.size > MAX_SIZE) {
+            alert(`"${file.name}" is ${formatFileSize(file.size)}, which exceeds the 50MB limit.`);
+            input.value = '';
+            $('#selectedFileInfo').hide().empty();
+            return;
+        }
+
         const infoHtml = `<div style="padding: 8px 12px; background: rgba(0, 174, 239, 0.08); border-radius: 6px; border: 1px solid rgba(0, 174, 239, 0.2); display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <i class="${getFileIconClass(file.name)}" style="color: #00AEEF; font-size: 18px;"></i>

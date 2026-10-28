@@ -529,7 +529,7 @@ $studentName = $_SESSION['studentName'] ?? 'Student';
                               <h5 style="margin: 0 0 5px 0; font-weight: 600; color: #020b1a;">Click or Drag & Drop File Here</h5>
                               <p style="margin: 0; font-size: 12px; color: #64748b;">Supports PDF, Word, Excel, PowerPoint, Images, Text (Max 50MB)</p>
                           </div>
-                          <input type="file" id="studentFileInput" name="files[]" style="display: none;" onchange="handleFileSelected(this)">
+                          <input type="file" id="studentFileInput" name="files[]" style="display: none;" onchange="handleFileSelected(this)" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods,.odp,.zip,.rar,.7z,.tar,.gz,.jpg,.jpeg,.png,.gif,.webp,.svg,.mp3,.wav,.m4a,.aac,.ogg,.mp4,.webm,.mkv,.mov,.avi">
                           <div id="selectedFileInfo" style="margin-top: 10px; display: none;"></div>
                       </div>
 

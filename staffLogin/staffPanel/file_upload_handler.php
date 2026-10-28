@@ -23,29 +23,45 @@ $staffId = (int)$_SESSION['staffId'];
 // Configuration
 $maxFileSize = 100 * 1024 * 1024; // 100MB
 $allowedTypes = [
-    // Documents
-    'pdf'  => 'application/pdf',
-    'doc'  => 'application/msword',
-    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'ppt'  => 'application/vnd.ms-powerpoint',
-    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'xls'  => 'application/vnd.ms-excel',
-    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'txt'  => 'text/plain',
-    'zip'  => 'application/zip',
-    'rar'  => 'application/x-rar-compressed',
+    // Documents & Office
+    'pdf'   => 'application/pdf',
+    'doc'   => 'application/msword',
+    'docx'  => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'ppt'   => 'application/vnd.ms-powerpoint',
+    'pptx'  => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'xls'   => 'application/vnd.ms-excel',
+    'xlsx'  => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'csv'   => 'text/csv',
+    'txt'   => 'text/plain',
+    'rtf'   => 'application/rtf',
+    'odt'   => 'application/vnd.oasis.opendocument.text',
+    'ods'   => 'application/vnd.oasis.opendocument.spreadsheet',
+    'odp'   => 'application/vnd.oasis.opendocument.presentation',
+    // Compressed Archives
+    'zip'   => 'application/zip',
+    'rar'   => 'application/x-rar-compressed',
+    '7z'    => 'application/x-7z-compressed',
+    'tar'   => 'application/x-tar',
+    'gz'    => 'application/gzip',
     // Images
-    'jpg'  => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'png'  => 'image/png',
-    'gif'  => 'image/gif',
-    // Media
-    'mp4'  => 'video/mp4',
-    'avi'  => 'video/x-msvideo',
-    'mov'  => 'video/quicktime',
-    'mkv'  => 'video/x-matroska',
-    'mp3'  => 'audio/mpeg',
-    'wav'  => 'audio/wav'
+    'jpg'   => 'image/jpeg',
+    'jpeg'  => 'image/jpeg',
+    'png'   => 'image/png',
+    'gif'   => 'image/gif',
+    'webp'  => 'image/webp',
+    'svg'   => 'image/svg+xml',
+    // Media - Video
+    'mp4'   => 'video/mp4',
+    'webm'  => 'video/webm',
+    'avi'   => 'video/x-msvideo',
+    'mov'   => 'video/quicktime',
+    'mkv'   => 'video/x-matroska',
+    // Media - Audio
+    'mp3'   => 'audio/mpeg',
+    'wav'   => 'audio/wav',
+    'm4a'   => 'audio/mp4',
+    'aac'   => 'audio/aac',
+    'ogg'   => 'audio/ogg'
 ];
 
 // Detect if post_max_size was exceeded (PHP empties $_POST and $_FILES in this scenario)

@@ -211,7 +211,16 @@ function handleFiles(files) {
     if (files.length === 0) return;
     
     const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+    const ALLOWED_EXTS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'csv', 'txt', 'rtf', 'odt', 'ods', 'odp', 'zip', 'rar', '7z', 'tar', 'gz', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'avi', 'mov', 'mkv', 'mp3', 'wav', 'm4a', 'aac', 'ogg'];
+    
     for (let i = 0; i < files.length; i++) {
+        const ext = files[i].name.split('.').pop().toLowerCase();
+        if (!ALLOWED_EXTS.includes(ext)) {
+            showPremiumModal(`"${escapeHtml(files[i].name)}" has an unsupported format (.${ext}). Allowed formats: PDF, Word, Excel, PowerPoint, Text, ZIP, Images, Audio, Video.`, 'Unsupported File Type', 'warning');
+            fileInput.value = '';
+            filePreview.innerHTML = '';
+            return;
+        }
         if (files[i].size > MAX_FILE_SIZE) {
             showPremiumModal(`"${escapeHtml(files[i].name)}" is ${formatFileSize(files[i].size)}, which exceeds the 100MB limit.`, 'File Too Large', 'warning');
             fileInput.value = '';
