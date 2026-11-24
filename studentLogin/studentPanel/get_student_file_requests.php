@@ -1,22 +1,27 @@
 <?php
-session_start();
-require_once "userExpiredSession.php";
-require_once "../../db_connection/dlhs_db_connection.php";
-require_once "../../scripts/file_request_helper.php";
+ob_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . "/userExpiredSession.php";
+require_once __DIR__ . "/../../db_connection/dlhs_db_connection.php";
+require_once __DIR__ . "/../../scripts/file_request_helper.php";
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['studentLoggedIn']) || $_SESSION['studentLoggedIn'] !== "yes") {
-    echo json_encode(['error' => 'Unauthorized access']);
+if (!isset($_SESSION['studentLoggedIn']) || $_SESSION['studentLoggedIn'] !== "yes" || empty($_SESSION['studentId'])) {
+    while (ob_get_level()) { ob_end_clean(); }
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized access or session expired']);
     exit();
 }
 
 dlhsEnsureFileRequestTablesExist($connection);
 
-$studentId = $_SESSION['studentId'];
+$studentId = intval($_SESSION['studentId']);
 
-// 1. Get the student's classId and their year group ID
-$classQuery = "SELECT s.classId, c.classYearGroup AS yearGroupId
+// 1. Get student's classId and year group ID
+$classQuery = "SELECT s.studentId, s.classId, s.yearGroupId AS studentDirectYearGroupId, c.classYearGroup 
                FROM studentlogin s
                LEFT JOIN classes c ON s.classId = c.classId
                WHERE s.studentId = ?";
@@ -26,23 +31,22 @@ $stmt->execute();
 $classResult = $stmt->get_result();
 
 if ($classResult->num_rows === 0) {
-    echo json_encode(['error' => 'Student class details not found']);
-    exit();
-}
-
-$studentRow  = $classResult->fetch_assoc();
-$classId     = $studentRow['classId'];
-$yearGroupId = $studentRow['yearGroupId'];
-$stmt->close();
-
-if (!$classId) {
+    $stmt->close();
+    while (ob_get_level()) { ob_end_clean(); }
     echo json_encode([]);
     exit();
 }
 
-// 2. Fetch active requests that target:
-//    - this student's specific class (r.classId = ?)  OR
-//    - this student's year group (r.yearGroupId = ?)
+$studentRow  = $classResult->fetch_assoc();
+$classId     = intval($studentRow['classId'] ?? 0);
+$directYearGroupId = intval($studentRow['studentDirectYearGroupId'] ?? 0);
+$yearGroupId = intval(!empty($studentRow['classYearGroup']) ? $studentRow['classYearGroup'] : $directYearGroupId);
+$stmt->close();
+
+// 2. Fetch active requests targeting:
+//    - this student's specific class (r.classId = ?) OR
+//    - this student's year group (r.yearGroupId = ?) OR
+//    - open to all classes & year groups (classId IS NULL/0 AND yearGroupId IS NULL/0)
 $query = "SELECT r.*,
                  CONCAT(t.surname, ' ', t.firstName) AS teacherName,
                  s.subjectName,
@@ -52,31 +56,35 @@ $query = "SELECT r.*,
           LEFT JOIN subjects    s   ON r.subjectId = s.subjectId
           LEFT JOIN file_request_submissions sub ON r.requestId = sub.requestId AND sub.studentId = ?
           WHERE r.isActive = 1
-            AND (r.classId = ? OR r.yearGroupId = ?)
-          ORDER BY r.dueDate ASC, r.created_at DESC";
+            AND (
+                (? > 0 AND r.classId = ?)
+                OR (? > 0 AND (r.yearGroupId = ? OR r.yearGroupId = ?))
+                OR ((r.classId IS NULL OR r.classId = 0) AND (r.yearGroupId IS NULL OR r.yearGroupId = 0))
+            )
+          ORDER BY (sub.submissionId IS NOT NULL) ASC, r.dueDate ASC, r.created_at DESC";
 
 $stmt = $connection->prepare($query);
-$stmt->bind_param("iii", $studentId, $classId, $yearGroupId);
+$stmt->bind_param("iiiiii", $studentId, $classId, $classId, $yearGroupId, $yearGroupId, $directYearGroupId);
 $stmt->execute();
 $result = $stmt->get_result();
 
 $requests = [];
 while ($row = $result->fetch_assoc()) {
     $requests[] = [
-        'requestId'    => $row['requestId'],
+        'requestId'    => (int)$row['requestId'],
         'title'        => $row['title'],
         'instructions' => $row['instructions'],
-        'teacherName'  => $row['teacherName'] ?? 'Unknown Teacher',
-        'subjectName'  => $row['subjectName'] ?? 'No Subject',
+        'teacherName'  => $row['teacherName'] ?? 'Subject Teacher',
+        'subjectName'  => $row['subjectName'] ?? 'General',
         'dueDate'      => $row['dueDate'],
         'allowedTypes' => $row['allowedTypes'],
-        'maxFileSizeMB'=> $row['maxFileSizeMB'],
+        'maxFileSizeMB'=> (int)($row['maxFileSizeMB'] ?: 10),
         'submitted'    => ($row['submissionId'] !== null),
         'submission'   => ($row['submissionId'] !== null) ? [
-            'submissionId' => $row['submissionId'],
+            'submissionId' => (int)$row['submissionId'],
             'fileName'     => $row['fileName'],
             'originalName' => $row['originalName'],
-            'fileSize'     => $row['fileSize'],
+            'fileSize'     => (int)$row['fileSize'],
             'submittedAt'  => $row['submittedAt'],
             'isLate'       => intval($row['isLate'])
         ] : null
@@ -86,5 +94,6 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 $connection->close();
 
+while (ob_get_level()) { ob_end_clean(); }
 echo json_encode($requests);
 ?>

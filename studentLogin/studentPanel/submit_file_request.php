@@ -1,46 +1,79 @@
 <?php
-session_start();
-require_once "userExpiredSession.php";
-require_once "../../db_connection/dlhs_db_connection.php";
-require_once "../../scripts/file_request_helper.php";
+ob_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . "/userExpiredSession.php";
+require_once __DIR__ . "/../../db_connection/dlhs_db_connection.php";
+require_once __DIR__ . "/../../scripts/file_request_helper.php";
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Check if user is logged in
-if (!isset($_SESSION['studentLoggedIn']) || $_SESSION['studentLoggedIn'] !== "yes") {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+// Ensure database tables exist
+dlhsEnsureFileRequestTablesExist($connection);
+
+// Detect if post_max_size was exceeded (PHP empties $_POST and $_FILES in this scenario)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] > 0) {
+    while (ob_get_level()) { ob_end_clean(); }
+    http_response_code(413);
+    $serverLimit = ini_get('post_max_size') ?: 'Unknown';
+    echo json_encode([
+        'success' => false,
+        'message' => "The uploaded file exceeds the server's post_max_size limit ({$serverLimit}). Please upload a smaller file or ask your administrator to increase post_max_size in php.ini."
+    ]);
     exit();
 }
 
-$studentId = $_SESSION['studentId'];
+// Check if user is logged in
+if (!isset($_SESSION['studentLoggedIn']) || $_SESSION['studentLoggedIn'] !== "yes" || empty($_SESSION['studentId'])) {
+    while (ob_get_level()) { ob_end_clean(); }
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'sessionExpired' => true,
+        'message' => 'Unauthorized or session expired. Please refresh and log in again.'
+    ]);
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['requestFile'])) {
+$studentId = intval($_SESSION['studentId']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_FILES['requestFile'])) {
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => 'No file was received for upload.']);
+        exit();
+    }
+
     $requestId = isset($_POST['requestId']) ? intval($_POST['requestId']) : 0;
     $file = $_FILES['requestFile'];
 
     if ($requestId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid request ID']);
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => 'Invalid file request ID.']);
         exit();
     }
 
-    // 1. Fetch student's classId and yearGroupId
-    $classQuery = "SELECT s.classId, c.classYearGroup 
-                  FROM studentlogin s 
-                  INNER JOIN classes c ON s.classId = c.classId 
-                  WHERE s.studentId = ?";
+    // 1. Fetch student's class and year group info
+    $classQuery = "SELECT s.studentId, s.classId, s.yearGroupId AS studentDirectYearGroupId, c.classYearGroup 
+                   FROM studentlogin s 
+                   LEFT JOIN classes c ON s.classId = c.classId 
+                   WHERE s.studentId = ?";
     $stmt = $connection->prepare($classQuery);
     $stmt->bind_param("i", $studentId);
     $stmt->execute();
     $classResult = $stmt->get_result();
 
     if ($classResult->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'Student class details not found']);
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => 'Student record not found in system.']);
         exit();
     }
 
     $studentRow = $classResult->fetch_assoc();
-    $studentClassId = $studentRow['classId'];
-    $studentYearGroupId = $studentRow['classYearGroup'];
+    $studentClassId = intval($studentRow['classId'] ?? 0);
+    $studentDirectYearGroupId = intval($studentRow['studentDirectYearGroupId'] ?? 0);
+    $studentYearGroupId = intval(!empty($studentRow['classYearGroup']) ? $studentRow['classYearGroup'] : $studentDirectYearGroupId);
     $stmt->close();
 
     // 2. Fetch file request details
@@ -51,22 +84,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['requestFile'])) {
     $reqResult = $stmt->get_result();
 
     if ($reqResult->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'File collection request not found or inactive.']);
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => 'File collection request not found or is no longer active.']);
         exit();
     }
 
     $request = $reqResult->fetch_assoc();
     $stmt->close();
 
-    // Verify target matches (either classId or yearGroupId)
+    // Verify target matches (either classId or yearGroupId, or open to all)
     $isTargeted = false;
-    if (!empty($request['classId']) && $request['classId'] == $studentClassId) {
+    $reqClassId = !empty($request['classId']) ? intval($request['classId']) : 0;
+    $reqYearGroupId = !empty($request['yearGroupId']) ? intval($request['yearGroupId']) : 0;
+
+    if ($reqClassId > 0 && $reqClassId === $studentClassId) {
         $isTargeted = true;
-    } elseif (!empty($request['yearGroupId']) && $request['yearGroupId'] == $studentYearGroupId) {
+    } elseif ($reqYearGroupId > 0 && ($reqYearGroupId === $studentYearGroupId || $reqYearGroupId === $studentDirectYearGroupId)) {
+        $isTargeted = true;
+    } elseif ($reqClassId === 0 && $reqYearGroupId === 0) {
+        // Request targets all students
         $isTargeted = true;
     }
 
     if (!$isTargeted) {
+        while (ob_get_level()) { ob_end_clean(); }
         echo json_encode(['success' => false, 'message' => 'Unauthorized: This file request is not targeted to your class or year group.']);
         exit();
     }
@@ -79,83 +120,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['requestFile'])) {
     $checkResult = $stmt->get_result();
 
     if ($checkResult->num_rows > 0) {
+        while (ob_get_level()) { ob_end_clean(); }
         echo json_encode(['success' => false, 'message' => 'You have already submitted a file for this collection request.']);
         exit();
     }
     $stmt->close();
 
-    // 4. Validate file
+    // 4. Validate file upload
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        echo json_encode(['success' => false, 'message' => 'File upload failed. Error code: ' . $file['error']]);
+        $errorMsg = 'File upload failed. ';
+        switch ($file['error']) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                $errorMsg .= 'File exceeds the maximum upload size permitted by the server.';
+                break;
+            case UPLOAD_ERR_PARTIAL:
+                $errorMsg .= 'File was only partially uploaded.';
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                $errorMsg .= 'No file was uploaded.';
+                break;
+            case UPLOAD_ERR_NO_TMP_DIR:
+                $errorMsg .= 'Missing temporary folder on server.';
+                break;
+            case UPLOAD_ERR_CANT_WRITE:
+                $errorMsg .= 'Failed to write file to disk.';
+                break;
+            default:
+                $errorMsg .= 'Error code: ' . $file['error'];
+        }
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => $errorMsg]);
         exit();
     }
 
     // Validate size
-    $maxSizeMB = $request['maxFileSizeMB'] ? intval($request['maxFileSizeMB']) : 10;
+    $maxSizeMB = !empty($request['maxFileSizeMB']) ? intval($request['maxFileSizeMB']) : 10;
     $maxSizeBytes = $maxSizeMB * 1024 * 1024;
     if ($file['size'] > $maxSizeBytes) {
-        echo json_encode(['success' => false, 'message' => 'File is too large. Maximum size allowed for this request is ' . $maxSizeMB . ' MB.']);
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => "File is too large. Maximum size allowed for this request is {$maxSizeMB} MB."]);
         exit();
     }
 
     // Validate extension
-    $allowedExts = array_map('trim', explode(',', strtolower($request['allowedTypes'])));
+    $rawAllowed = explode(',', strtolower($request['allowedTypes'] ?? ''));
+    $allowedExts = [];
+    foreach ($rawAllowed as $rawExt) {
+        $clean = ltrim(trim($rawExt), '.');
+        if ($clean !== '') {
+            $allowedExts[] = $clean;
+        }
+    }
     $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-    if (!in_array($fileExt, $allowedExts)) {
-        echo json_encode(['success' => false, 'message' => 'Invalid file extension. Allowed extensions: ' . strtoupper(implode(', ', $allowedExts))]);
+    if (!empty($allowedExts) && !in_array($fileExt, $allowedExts, true)) {
+        while (ob_get_level()) { ob_end_clean(); }
+        echo json_encode(['success' => false, 'message' => 'Invalid file extension (.' . htmlspecialchars($fileExt) . '). Allowed extensions: ' . strtoupper(implode(', ', $allowedExts))]);
         exit();
     }
 
-    // 5. Create storage directory with robust error checking and detailed diagnostics
-    $storageDir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'file_requests' . DIRECTORY_SEPARATOR . $requestId . DIRECTORY_SEPARATOR;
-    
-    $dirExists = is_dir($storageDir);
-    if (!$dirExists) {
-        $dirExists = @mkdir($storageDir, 0777, true);
-        if ($dirExists) {
-            @chmod($storageDir, 0777);
-        }
+    // 5. Ensure storage directory exists
+    $projectRoot = dirname(dirname(__DIR__));
+    $baseUploadDir = $projectRoot . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'file_requests';
+    $storageDir = $baseUploadDir . DIRECTORY_SEPARATOR . $requestId . DIRECTORY_SEPARATOR;
+
+    if (!is_dir($baseUploadDir)) {
+        @mkdir($baseUploadDir, 0777, true);
+        @chmod($baseUploadDir, 0777);
     }
-    
-    if (!$dirExists) {
+
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0777, true);
+        @chmod($storageDir, 0777);
+    }
+
+    if (!is_dir($storageDir)) {
+        while (ob_get_level()) { ob_end_clean(); }
         echo json_encode([
             'success' => false, 
-            'message' => 'Upload directory does not exist and could not be created: ' . $storageDir . '. Please check parent folder permissions.'
+            'message' => 'Upload directory does not exist and could not be created. Please check folder permissions on server.'
         ]);
         exit();
     }
-    
+
     if (!is_writable($storageDir)) {
         @chmod($storageDir, 0777);
         if (!is_writable($storageDir)) {
-            $currentUser = function_exists('posix_getpwuid') && function_exists('posix_geteuid') 
-                ? posix_getpwuid(posix_geteuid())['name'] 
-                : get_current_user();
+            while (ob_get_level()) { ob_end_clean(); }
             echo json_encode([
                 'success' => false, 
-                'message' => 'Upload directory is not writable: ' . $storageDir . '. Executing process user: ' . $currentUser . '. Please ensure directory permissions allow writes.'
+                'message' => 'Upload directory is not writable. Please ensure server write permissions.'
             ]);
             exit();
         }
     }
 
     // Clean and generate unique filename
-    $sanitizedOriginalName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file['name']);
+    $sanitizedOriginalName = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($file['name']));
     $newFileName = time() . "_" . $studentId . "_" . $sanitizedOriginalName;
     $filePath = $storageDir . $newFileName;
 
     // 6. Save file to disk
-    if (move_uploaded_file($file['tmp_name'], $filePath)) {
-        
+    $moved = is_uploaded_file($file['tmp_name']) 
+        ? move_uploaded_file($file['tmp_name'], $filePath)
+        : @copy($file['tmp_name'], $filePath);
+
+    if ($moved) {
+        @chmod($filePath, 0666);
+
         // Check if submission is late
         $isLate = 0;
-        if ($request['dueDate']) {
+        if (!empty($request['dueDate'])) {
             $dueTime = strtotime($request['dueDate']);
-            if (time() > $dueTime) {
+            if ($dueTime !== false && time() > $dueTime) {
                 $isLate = 1;
             }
         }
+
+        // Relative path for database portability across OS/folders
+        $relativeFilePath = 'uploads/file_requests/' . $requestId . '/' . $newFileName;
 
         // Insert into database
         $insertQuery = "INSERT INTO file_request_submissions (
@@ -164,33 +248,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['requestFile'])) {
         
         $stmt = $connection->prepare($insertQuery);
         $fileSizeVal = intval($file['size']);
-        $stmt->bind_param("iisssii", $requestId, $studentId, $newFileName, $file['name'], $filePath, $fileSizeVal, $isLate);
+        $originalName = basename($file['name']);
+        $stmt->bind_param("iisssii", $requestId, $studentId, $newFileName, $originalName, $relativeFilePath, $fileSizeVal, $isLate);
 
         if ($stmt->execute()) {
+            while (ob_get_level()) { ob_end_clean(); }
             echo json_encode([
                 'success' => true, 
-                'message' => 'Your file has been submitted successfully!' . ($isLate ? ' (Late submission)' : '')
+                'message' => 'Your file has been submitted successfully!' . ($isLate ? ' (Submitted after due date)' : '')
             ]);
         } else {
             // Delete file if DB insert failed
-            unlink($filePath);
+            @unlink($filePath);
+            while (ob_get_level()) { ob_end_clean(); }
             echo json_encode(['success' => false, 'message' => 'Failed to save submission records: ' . $connection->error]);
         }
         $stmt->close();
     } else {
         $lastErr = error_get_last();
+        while (ob_get_level()) { ob_end_clean(); }
         echo json_encode([
             'success' => false, 
-            'message' => 'Failed to write file to disk. Check directory permissions. Error: ' . ($lastErr ? $lastErr['message'] : 'Unknown error'),
-            'debug' => [
-                'tmp_name' => $file['tmp_name'],
-                'destination' => $filePath,
-                'is_uploaded' => is_uploaded_file($file['tmp_name'])
-            ]
+            'message' => 'Failed to write file to disk. Error: ' . ($lastErr ? $lastErr['message'] : 'Permission denied or disk full.')
         ]);
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Invalid file or request data.']);
+    while (ob_get_level()) { ob_end_clean(); }
+    echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
 }
 
 $connection->close();

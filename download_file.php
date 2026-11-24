@@ -70,10 +70,22 @@ if ($type === 'file_request') {
     
     $filePath = $submission['filePath'];
     
-    // Try to resolve path relative to root if it starts with '../../'
+    // Check multiple candidate locations (absolute, relative, or standard upload directory)
     if (!file_exists($filePath)) {
         if (strpos($filePath, '../../') === 0) {
             $filePath = substr($filePath, 6); // remove '../../'
+        }
+    }
+    
+    if (!file_exists($filePath)) {
+        $candidateRoot = __DIR__ . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $filePath), DIRECTORY_SEPARATOR);
+        if (file_exists($candidateRoot)) {
+            $filePath = $candidateRoot;
+        } else {
+            $candidateUploads = __DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'file_requests' . DIRECTORY_SEPARATOR . $submission['requestId'] . DIRECTORY_SEPARATOR . $submission['fileName'];
+            if (file_exists($candidateUploads)) {
+                $filePath = $candidateUploads;
+            }
         }
     }
     
