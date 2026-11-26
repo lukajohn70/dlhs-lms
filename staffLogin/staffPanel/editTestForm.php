@@ -710,6 +710,7 @@ $currentAcademicSession = dlhsGetCurrentAcademicSessionName($connection);
                 amOrPm: $('#amOrPm1').val(),
                 subjectId: $('#subjectId1').val(),
                 yearGroupId: $('#yearGroup1').val(),
+                classId: $('#classId1').val(),
                 academicSession: $('#academicSession1').val(),
                 testType: $('#testType1').val(),
                 customTestType: $.trim($('#customTestType1').val()),

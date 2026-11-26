@@ -713,155 +713,6 @@ session_start();
           </section>
       </section>
 	  
-	<div id="myModal1" class="modal1"> <!--Start of Edit modal-->
-		<div class="modal-content">
-			<span class="close1">&times;</span>
-			<div class="edit-test-shell">
-				<div class="edit-test-header">
-					<h3>Edit Test</h3>
-					<p>Update the selected test details below. Conditional fields such as mock paper and custom test type will appear automatically when needed.</p>
-				</div>
-				<div class="edit-test-body">
-					<form method="post" id="editTestForm">
-						<input type="hidden" name="testId" required="required" id="testId">
-						<input type="hidden" name="startHour1" id="startHour1" value="8">
-						<input type="hidden" name="startMinute1" id="startMinute1" value="0">
-						<input type="hidden" name="amOrPm1" id="amOrPm1" value="AM">
-						<input type="hidden" name="reviewOption1" id="reviewOption1">
-
-						<div class="edit-section">
-							<div class="edit-section-title">Test Identity</div>
-							<div class="edit-form-grid">
-								<div class="edit-field field-span-3">
-									<label><span>Generated test name: </span> <span class="required" style="color:red;">*</span></label>
-									<input type="text" name="testName1" required="required" maxlength="120" id="testName1" class="form-control" readonly>
-								</div>
-								<div class="edit-field">
-									<label><span>Test date: </span> <span class="required" style="color:red;">*</span></label>
-									<input type="date" name="testDate1" required="required" id="testDate1" class="form-control">
-								</div>
-								<div class="edit-field">
-									<label><span>Duration in minutes: </span> <span class="required" style="color:red;">*</span></label>
-									<input type="text" name="testDuration1" required="required" onkeypress="javascript:return onlyNumberKey(event)" id="testDuration1" class="form-control" placeholder="e.g. 50">
-								</div>
-								<div class="edit-field">
-									<label><span>Academic session: </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="academicSession1" id="academicSession1" required>
-										<option value="">... Select Session ...</option>
-										<?php foreach ($academicSessions as $academicSessionRow) { ?>
-										<?php $sessionName = isset($academicSessionRow['sessionName']) ? $academicSessionRow['sessionName'] : ''; ?>
-										<option value="<?php echo htmlspecialchars($sessionName); ?>">
-											<?php echo htmlspecialchars($sessionName); ?><?php echo !empty($academicSessionRow['isCurrentSession']) ? ' (Current)' : ''; ?>
-										</option>
-										<?php } ?>
-									</select>
-								</div>
-							</div>
-						</div>
-
-						<div class="edit-section">
-							<div class="edit-section-title">Academic Setup</div>
-							<div class="edit-form-grid">
-								<div class="edit-field">
-									<label><span>Subject: </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="subject_composite1" id="subject_composite1" required onchange="dlhsHandleSubjectChange('edit')">
-										<option value="">... Select Subject ...</option>
-										<?php
-										$subjectsQuery = "SELECT s.subjectId, s.subjectName, yg.yearGroupId, yg.yearGroupName 
-														  FROM subjects s 
-														  CROSS JOIN yeargroup yg 
-														  ORDER BY s.subjectName ASC, yg.yearGroupName ASC";
-										$res = $connection->query($subjectsQuery);
-										if ($res) {
-											while($row = $res->fetch_assoc()){
-												$val = $row['subjectId'] . '|' . $row['yearGroupId'];
-												$label = $row['subjectName'] . ' ' . $row['yearGroupName'];
-											?>
-											<option value="<?php echo $val; ?>"><?php echo htmlspecialchars($label); ?></option>
-											<?php }
-										}
-										?>
-									</select>
-									<input type="hidden" name="subjectId1" id="subjectId1">
-									<input type="hidden" name="yearGroup1" id="yearGroup1">
-								</div>
-								<div class="edit-field">
-									<label><span>Class (Arm): </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="classId1" id="classId1" required onchange="updateGeneratedEditName()">
-										<option value="">... Select Class ...</option>
-									</select>
-								</div>
-							</div>
-						</div>
-
-						<div class="edit-section">
-							<div class="edit-section-title">Test Type And Delivery</div>
-							<div class="edit-form-grid">
-								<div class="edit-field">
-									<label><span>Type of test: </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="testType1" id="testType1" required>
-										<option value="">... Select Test Type ...</option>
-										<?php foreach ($configuredTestTypes as $configuredTestType) { ?>
-										<option value="<?php echo htmlspecialchars($configuredTestType); ?>"><?php echo htmlspecialchars($configuredTestType); ?></option>
-										<?php } ?>
-									</select>
-								</div>
-								<div class="edit-field edit-highlight" id="customTestTypeGroup1" style="display:none;">
-									<label><span>Enter kind of test: </span> <span class="required" style="color:red;">*</span></label>
-									<input type="text" class="form-control" name="customTestType1" id="customTestType1" placeholder="e.g. MIDTERM, PRACTICAL, QUIZ">
-									<small>This custom label replaces OTHER in the generated test name.</small>
-								</div>
-								<div class="edit-field edit-highlight" id="mockPaperGroup1" style="display:none;">
-									<label><span>Mock paper: </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="mockPaperLabel1" id="mockPaperLabel1">
-										<option value="">... Select Mock Paper ...</option>
-										<option value="PAPER 1">PAPER 1</option>
-										<option value="PAPER 2">PAPER 2</option>
-										<option value="PAPER 3">PAPER 3</option>
-									</select>
-									<small>Select the paper for this mock exam.</small>
-								</div>
-								<div class="edit-field">
-									<label><span>Does test have essay? </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="essayOption1" id="essayOption1" required>
-										<option value="">... Select Essay option ...</option>
-										<option value="Yes">Yes</option>
-										<option value="No">No</option>
-									</select>
-								</div>
-								<div class="edit-field" id="addEssayTime1"></div>
-								<div class="edit-field">
-									<label><span>Randomize Questions? </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="randomizeQuestions1" id="randomizeQuestions1" required>
-										<option value="">... Select option ...</option>
-										<option value="Yes">Yes - Randomize</option>
-										<option value="No">No - Keep Original Order</option>
-									</select>
-								</div>
-								<div class="edit-field">
-									<label><span>Randomize Options? </span> <span class="required" style="color:red;">*</span></label>
-									<select class="form-control" name="randomizeOptions1" id="randomizeOptions1" required>
-										<option value="">... Select option ...</option>
-										<option value="Yes">Yes - Randomize Options</option>
-										<option value="No">No - Keep Original Order</option>
-									</select>
-								</div>
-							</div>
-						</div>
-
-						<div class="edit-section">
-							<div class="edit-actions">
-								<button class="btn btn-default" type="reset">Reset</button>
-								<button type="button" class="btn btn-success" onclick="editTestDetails()">Update</button>
-							</div>
-							<div class="message3" id="message3" style="color:red; margin-top:12px;" align="center"></div>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>	<!-- End of modal content-->
-	</div><!-- End of edit modal-->
-	
 	<div id="myModal2" class="modal2"> <!--Start of modal to add/subtract time for all or selected students-->
 		<div class="modal-content">
 			<span class="close1">&times;</span>
@@ -1289,7 +1140,7 @@ session_start();
 								"<td width='10' style='font-size:13px;'><center>" + reviewOptionTODisplay + getReviewFlagging(testId, theReviewOption) + "</center></td>" +
 								"<td width='7'><center>" + teacherName + "</center></td>" +
 								"<td width='10'><center>" + getStatus(testId, testName, status) + "</center></td>" +
-								"<td align='center' width='7'><a onClick='openEditModal(\""+testId+"\")' title='Edit this test' style='cursor:pointer'><i class='fa fa-pencil-square-o'></i></a> &nbsp; &nbsp;<a onClick='openEditTimeModal(\""+testId+"\")' title='Edit test time before it starts' style='cursor:pointer'><i class='fa fa-clock-o'></i></a> &nbsp; &nbsp;<a onClick='deleteTest(\""+testId+"\")' title='Delete this test' style='cursor:pointer'><i class='fa fa-trash' style='color:red;'></i></a></td>" +
+								"<td align='center' width='7'><a href='editTestForm.php?testId=" + encodeURIComponent(testId) + "' title='Edit this test'><i class='fa fa-pencil-square-o'></i></a> &nbsp; &nbsp;<a onClick='openEditTimeModal(\""+testId+"\")' title='Edit test time before it starts' style='cursor:pointer'><i class='fa fa-clock-o'></i></a> &nbsp; &nbsp;<a onClick='deleteTest(\""+testId+"\")' title='Delete this test' style='cursor:pointer'><i class='fa fa-trash' style='color:red;'></i></a></td>" +
 								
 								"</tr>";
 
@@ -1407,117 +1258,10 @@ session_start();
 			});
 		}
 
-		//function call to open modal for editing a category
-		function openEditModal(testId, testName, testDate, duration, startHour, startMinute, isAmOrPm, subjectId, yearGroupId, theReviewOption, essayOption, essayTime)
-        {
-            var modal1 = document.getElementById("myModal1");
-			var test = (window.allTestsMap && window.allTestsMap[testId]) ? window.allTestsMap[testId] : null;
-
-			if (test) {
-				testName = test.testName;
-				testDate = test.testDate;
-				duration = test.duration;
-				startHour = test.startHour;
-				startMinute = test.startMinute;
-				isAmOrPm = test.isAmOrPm;
-				subjectId = test.subjectId;
-				yearGroupId = test.yearGroupId;
-				theReviewOption = test.reviewOption;
-				essayOption = test.essayOption;
-				essayTime = test.essayTime;
-			}
-
-			document.getElementById("testId").value = testId;  
-			document.getElementById("testName1").value = testName || '';  
-			document.getElementById("testDate1").value = testDate || '';  
-			document.getElementById("testDuration1").value = duration || '';  
-			
-			$('#startHour1').val(startHour || '8');
-			$('#startMinute1').val(startMinute || '0');
-			$('#amOrPm1').val(isAmOrPm || 'AM');
-
-			var academicSession = test ? (test.academicSession || '') : '';
-			var testType = test ? (test.testType || '') : '';
-			var customTestType = test ? (test.customTestType || '') : '';
-			var mockPaperLabel = test ? (test.mockPaperLabel || '') : '';
-			var randomizeQuestions = test ? (test.randomizeQuestions || 'No') : 'No';
-			var randomizeOptions = test ? (test.randomizeOptions || 'No') : 'No';
-
-			$("#academicSession1").val(academicSession);
-			$("#testType1").val(testType);
-			$("#customTestType1").val(customTestType ? decodeURIComponent(customTestType) : '');
-			$("#mockPaperLabel1").val(mockPaperLabel ? decodeURIComponent(mockPaperLabel) : '');
-			toggleCustomTestTypeField('edit');
-
-			$("#reviewOption1").val(theReviewOption || 'No');
-			$("#essayOption1").val(essayOption || 'No');
-			$("#randomizeQuestions1").val(randomizeQuestions);
-			$("#randomizeOptions1").val(randomizeOptions);
-
-			var targetClassId = test ? test.classId : '';
-
-			if (yearGroupId && subjectId) {
-				var compositeVal = subjectId + '|' + yearGroupId;
-				$("#subject_composite1").val(compositeVal);
-				$("#subjectId1").val(subjectId);
-				$("#yearGroup1").val(yearGroupId);
-
-				$.ajax({
-					url: 'getTeacherAssignedClassesAndSubjects.php',
-					type: 'GET',
-					data: { type: 'classesBySubject', subjectId: subjectId, yearGroupId: yearGroupId },
-					dataType: 'json',
-					success: function(classResponse) {
-						var options = '<option value="">... Select Class ...</option>';
-						if (classResponse && classResponse.success && classResponse.data && classResponse.data.length > 0) {
-							if (classResponse.data.length > 1) {
-								options += '<option value="all">ALL ASSIGNED ARMS</option>';
-							}
-							classResponse.data.forEach(function(item) {
-								options += '<option value="' + item.classId + '">' + item.className + '</option>';
-							});
-						}
-						$("#classId1").html(options);
-						if (targetClassId && targetClassId !== '0') {
-							$("#classId1").val(targetClassId);
-						} else if (targetClassId === 0 || targetClassId === '0') {
-							if ($("#classId1 option[value='all']").length > 0) {
-								$("#classId1").val('all');
-							}
-						}
-						updateGeneratedEditName();
-					}
-				});
-			} else {
-				updateGeneratedEditName();
-			}
-
-			if(essayOption == "Yes")
-			{
-				$("#addEssayTime1").html('<label><span style="color:#000000;">Essay time in minutes:</span> <span class="required" style="color:red;">*</span></label><br><input type="text" class="form-control" name="essayTime1" id="essayTime1" onkeypress="javascript:return onlyNumberKey(event)" placeholder="Enter the essay duration in minutes">');
-				document.getElementById("essayTime1").value = essayTime || '';
-			}
-			else
-			{
-				$("#addEssayTime1").html('');
-			}
-                
-            modal1.style.display = "block";
-        }
-		var span1 = document.getElementsByClassName("close1")[0];
-            
-        // When the user clicks on <span> (x), close the modal1
-        span1.onclick = function() {
-			modal1.style.display = "none";
-        }
-            
-        // When the user clicks anywhere outside of the modal, close it
-        var modal1 = document.getElementById("myModal1");
-        window.onclick = function(event) {
-            if (event.target == modal1) {
-                modal1.style.display = "none";
-            }
-        }
+		// Redirect to dedicated Edit Test page
+		function openEditModal(testId) {
+			window.location.href = 'editTestForm.php?testId=' + encodeURIComponent(testId);
+		}
 		
 		//function call to open modal for editing test time of all or selected students
 		function openEditTimeModal(testId, testName, testDate, duration, startHour, startMinute, isAmOrPm)
@@ -1586,12 +1330,16 @@ session_start();
 			});
             
         }
-		var span2 = document.getElementsByClassName("close1")[1];
-            
-        // When the user clicks on <span> (x), close the modal1
-        span2.onclick = function() {
-			modal2.style.display = "none";
-        }
+        
+        // Modal close button handlers
+        $('#myModal2 .close1').on('click', function() {
+            var m2 = document.getElementById("myModal2");
+            if (m2) m2.style.display = "none";
+        });
+
+        $('#myModal3 .close1').on('click', function() {
+            closeDeleteModal();
+        });
             
         // When the user clicks anywhere outside of the modal, close it
         var modal2 = document.getElementById("myModal2");
@@ -1601,14 +1349,6 @@ session_start();
                 modal2.style.display = "none";
             }
             if (event.target == modal3) {
-                modal3.style.display = "none";
-            }
-        }
-        
-        // Close modal3 (delete modal) when clicking X
-        var span3 = document.getElementsByClassName("close1")[2];
-        if (span3) {
-            span3.onclick = function() {
                 modal3.style.display = "none";
             }
         }

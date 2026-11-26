@@ -112,6 +112,8 @@ if ($testsResult) {
             margin-bottom: 18px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             transition: border-color 0.2s, box-shadow 0.2s;
+            content-visibility: auto;
+            contain-intrinsic-size: 0 160px;
         }
         .parsed-q-card:hover {
             border-color: #e91e8c;
@@ -311,6 +313,11 @@ if ($testsResult) {
         </div>
     </div>
 
+    <!-- Floating Back to Top Button for single-page and long list view -->
+    <button type="button" id="bulkBackToTopBtn" onclick="$('html, body').animate({scrollTop: $('#bulkPastePreviewArea').offset().top - 70}, 300)" style="display:none; position:fixed; bottom:25px; right:25px; z-index:9999; background:#003366; color:#fff; border:none; width:46px; height:46px; border-radius:50%; box-shadow:0 6px 18px rgba(0,0,0,0.25); cursor:pointer; font-size:18px;" title="Back to top">
+        <i class="fa fa-chevron-up"></i>
+    </button>
+
     <!-- Scripts -->
     <script src="js/bootstrap.min.js"></script>
     <script src="js/bulkPasteParser.js"></script>
@@ -413,24 +420,61 @@ if ($testsResult) {
             }, 40);
         }
 
+        function setBulkPageSize(size) {
+            syncVisiblePreviewEdits();
+            if (size === 'all') {
+                bulkPreviewPageSize = 999999;
+            } else {
+                bulkPreviewPageSize = parseInt(size, 10);
+            }
+            bulkPreviewPage = 1;
+            renderBulkPreview(1);
+        }
+
         function renderBulkPagination(totalPages) {
-            if (totalPages <= 1) {
-                $('#bulkPreviewPaginationTop, #bulkPreviewPaginationBottom').html('');
-                return;
+            var totalQuestions = currentParsedQuestions.length;
+            var isAll = (bulkPreviewPageSize >= 999999 || bulkPreviewPageSize >= totalQuestions);
+            var startNum = isAll ? 1 : ((bulkPreviewPage - 1) * bulkPreviewPageSize + 1);
+            var endNum = isAll ? totalQuestions : Math.min(bulkPreviewPage * bulkPreviewPageSize, totalQuestions);
+
+            var summaryText = '<span style="font-size:13px; font-weight:600; color:#003366; margin-right:12px;">' +
+                (isAll ? ('Showing all ' + totalQuestions + ' questions') : ('Showing ' + startNum + '–' + endNum + ' of ' + totalQuestions + ' questions')) +
+                '</span>';
+
+            // Page size switcher
+            var sizes = [10, 25, 50, 100, 'all'];
+            var sizeGroup = '<div class="btn-group btn-group-xs" style="margin-right:12px;" title="Questions per page">';
+            sizeGroup += '<span class="btn btn-default disabled" style="color:#64748b; font-weight:bold; cursor:default; border-right:none; background:#f8fafc;">View:</span>';
+            sizes.forEach(function(s) {
+                var isSelected = (s === 'all' && bulkPreviewPageSize >= 999999) || (s !== 'all' && bulkPreviewPageSize === s);
+                var activeStyle = isSelected ? 'background:#003366; color:#fff; font-weight:bold; border-color:#003366;' : '';
+                var label = (s === 'all') ? 'All' : s;
+                sizeGroup += '<button type="button" class="btn btn-default" style="' + activeStyle + '" onclick="setBulkPageSize(\'' + s + '\')">' + label + '</button>';
+            });
+            sizeGroup += '</div>';
+
+            var buttonsHtml = '';
+            if (!isAll && totalPages > 1) {
+                buttonsHtml += '<div class="btn-group btn-group-sm">';
+                buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage <= 1 ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage - 1) + ')"><i class="fa fa-chevron-left"></i> Prev</button>';
+                buttonsHtml += '<span class="btn btn-default" style="cursor:default; font-weight:bold; background:#fff;">Page ' + bulkPreviewPage + ' / ' + totalPages + '</span>';
+                buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage >= totalPages ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage + 1) + ')">Next <i class="fa fa-chevron-right"></i></button>';
+                buttonsHtml += '</div>';
+            } else if (isAll) {
+                buttonsHtml = '<span class="badge" style="background:#009999; padding:6px 12px; font-size:12px; font-weight:600;"><i class="fa fa-list"></i> Single Page View</span>';
             }
 
-            var startNum = (bulkPreviewPage - 1) * bulkPreviewPageSize + 1;
-            var endNum = Math.min(bulkPreviewPage * bulkPreviewPageSize, currentParsedQuestions.length);
-            var summaryText = '<span style="font-size:13px; font-weight:600; color:#003366; margin-right:12px;">Showing ' + startNum + '–' + endNum + ' of ' + currentParsedQuestions.length + ' questions</span>';
+            $('#bulkPreviewPaginationTop').html(
+                '<div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">' +
+                summaryText + sizeGroup + buttonsHtml +
+                '</div>'
+            );
 
-            var buttonsHtml = '<div class="btn-group btn-group-sm">';
-            buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage <= 1 ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage - 1) + ')"><i class="fa fa-chevron-left"></i> Prev</button>';
-            buttonsHtml += '<span class="btn btn-default" style="cursor:default; font-weight:bold; background:#fff;">Page ' + bulkPreviewPage + ' / ' + totalPages + '</span>';
-            buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage >= totalPages ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage + 1) + ')">Next <i class="fa fa-chevron-right"></i></button>';
-            buttonsHtml += '</div>';
-
-            $('#bulkPreviewPaginationTop').html(summaryText + buttonsHtml);
-            $('#bulkPreviewPaginationBottom').html(buttonsHtml);
+            if (!isAll && totalPages > 1) {
+                $('#bulkPreviewPaginationBottom').html(buttonsHtml).show();
+            } else {
+                $('#bulkPreviewPaginationBottom').html('').hide();
+            }
         }
 
         function goToBulkPreviewPage(page) {
@@ -850,6 +894,14 @@ if ($testsResult) {
                     }, 100);
                 }
             }
+
+            $(window).on('scroll', function() {
+                if ($(this).scrollTop() > 350 && $('#bulkPastePreviewArea').is(':visible')) {
+                    $('#bulkBackToTopBtn').fadeIn(200);
+                } else {
+                    $('#bulkBackToTopBtn').fadeOut(200);
+                }
+            });
         });
     </script>
 </body>

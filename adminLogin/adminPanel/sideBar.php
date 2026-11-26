@@ -4,7 +4,7 @@ require_once '../../track_user_presence.php';
 $currentPage = basename($_SERVER['PHP_SELF']);
 $isSettings = in_array($currentPage, array('security_violations.php', 'terminate_exam.php', 'cleanup_tests.php'));
 
-$isTests = in_array($currentPage, array('allTestsForm.php', 'yetToBeStartedTests.php', 'testsInProgress.php', 'endedTests.php', 'view_teacher_questions.php'));
+$isTests = in_array($currentPage, array('allTestsForm.php', 'editTestForm.php', 'yetToBeStartedTests.php', 'testsInProgress.php', 'endedTests.php', 'view_teacher_questions.php'));
 $isQueries = in_array($currentPage, array('reportQueries.php', 'namesAndIds.php'));
 $isResultProcessing = in_array($currentPage, array('assignFormTeachersForm.php', 'manageGradingForm.php', 'manageCharacterForm.php', 'managePsychomotorForm.php', 'manageHouseForm.php', 'manageSportForm.php', 'generateResultForm.php', 'result_config.php'));
 
