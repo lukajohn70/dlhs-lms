@@ -111,10 +111,10 @@ session_start();
 								'<strong>' + enrolledCount + ' student(s)</strong> from <strong>' + studentClassName + '</strong> have been enrolled for <strong>' + testName2 + '</strong>.' +
 								'</p>' +
 								'<div style="display:flex; flex-direction:column; gap:10px;">' +
-								'  <a href="' + proceedUrl + '" class="btn-proceed-prominent" style="justify-content:center; text-align:center;">' +
-								'    <i class="fa fa-question-circle"></i> PROCEED TO ADD QUESTIONS &nbsp;<i class="fa fa-arrow-right"></i>' +
+								'  <a href="' + proceedUrl + '" class="btn btn-success" style="border-radius:50px; font-weight:700; padding:12px; font-size:15px; text-align:center; box-shadow:0 4px 12px rgba(40,167,69,0.3); display:flex; align-items:center; justify-content:center; gap:8px;">' +
+								'    <i class="fa fa-question-circle"></i> Proceed to Add Questions &nbsp;<i class="fa fa-arrow-right"></i>' +
 								'  </a>' +
-								'  <button type="button" class="btn btn-default" onclick="selectNextArm()" style="font-weight:600; font-size:14px; padding:10px; border:1px solid #ced4da; background:#fff; color:#333;">' +
+								'  <button type="button" class="btn btn-default" onclick="selectNextArm()" style="border-radius:50px; font-weight:600; font-size:14px; padding:10px; border:1px solid #ced4da; background:#fff; color:#333;">' +
 								'    <i class="fa fa-plus-circle"></i> Enroll Another Arm / Class' +
 								'  </button>' +
 								'</div>' +
@@ -177,34 +177,6 @@ session_start();
 			overflow-y:auto;
 			height:900px;
 		}
-		@keyframes pulse-proceed {
-			0% { transform: scale(1); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
-			50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.65); }
-			100% { transform: scale(1); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
-		}
-		.btn-proceed-prominent {
-			background: #28a745 !important;
-			color: #ffffff !important;
-			font-size: 16px !important;
-			font-weight: 800 !important;
-			padding: 12px 24px !important;
-			border-radius: 6px !important;
-			border: 2px solid #34d058 !important;
-			text-transform: uppercase !important;
-			letter-spacing: 0.8px !important;
-			display: inline-flex !important;
-			align-items: center !important;
-			gap: 10px !important;
-			text-decoration: none !important;
-			transition: all 0.2s ease-in-out !important;
-			animation: pulse-proceed 2.5s infinite;
-		}
-		.btn-proceed-prominent:hover, .btn-proceed-prominent:focus {
-			background: #218838 !important;
-			color: #ffffff !important;
-			transform: scale(1.04) !important;
-			text-decoration: none !important;
-		}
 		/* Standard modal styles (match other pages) */
 		.modal1 {
 			display: none; /* Hidden by default */
@@ -256,37 +228,24 @@ session_start();
       <!--main content start-->
       <section id="main-content">
           <section class="wrapper">
-		  <div class="row">
+		  <div class="row" style="margin-bottom: 20px;">
 				<div class="col-lg-12">
-					<h3 class="page-header"><i class="fa fa-users"></i> Manage Test Access</h3>
-					<ol class="breadcrumb">
-						<li><i class="fa fa-home"></i><a href="index.php">Home</a></li>
-						<li><i class="fa fa-users"></i>Manage Test Access</li>
-						<a href="#" style="color:#0acca2; padding-left:10px;"><i class="fa fa-calendar-o"></i> <?php echo date('d')." ".date('M').", ".date("Y"); ?></a>
-					</ol>
-				</div>
-			</div>
-              
-			<!-- Prominent Test Workflow Banner -->
-			<div id="workflowHeaderCard" class="panel" style="background: linear-gradient(135deg, #1b355a 0%, #254a80 100%); color: #fff; border-radius: 8px; margin-bottom: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); padding: 18px 24px; border: none; <?php echo ($setupTestId > 0) ? '' : 'display:none;'; ?>">
-				<div class="row" style="align-items: center; display: flex; flex-wrap: wrap;">
-					<div class="col-md-7 col-sm-12" style="margin-bottom: 10px;">
-						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.85; font-weight: 600; color: #a8d5ff;">
-							<i class="fa fa-tasks"></i> Test Setup Workflow &bull; Step 2 of 3
+					<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+						<div>
+							<h3 class="page-header" style="margin:0; border-bottom:none; font-weight:700; color:#003366;">
+								<i class="fa fa-users" style="color:#009999;"></i> Manage Test Access
+							</h3>
+							<ol class="breadcrumb" style="margin:5px 0 0 0; padding:0; background:none;">
+								<li><i class="fa fa-home"></i><a href="index.php">Home</a></li>
+								<li class="active">Manage Test Access</li>
+								<li><span style="color:#0acca2;"><i class="fa fa-calendar-o"></i> <?php echo date('d')." ".date('M').", ".date("Y"); ?></span></li>
+							</ol>
 						</div>
-						<h3 id="bannerTestName" style="margin: 6px 0 8px 0; font-weight: 700; color: #ffffff; font-size: 22px;">
-							Manage Test Access
-						</h3>
-						<div id="bannerStats" style="font-size: 14px; opacity: 0.95;">
-							<span id="bannerEnrolledCount" class="badge" style="background: #28a745; font-size: 13px; padding: 6px 12px; margin-right: 10px; font-weight: 600;">0 Students Enrolled</span>
-							<span id="bannerHelpText" style="color: #e0e8f5;">Enroll class arms on the left, then proceed to enter test questions.</span>
+						<div id="topProceedContainer" style="<?php echo ($setupTestId > 0) ? '' : 'display:none;'; ?>">
+							<a id="btnTopProceed" href="addQuestionForm.php<?php echo $setupTestId > 0 ? '?testId='.$setupTestId : ''; ?>" class="btn btn-success" style="border-radius:50px; font-weight:700; padding:10px 24px; font-size:14px; box-shadow:0 4px 12px rgba(40,167,69,0.3); display:inline-flex; align-items:center; gap:8px;">
+								<i class="fa fa-plus-circle"></i> <span>Proceed to Add Questions</span> &nbsp;<i class="fa fa-arrow-right"></i>
+							</a>
 						</div>
-					</div>
-					<div class="col-md-5 col-sm-12 text-right" style="margin-bottom: 10px;">
-						<a id="btnTopProceed" href="addQuestionForm.php<?php echo $setupTestId > 0 ? '?testId='.$setupTestId : ''; ?>" class="btn-proceed-prominent">
-							<span>PROCEED TO ADD QUESTIONS</span>
-							<i class="fa fa-arrow-circle-right" style="font-size: 20px;"></i>
-						</a>
 					</div>
 				</div>
 			</div>
@@ -355,11 +314,6 @@ session_start();
 									<div>
 										<button type="button" class="btn btn-sm btn-danger" onclick="openDeleteSelectedStudentsModal()"><i class="fa fa-trash"></i> Delete selected</button>
 										<button type="button" class="btn btn-sm btn-danger" onclick="openRemoveAllStudentsModal()" style="margin-left:6px;"><i class="fa fa-user-times"></i> Remove all</button>
-									</div>
-									<div>
-										<a id="btnTableProceed" href="addQuestionForm.php<?php echo $setupTestId > 0 ? '?testId='.$setupTestId : ''; ?>" class="btn-proceed-prominent" style="font-size:13px !important; padding:8px 18px !important; <?php echo $setupTestId > 0 ? '' : 'display:none !important;'; ?>">
-											PROCEED TO ADD QUESTIONS &nbsp;<i class="fa fa-arrow-right"></i>
-										</a>
 									</div>
 								</div>
 									<table id="example" class="table table-striped table-bordered bulk_action" style="width:100%" width="100%">
@@ -513,8 +467,7 @@ session_start();
 
 			if (!selectedTestId || selectedTestId === "")
 			{
-				$('#workflowHeaderCard').slideUp();
-				$('#btnTableProceed').hide();
+				$('#topProceedContainer').hide();
 				if ($.fn.DataTable.isDataTable('#example')) {
 					$('#example').DataTable().clear().destroy();
 				}
@@ -522,12 +475,10 @@ session_start();
 				return;
 			}
 
-			// Update workflow header card and proceed buttons
-			$('#bannerTestName').text(selectedTestName);
+			// Update proceed button in top header
 			var proceedUrl = 'addQuestionForm.php?testId=' + encodeURIComponent(selectedTestId);
 			$('#btnTopProceed').attr('href', proceedUrl);
-			$('#btnTableProceed').attr('href', proceedUrl).show();
-			$('#workflowHeaderCard').slideDown();
+			$('#topProceedContainer').fadeIn();
 
 			// Immediately load all students enrolled in this test across all arms
 			viewAdded1(selectedTestId, '');
@@ -893,8 +844,7 @@ session_start();
 
 					var len = response ? response.length : 0;
 					
-					// Update badge counts in banner and table header
-					$('#bannerEnrolledCount').text(len + ' Student' + (len === 1 ? '' : 's') + ' Enrolled');
+					// Update badge count in table header
 					$('#tableEnrolledBadge').text(len + ' Enrolled');
 
 					for(var i=0; i<len; i++){
