@@ -37,6 +37,15 @@ if (isset($_POST['staffUsername'])) {
         if ($isValid) {
             session_regenerate_id(true);
 
+            // Clear any lingering admin session keys so admin privileges never bleed into staff sessions
+            unset(
+                $_SESSION['adminLoggedIn'],
+                $_SESSION['adminId'],
+                $_SESSION['adminEmail'],
+                $_SESSION['adminLast_login'],
+                $_SESSION['adminName']
+            );
+
             // Setting up session for logged in user
             $_SESSION['staffLast_login'] = time();
             $_SESSION['staffId'] = $staffId;

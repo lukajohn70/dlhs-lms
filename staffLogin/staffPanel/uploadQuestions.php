@@ -26,6 +26,13 @@ if (isset($_POST['testName'])) {
         exit;
     }
 
+    $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+    $isAdmin = isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes' && empty($_SESSION['staffLoggedIn']);
+    if (($staffId > 0 && (int)$testRow['staffId'] !== $staffId) || ($staffId === 0 && !$isAdmin)) {
+        header("location:addQuestionForm.php?status=err");
+        exit;
+    }
+
     $questionEntryCheck = dlhsCheckQuestionEntryAllowed($connection, $testRow);
     if (!$questionEntryCheck['allowed']) {
         header("location:addQuestionForm.php?status=students_required");

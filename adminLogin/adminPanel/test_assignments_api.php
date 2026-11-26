@@ -1,6 +1,8 @@
 <?php
 session_start();
-$_SESSION['adminLoggedIn'] = true; // Simulate admin login for testing
+if (!isset($_SESSION['adminLoggedIn']) || $_SESSION['adminLoggedIn'] !== 'yes') {
+    die("Access denied. Admin login required.");
+}
 
 include "../../db_connection/dlhs_db_connection.php";
 

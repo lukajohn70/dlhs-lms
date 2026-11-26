@@ -10,8 +10,8 @@ if ((time() - $_SESSION['staffLast_login']) > $allottedTime) {
     exit;
 }
 
-$isAdmin = isset($_SESSION['adminLoggedIn']);
 $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+$isAdmin = isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes' && empty($_SESSION['staffLoggedIn']);
 
 if (!isset($_POST['testId']) || !isset($_POST['questions']) || (!$isAdmin && $staffId === 0)) {
     echo json_encode(['success' => false, 'message' => 'Invalid request']);
@@ -31,7 +31,7 @@ if (!is_array($questions)) {
 }
 
 $testRow = dlhsFetchTestRowById($connection, $testId);
-if (!$testRow || (!$isAdmin && (int) $testRow['staffId'] !== $staffId)) {
+if (!$testRow || ($staffId > 0 && (int) $testRow['staffId'] !== $staffId) || ($staffId === 0 && !$isAdmin)) {
     echo json_encode(['success' => false, 'message' => 'Test not found or unauthorized']);
     exit;
 }

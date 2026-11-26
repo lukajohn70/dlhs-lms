@@ -26,6 +26,14 @@ function dlhs_admin_fallback_login($username, $password)
 
 function dlhs_set_admin_session($adminId, $adminEmail)
 {
+    // Clear any lingering staff session keys so staff sessions do not bleed into admin
+    unset(
+        $_SESSION['staffLoggedIn'],
+        $_SESSION['staffId'],
+        $_SESSION['staffEmail'],
+        $_SESSION['staffLast_login'],
+        $_SESSION['staffName']
+    );
     $_SESSION['adminLast_login'] = time();
     $_SESSION['adminId'] = $adminId;
     $_SESSION['adminEmail'] = $adminEmail;

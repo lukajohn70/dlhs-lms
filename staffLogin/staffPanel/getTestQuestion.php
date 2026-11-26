@@ -1,7 +1,7 @@
 <?php
 session_start();
 $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
-$isAdmin = isset($_SESSION['adminLoggedIn']);
+$isAdmin = isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes' && empty($_SESSION['staffLoggedIn']);
 session_write_close();
 
 header('Content-Type: application/json');
@@ -19,7 +19,7 @@ if ($testId <= 0) {
 
 include "../../db_connection/dlhs_db_connection.php";
 
-$query = "SELECT tableName FROM tests WHERE testId = '{$testId}'" . ($isAdmin ? "" : " AND staffId = '{$staffId}'") . " LIMIT 1";
+$query = "SELECT tableName FROM tests WHERE testId = '{$testId}'" . ($staffId > 0 ? " AND staffId = '{$staffId}'" : "") . " LIMIT 1";
 $result = $connection->query($query);
 if (!$result || $result->num_rows === 0) {
     echo json_encode(array());

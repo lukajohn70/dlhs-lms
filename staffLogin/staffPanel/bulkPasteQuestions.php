@@ -11,14 +11,16 @@ include "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/test_workflow_helper.php";
 
 $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
-$isAdmin = isset($_SESSION['adminLoggedIn']);
+$isAdmin = isset($_SESSION['adminLoggedIn']) && $_SESSION['adminLoggedIn'] === 'yes' && empty($_SESSION['staffLoggedIn']);
 $preselectedTestId = isset($_GET['testId']) ? (int) $_GET['testId'] : 0;
 $questionTestOptions = array();
 
-if ($staffId > 0 && !$isAdmin) {
+if ($staffId > 0) {
     $testsResult = $connection->query("SELECT * FROM tests WHERE staffId='{$staffId}' ORDER BY testName ASC");
-} else {
+} elseif ($isAdmin) {
     $testsResult = $connection->query("SELECT * FROM tests ORDER BY testName ASC");
+} else {
+    $testsResult = false;
 }
 
 if ($testsResult) {
