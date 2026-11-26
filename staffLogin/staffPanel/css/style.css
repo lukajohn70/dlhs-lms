@@ -10706,6 +10706,16 @@ body.dlhs-has-unified-sidebar .toggle-nav {
   }
 }
 
+/* Base expanded layout for unified sidebar on desktop */
+body.dlhs-has-unified-sidebar:not(.dlhs-sidebar-collapsed) #sidebar {
+  width: 286px !important;
+}
+
+body.dlhs-has-unified-sidebar:not(.dlhs-sidebar-collapsed) #main-content {
+  margin-left: 286px !important;
+}
+
+/* Collapsed layout for unified sidebar */
 body.dlhs-sidebar-collapsed #sidebar {
   width: 88px !important;
   padding-left: 14px !important;
@@ -10750,50 +10760,15 @@ body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .sidebar-footer {
   padding: 12px !important;
 }
 
-body.dlhs-sidebar-collapsed .dlhs-sidebar-collapse-button {
-  left: 102px;
-}
-
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .brand,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .identity,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .sidebar-menu > a.nav-link,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .nav-toggle {
-  justify-content: center !important;
-}
-
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .brand-copy,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .nav-link span,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .nav-toggle span,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .submenu-caret,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .nav-submenu,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .identity h3,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .identity p,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .dlhs-sidepanel-logout span {
-  display: none !important;
-}
-
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .brand-mark,
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .identity-badge {
-  width: 46px !important;
-  height: 46px !important;
-  border-radius: 15px !important;
-}
-
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .sidebar-footer {
-  padding: 12px !important;
-}
-
 body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .identity {
   margin-bottom: 12px !important;
 }
 
-body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .dlhs-sidepanel-logout {
-  justify-content: center !important;
-}
-
 /* Exact index-style sidebar lock for shared staff pages */
 .dlhs-unified-sidebar #sidebar.sidebar {
-  background: rgba(2, 11, 26, 0.82) !important;
+  width: 286px !important;
+  background: #020b1a !important; /* solid fallback */
+  background: rgba(2, 11, 26, 0.88) !important;
   backdrop-filter: blur(24px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
   color: #fff !important;
@@ -10805,6 +10780,37 @@ body.dlhs-sidebar-collapsed .dlhs-unified-sidebar .dlhs-sidepanel-logout {
   overflow-y: auto !important;
   max-height: 100vh !important;
   overscroll-behavior: contain;
+}
+
+/* Integration with modern dashboard-shell flex container */
+.dashboard-shell aside.dlhs-unified-sidebar {
+  width: 286px;
+  flex-shrink: 0;
+  transition: width 0.25s ease;
+}
+
+body.dlhs-sidebar-collapsed .dashboard-shell aside.dlhs-unified-sidebar {
+  width: 88px;
+}
+
+.dashboard-shell #main-content,
+.dashboard-shell .page {
+  margin-left: 0 !important;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  body.dlhs-has-unified-sidebar #main-content,
+  .dashboard-shell #main-content,
+  .dashboard-shell .page {
+    margin-left: 0 !important;
+    padding-top: 76px !important;
+  }
+  .dashboard-shell aside.dlhs-unified-sidebar {
+    width: 0 !important;
+    display: none !important;
+  }
 }
 
 .dlhs-unified-sidebar .brand {
