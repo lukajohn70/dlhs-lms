@@ -694,6 +694,14 @@ session_start();
 			document.getElementById("submitToEditQuestionForm").submit();
 			
 		}
+
+		$(document).ready(function() {
+			var urlParams = new URLSearchParams(window.location.search);
+			var urlTestId = urlParams.get('testId');
+			if (urlTestId) {
+				$('#testId').val(urlTestId).trigger('change');
+			}
+		});
 	</script>
 	
   </body>
