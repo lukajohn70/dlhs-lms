@@ -10773,35 +10773,3 @@ ul.sidebar-menu {
     display: block;
   }
 }
-
-/* Integration with modern dashboard-shell flex container */
-.dashboard-shell aside.dlhs-unified-sidebar {
-  width: 286px;
-  flex-shrink: 0;
-  transition: width 0.25s ease;
-}
-
-body.dlhs-sidebar-collapsed .dashboard-shell aside.dlhs-unified-sidebar {
-  width: 88px;
-}
-
-.dashboard-shell #main-content,
-.dashboard-shell .page {
-  margin-left: 0 !important;
-  flex: 1;
-  min-width: 0;
-}
-
-@media (max-width: 1023px) {
-  body.dlhs-has-unified-sidebar #main-content,
-  .dashboard-shell #main-content,
-  .dashboard-shell .page {
-    margin-left: 0 !important;
-    padding-top: 76px !important;
-  }
-  .dashboard-shell aside.dlhs-unified-sidebar {
-    width: 0 !important;
-    display: none !important;
-  }
-}
-
