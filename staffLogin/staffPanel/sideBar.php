@@ -30,7 +30,7 @@ if (isset($_SESSION['staffLoggedIn']) && $_SESSION['staffLoggedIn'] === 'yes') {
 }
 
 $currentPage = basename($_SERVER['PHP_SELF']);
-$isCreateTest = in_array($currentPage, array('addTestForm.php', 'editTest.php', 'editOverAllTestTime.php', 'modifyTimeBeforeTestStarts.php', 'rescheduleTest.php', 'endTest.php'));
+$isCreateTest = in_array($currentPage, array('addTestForm.php', 'editTestForm.php', 'editTest.php', 'editOverAllTestTime.php', 'modifyTimeBeforeTestStarts.php', 'rescheduleTest.php', 'endTest.php'));
 $isQuestions = in_array($currentPage, array('addQuestionForm.php', 'viewQuestionForm.php', 'editQuestionForm.php'));
 $isTestAccess = in_array($currentPage, array('addStudentsToTestForm.php', 'manageStudentsAndTestForm.php'));
 $isResults = in_array($currentPage, array('examineesStatus.php', 'getAllStudentsResults.php', 'getStudentquestionsResult.php', 'formTeacherBusinessForm.php', 'classResultEntryForm.php', 'generateResultForm.php', 'manage_term_results.php', 'manage_assessments.php', 'print_term_report.php'));
