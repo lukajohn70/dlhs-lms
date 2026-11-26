@@ -1749,43 +1749,63 @@ session_start();
 					<div style="background:rgba(233, 30, 140, 0.05); border:1px solid rgba(233, 30, 140, 0.1); padding:15px; border-radius:12px; margin-bottom:15px; display:flex; align-items:flex-start; gap:12px;">
 						<i class="fa fa-info-circle" style="color:#e91e8c; font-size:18px; margin-top:2px;"></i>
 						<div style="font-size:14px; color:#555;">
-							<strong style="color:#e91e8c;">Instructions:</strong> Paste questions and options below. 
+							<strong style="color:#e91e8c;">Instructions:</strong> Paste questions and options below. Rich text formatting (<b>bold</b>, <i>italics</i>, <u>underlines</u>, superscripts x<sup>2</sup>, subscripts H<sub>2</sub>O, formulas, tables) is fully preserved!
 							<br>Format example: <code>1. Which country...? [A] Nigeria [B] Ghana [C] UK [D] USA</code>
 						</div>
 					</div>
 					
 					<!-- General Support with Glassmorphism -->
-					<div style="background:rgba(0, 51, 102, 0.03); border:1px solid rgba(0, 51, 102, 0.08); padding:18px; border-radius:15px; margin-bottom:20px;">
+					<div style="background:rgba(0, 51, 102, 0.03); border:1px solid rgba(0, 51, 102, 0.08); padding:18px; border-radius:15px; margin-bottom:15px;">
 						<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
 							<div style="width:32px; height:32px; background:#003366; color:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center;"><i class="fa fa-lightbulb-o"></i></div>
-							<strong style="color:#003366;">Support for Complex Content (Math, Tech Drawing, etc.)</strong>
+							<strong style="color:#003366;">Formatting Preservation & Guidelines</strong>
 						</div>
 						<div style="font-size:13px; color:#444; line-height:1.6;">
-							If your questions include complex equations, symbols, or diagrams, we've got you covered:
+							Paste directly from <strong>Microsoft Word</strong>, <strong>Google Docs</strong>, or any webpage:
 							<ul style="margin:8px 0 0 0; padding-left:20px;">
+								<li><strong>Formatting Preserved:</strong> Bold, italic, underline, equations, mathematical powers (e.g. <code>x²</code>), chemical formulas (e.g. <code>H₂SO₄</code>), and tables are retained automatically.</li>
 								<li><strong>Diagrams:</strong> Upload them via <span style="color:#e91e8c; font-weight:600;">Shared Material</span> first, then link them after pasting.</li>
-								<li><strong>Symbols & Equations:</strong> Paste them as plain text (e.g., <code>x²</code>, <code>&pi;</code>). Once imported, use the rich editor to refine them.</li>
-								<li><strong>Cleanup:</strong> Leading numbers (1., 2.) are automatically detected and handled.</li>
+								<li><strong>Cleanup:</strong> Question numbers (<code>1.</code>, <code>2.</code>, etc.) and option markers (<code>[A]</code>, <code>A.</code>, <code>(A)</code>) are automatically parsed and structured.</li>
 							</ul>
 						</div>
 					</div>
 
-					<textarea id="bulkPasteTextarea" class="form-control" rows="12" placeholder="1. Paste your questions here..." style="border-radius:12px; border:2px solid #eee; padding:15px; font-family:'Courier New', monospace; font-size:15px; transition:border-color 0.2s;"></textarea>
+					<!-- Formatting Toolbar for Bulk Paste -->
+					<div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; padding:8px 12px; background:#f8f9fa; border:1px solid #e2e8f0; border-radius:8px;">
+						<span style="font-size:12px; font-weight:600; color:#555; margin-right:6px;"><i class="fa fa-pencil"></i> Quick Tools:</span>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('superscript')" title="Superscript (x²)">x²</button>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('subscript')" title="Subscript (x₂)">x₂</button>
+						<button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('removeFormat')" title="Clear formatting"><i class="fa fa-eraser"></i> Clear Styles</button>
+						<div style="margin-left:auto; display:flex; gap:6px;">
+							<button type="button" class="btn btn-default btn-xs" onclick="clearBulkPasteEditor()" style="color:#d9534f;" title="Clear paste editor"><i class="fa fa-trash"></i> Clear All</button>
+						</div>
+					</div>
+
+					<!-- Rich Contenteditable Box Preserving All Formatting -->
+					<div id="bulkPasteEditor" contenteditable="true" spellcheck="false" class="form-control" data-placeholder="Paste your formatted questions here (Ctrl+V / Cmd+V)..." style="min-height:280px; max-height:450px; overflow-y:auto; border-radius:12px; border:2px solid #ddd; padding:15px; font-size:15px; line-height:1.6; transition:border-color 0.2s; background:#fff;"></div>
 					
-					<div style="margin-top:20px; text-align:right;">
-						<button type="button" class="btn" onclick="processBulkPaste()" style="background:#003366; color:#fff; padding:12px 30px; border-radius:50px; font-weight:600; border:none; box-shadow:0 4px 12px rgba(0,51,102,0.2);"><i class="fa fa-magic"></i> Parse & Preview Questions</button>
+					<div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+						<button type="button" class="btn" onclick="sendBulkPasteToEssay()" style="background:#0275d8; color:#fff; padding:12px 25px; border-radius:50px; font-weight:600; border:none; box-shadow:0 4px 12px rgba(2,117,216,0.2);"><i class="fa fa-file-text-o"></i> Insert into Essay Questions</button>
+						<button type="button" id="btnParseBulkQuestions" class="btn" onclick="processBulkPaste()" style="background:#003366; color:#fff; padding:12px 30px; border-radius:50px; font-weight:600; border:none; box-shadow:0 4px 12px rgba(0,51,102,0.2);"><i class="fa fa-magic"></i> Parse & Preview Objective Questions</button>
 					</div>
 				</div>
 
 				<div id="bulkPastePreviewArea" style="display:none;">
-					<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-						<h5 style="margin:0; font-weight:700; color:#003366;">Parsed Questions (<span id="parsedCount" style="color:#e91e8c;">0</span>)</h5>
-						<span style="font-size:12px; color:#888;">Review and set correct options below</span>
+					<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+						<div>
+							<h5 style="margin:0; font-weight:700; color:#003366;">Parsed Questions (<span id="parsedCount" style="color:#e91e8c;">0</span>)</h5>
+							<span style="font-size:12px; color:#888;">Review, set correct options, or edit questions and options directly below</span>
+						</div>
+						<div id="bulkPreviewPaginationTop" style="display:flex; align-items:center; gap:8px;"></div>
 					</div>
 					<div id="parsedQuestionsList" style="padding:5px;"></div>
-					<div style="margin-top:25px; padding-top:20px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-						<button type="button" class="btn" onclick="backToPaste()" style="background:#f0f0f0; color:#555; padding:10px 25px; border-radius:50px; border:none;"><i class="fa fa-arrow-left"></i> Edit Text</button>
-						<button type="button" class="btn" onclick="saveBulkParsedQuestions()" style="background:#28a745; color:#fff; padding:12px 35px; border-radius:50px; font-weight:700; border:none; box-shadow:0 4px 12px rgba(40,167,69,0.2);"><i class="fa fa-check-circle"></i> Save All to Database</button>
+					<div id="bulkPreviewPaginationBottom" style="display:flex; justify-content:center; margin-top:15px;"></div>
+					<div style="margin-top:20px; padding-top:18px; border-top:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+						<button type="button" class="btn" onclick="backToPaste()" style="background:#f0f0f0; color:#555; padding:10px 25px; border-radius:50px; border:none;"><i class="fa fa-arrow-left"></i> Edit Source</button>
+						<button type="button" id="btnSaveBulkQuestions" class="btn" onclick="saveBulkParsedQuestions()" style="background:#28a745; color:#fff; padding:12px 35px; border-radius:50px; font-weight:700; border:none; box-shadow:0 4px 12px rgba(40,167,69,0.2);"><i class="fa fa-check-circle"></i> Save All to Database</button>
 					</div>
 				</div>
 			</div>
@@ -1809,21 +1829,42 @@ session_start();
 			border-color: #e91e8c !important;
 			box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
 		}
-		#bulkPasteTextarea:focus {
+		#bulkPasteEditor:empty:before {
+			content: attr(data-placeholder);
+			color: #999;
+			font-style: italic;
+			pointer-events: none;
+		}
+		#bulkPasteEditor:focus {
 			border-color: #003366 !important;
 			outline: none;
 			box-shadow: 0 0 0 4px rgba(0,51,102,0.1);
+		}
+		.parsed-editable-field {
+			outline: none;
+			padding: 2px 4px;
+			border-radius: 4px;
+			transition: background-color 0.2s;
+		}
+		.parsed-editable-field:hover, .parsed-editable-field:focus {
+			background-color: #fff9db !important;
+			box-shadow: 0 0 0 1px #ffc107;
 		}
 	</style>
 
 	<script src="js/bulkPasteParser.js"></script>
 	<script>
 		var currentParsedQuestions = [];
+		var bulkPreviewPage = 1;
+		var bulkPreviewPageSize = 10;
 
 		function openBulkPasteModal() {
 			$('#myModalBulkPaste').css('display', 'flex');
 			$('#bulkPasteInputArea').show();
 			$('#bulkPastePreviewArea').hide();
+			setTimeout(function() {
+				$('#bulkPasteEditor').focus();
+			}, 100);
 		}
 
 		function closeBulkPasteModal() {
@@ -1837,51 +1878,221 @@ session_start();
 			$('#bulkPastePreviewArea').hide();
 		}
 
-		function processBulkPaste() {
-			var text = $('#bulkPasteTextarea').val();
-			currentParsedQuestions = DLHSBulkParser.parse(text);
-			
-			if (currentParsedQuestions.length === 0) {
-				dlhsAlert("No questions could be parsed. Please check the format.", "error");
-				return;
-			}
-			
-			$('#parsedCount').text(currentParsedQuestions.length);
-			var html = '';
-			currentParsedQuestions.forEach(function(q, index) {
-				html += '<div class="parsed-q-item" style="margin-bottom:20px; padding:15px; background:white; border:1px solid #eee; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">';
-				html += '  <div style="margin-bottom:10px;"><strong>Question ' + (index + 1) + ':</strong> ' + q.question + '</div>';
-				html += '  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:13px; color:#555;">';
-				html += '    <div>A: ' + q.optionA + '</div>';
-				html += '    <div>B: ' + q.optionB + '</div>';
-				html += '    <div>C: ' + q.optionC + '</div>';
-				html += '    <div>D: ' + q.optionD + '</div>';
-				if (q.optionE) html += '    <div>E: ' + q.optionE + '</div>';
-				html += '  </div>';
-				html += '  <div style="margin-top:10px; display:flex; align-items:center; gap:15px;">';
-				html += '    <label>Correct: <select class="parsed-correct" data-index="' + index + '" style="padding:2px 5px; border-radius:4px; border:1px solid #ccc;">';
-				['A', 'B', 'C', 'D', 'E'].forEach(function(opt) {
-					if (opt === 'E' && !q.optionE) return;
-					html += '<option value="' + opt + '">' + opt + '</option>';
-				});
-				html += '    </select></label>';
-				html += '    <label>Mark: <input type="number" class="parsed-mark" data-index="' + index + '" value="1" step="0.5" style="width:50px; padding:2px 5px; border-radius:4px; border:1px solid #ccc;"></label>';
-				html += '    <button class="btn btn-xs btn-danger" onclick="removeParsedQuestion(' + index + ')"><i class="fa fa-trash"></i> Remove</button>';
-				html += '  </div>';
-				html += '</div>';
-			});
-			
-			$('#parsedQuestionsList').html(html);
-			$('#bulkPasteInputArea').hide();
-			$('#bulkPastePreviewArea').show();
+		function formatBulkEditor(command) {
+			document.execCommand(command, false, null);
+			$('#bulkPasteEditor').focus();
 		}
 
+		function clearBulkPasteEditor() {
+			$('#bulkPasteEditor').html('').focus();
+		}
+
+		// Handle paste event on contenteditable to preserve rich formatting while stripping Word office xml junk
+		$('#bulkPasteEditor').on('paste', function(e) {
+			try {
+				var clipboardData = (e.originalEvent || e).clipboardData;
+				if (clipboardData) {
+					var html = clipboardData.getData('text/html');
+					if (html && html.trim() !== '') {
+						e.preventDefault();
+						var cleaned = DLHSBulkParser.cleanRawHtml(html);
+						document.execCommand('insertHTML', false, cleaned);
+					}
+				}
+			} catch (err) {
+				// Fallback to default paste if insertHTML is restricted
+			}
+		});
+
+		function sendBulkPasteToEssay() {
+			var html = $('#bulkPasteEditor').html() || '';
+			var plainText = ($('#bulkPasteEditor').text() || '').trim();
+			if (!plainText && !/<img/i.test(html) && !/<table/i.test(html)) {
+				dlhsAlert("Please paste questions into the box first.", "error");
+				return;
+			}
+			if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances && CKEDITOR.instances.essay) {
+				CKEDITOR.instances.essay.setData(html);
+				closeBulkPasteModal();
+				dlhsAlert("Questions loaded into the Essay editor with formatting preserved! Click 'Upload essay questions' to save them for the test.", "success");
+				$('html, body').animate({
+					scrollTop: $('#essay').offset().top - 120
+				}, 500);
+			} else {
+				dlhsAlert("Essay editor is not available on this page.", "error");
+			}
+		}
+
+		function processBulkPaste() {
+			var html = $('#bulkPasteEditor').html() || '';
+			var plainText = ($('#bulkPasteEditor').text() || '').trim();
+			if (!plainText && !/<img/i.test(html) && !/<table/i.test(html)) {
+				dlhsAlert("Please paste questions into the box first.", "error");
+				return;
+			}
+
+			var parseBtn = $('#btnParseBulkQuestions');
+			var originalBtnHtml = parseBtn.html();
+			parseBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Parsing Questions...');
+
+			// Yield to the browser so the loading state renders immediately before heavy processing
+			setTimeout(function() {
+				try {
+					currentParsedQuestions = DLHSBulkParser.parse(html);
+					
+					if (currentParsedQuestions.length === 0) {
+						dlhsConfirm("No multiple-choice options (A-D) were found in the pasted content. Would you like to insert this content into the Essay questions editor instead?", function() {
+							sendBulkPasteToEssay();
+						});
+						return;
+					}
+					
+					bulkPreviewPage = 1;
+					renderBulkPreview(1);
+					$('#bulkPasteInputArea').hide();
+					$('#bulkPastePreviewArea').show();
+				} catch (err) {
+					console.error(err);
+					dlhsAlert("An error occurred while parsing: " + err.message, "error");
+				} finally {
+					parseBtn.prop('disabled', false).html(originalBtnHtml);
+				}
+			}, 40);
+		}
+
+		function renderBulkPagination(totalPages) {
+			if (totalPages <= 1) {
+				$('#bulkPreviewPaginationTop, #bulkPreviewPaginationBottom').html('');
+				return;
+			}
+
+			var startNum = (bulkPreviewPage - 1) * bulkPreviewPageSize + 1;
+			var endNum = Math.min(bulkPreviewPage * bulkPreviewPageSize, currentParsedQuestions.length);
+			var summaryText = '<span style="font-size:13px; font-weight:600; color:#003366; margin-right:8px;">Showing ' + startNum + '–' + endNum + ' of ' + currentParsedQuestions.length + '</span>';
+
+			var buttonsHtml = '<div class="btn-group btn-group-sm">';
+			buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage <= 1 ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage - 1) + ')"><i class="fa fa-chevron-left"></i> Prev</button>';
+			buttonsHtml += '<span class="btn btn-default" style="cursor:default; font-weight:bold; background:#fff;">Page ' + bulkPreviewPage + ' / ' + totalPages + '</span>';
+			buttonsHtml += '<button type="button" class="btn btn-default" ' + (bulkPreviewPage >= totalPages ? 'disabled' : '') + ' onclick="goToBulkPreviewPage(' + (bulkPreviewPage + 1) + ')">Next <i class="fa fa-chevron-right"></i></button>';
+			buttonsHtml += '</div>';
+
+			$('#bulkPreviewPaginationTop').html(summaryText + buttonsHtml);
+			$('#bulkPreviewPaginationBottom').html(buttonsHtml);
+		}
+
+		function goToBulkPreviewPage(page) {
+			var totalPages = Math.ceil(currentParsedQuestions.length / bulkPreviewPageSize);
+			if (page < 1 || page > totalPages) return;
+			// Sync changes on the current page before flipping
+			syncVisiblePreviewEdits();
+			bulkPreviewPage = page;
+			renderBulkPreview(page);
+			// Scroll modal to top of preview list
+			var listElem = document.getElementById('parsedQuestionsList');
+			if (listElem) listElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
+
+		function syncVisiblePreviewEdits() {
+			$('.parsed-q-item').each(function() {
+				var idx = $(this).data('index');
+				if (currentParsedQuestions[idx]) {
+					var qText = $(this).find('.parsed-q-text').html();
+					if (qText !== undefined) currentParsedQuestions[idx].question = qText.trim();
+					var optA = $(this).find('.parsed-opt-a').html();
+					if (optA !== undefined) currentParsedQuestions[idx].optionA = optA.trim();
+					var optB = $(this).find('.parsed-opt-b').html();
+					if (optB !== undefined) currentParsedQuestions[idx].optionB = optB.trim();
+					var optC = $(this).find('.parsed-opt-c').html();
+					if (optC !== undefined) currentParsedQuestions[idx].optionC = optC.trim();
+					var optD = $(this).find('.parsed-opt-d').html();
+					if (optD !== undefined) currentParsedQuestions[idx].optionD = optD.trim();
+					var optE = $(this).find('.parsed-opt-e').html();
+					if (optE !== undefined) currentParsedQuestions[idx].optionE = optE.trim();
+					currentParsedQuestions[idx].correctOption = $(this).find('.parsed-correct').val();
+					currentParsedQuestions[idx].mark = $(this).find('.parsed-mark').val();
+				}
+			});
+		}
+
+		function renderBulkPreview(page) {
+			bulkPreviewPage = page || bulkPreviewPage || 1;
+			var totalQuestions = currentParsedQuestions.length;
+			$('#parsedCount').text(totalQuestions);
+
+			var totalPages = Math.ceil(totalQuestions / bulkPreviewPageSize);
+			if (bulkPreviewPage > totalPages && totalPages > 0) bulkPreviewPage = totalPages;
+
+			var startIndex = (bulkPreviewPage - 1) * bulkPreviewPageSize;
+			var endIndex = Math.min(startIndex + bulkPreviewPageSize, totalQuestions);
+
+			renderBulkPagination(totalPages);
+
+			var html = '';
+			for (var index = startIndex; index < endIndex; index++) {
+				var q = currentParsedQuestions[index];
+				html += '<div class="parsed-q-item" data-index="' + index + '" style="margin-bottom:18px; padding:18px; background:white; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">';
+				html += '  <div style="margin-bottom:12px; font-size:15px; line-height:1.6;">';
+				html += '    <strong style="color:#003366;">Question ' + (index + 1) + ':</strong> ';
+				html += '    <div class="parsed-q-text parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="question" style="display:inline-block; margin-left:4px;">' + q.question + '</div>';
+				html += '  </div>';
+				html += '  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:13px; color:#444;">';
+				html += '    <div style="padding:6px 10px; background:#f8fafc; border-radius:6px; border:1px solid #edf2f7;"><strong style="color:#003366;">A:</strong> <span class="parsed-opt parsed-opt-a parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="optionA">' + q.optionA + '</span></div>';
+				html += '    <div style="padding:6px 10px; background:#f8fafc; border-radius:6px; border:1px solid #edf2f7;"><strong style="color:#003366;">B:</strong> <span class="parsed-opt parsed-opt-b parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="optionB">' + q.optionB + '</span></div>';
+				html += '    <div style="padding:6px 10px; background:#f8fafc; border-radius:6px; border:1px solid #edf2f7;"><strong style="color:#003366;">C:</strong> <span class="parsed-opt parsed-opt-c parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="optionC">' + q.optionC + '</span></div>';
+				html += '    <div style="padding:6px 10px; background:#f8fafc; border-radius:6px; border:1px solid #edf2f7;"><strong style="color:#003366;">D:</strong> <span class="parsed-opt parsed-opt-d parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="optionD">' + q.optionD + '</span></div>';
+				if (q.optionE) {
+					html += '    <div style="padding:6px 10px; background:#f8fafc; border-radius:6px; border:1px solid #edf2f7;"><strong style="color:#003366;">E:</strong> <span class="parsed-opt parsed-opt-e parsed-editable-field" contenteditable="true" spellcheck="false" data-index="' + index + '" data-field="optionE">' + q.optionE + '</span></div>';
+				}
+				html += '  </div>';
+				html += '  <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #eee; display:flex; align-items:center; gap:20px; flex-wrap:wrap;">';
+				html += '    <label style="margin:0; font-weight:600; font-size:13px; color:#555;">Correct Option: <select class="parsed-correct" data-index="' + index + '" style="margin-left:6px; padding:3px 8px; border-radius:4px; border:1px solid #ccc; font-weight:bold; color:#003366;">';
+				['A', 'B', 'C', 'D', 'E'].forEach(function(opt) {
+					if (opt === 'E' && !q.optionE) return;
+					var sel = (q.correctOption === opt) ? ' selected' : '';
+					html += '<option value="' + opt + '"' + sel + '>' + opt + '</option>';
+				});
+				html += '    </select></label>';
+				html += '    <label style="margin:0; font-weight:600; font-size:13px; color:#555;">Mark: <input type="number" class="parsed-mark" data-index="' + index + '" value="' + (q.mark || '1') + '" step="0.5" style="margin-left:6px; width:55px; padding:3px 6px; border-radius:4px; border:1px solid #ccc; font-weight:bold;"></label>';
+				html += '    <button type="button" class="btn btn-xs btn-danger" onclick="removeParsedQuestion(' + index + ')" style="margin-left:auto;"><i class="fa fa-trash"></i> Remove</button>';
+				html += '  </div>';
+				html += '</div>';
+			}
+			
+			$('#parsedQuestionsList').html(html);
+		}
+
+		// Real-time synchronization of in-memory parsed questions array
+		$(document).on('input', '.parsed-editable-field', function() {
+			var idx = $(this).data('index');
+			var field = $(this).data('field');
+			if (currentParsedQuestions[idx] && field) {
+				currentParsedQuestions[idx][field] = $(this).html().trim();
+			}
+		});
+
+		$(document).on('change', '.parsed-correct', function() {
+			var idx = $(this).data('index');
+			if (currentParsedQuestions[idx]) {
+				currentParsedQuestions[idx].correctOption = $(this).val();
+			}
+		});
+
+		$(document).on('input change', '.parsed-mark', function() {
+			var idx = $(this).data('index');
+			if (currentParsedQuestions[idx]) {
+				currentParsedQuestions[idx].mark = $(this).val();
+			}
+		});
+
 		function removeParsedQuestion(index) {
+			syncVisiblePreviewEdits();
 			currentParsedQuestions.splice(index, 1);
 			if (currentParsedQuestions.length === 0) {
 				backToPaste();
 			} else {
-				processBulkPaste(); // Refresh preview
+				var totalPages = Math.ceil(currentParsedQuestions.length / bulkPreviewPageSize);
+				if (bulkPreviewPage > totalPages) bulkPreviewPage = Math.max(1, totalPages);
+				renderBulkPreview(bulkPreviewPage);
 			}
 		}
 
@@ -1892,15 +2103,11 @@ session_start();
 				return;
 			}
 			
-			// Update correct options and marks from the preview UI
-			$('.parsed-q-item').each(function() {
-				var idx = $(this).find('.parsed-correct').data('index');
-				currentParsedQuestions[idx].correctOption = $(this).find('.parsed-correct').val();
-				currentParsedQuestions[idx].mark = $(this).find('.parsed-mark').val();
-			});
+			// Sync any current page visible edits to memory
+			syncVisiblePreviewEdits();
 			
-			dlhsConfirm("Are you sure you want to save these " + currentParsedQuestions.length + " questions?", function() {
-				var btn = $('.btn-success');
+			dlhsConfirm("Are you sure you want to save all " + currentParsedQuestions.length + " questions to the test?", function() {
+				var btn = $('#btnSaveBulkQuestions');
 				var originalHtml = btn.html();
 				btn.prop('disabled', true).html('<i class="fa fa-refresh fa-spin"></i> Saving...');
 				

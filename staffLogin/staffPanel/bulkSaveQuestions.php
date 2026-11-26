@@ -44,28 +44,57 @@ $questionsTableSql = dlhsEscapeIdentifier($questionsTableName);
 $successCount = 0;
 $failCount = 0;
 
-foreach ($questions as $q) {
-    $questionText = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['question'] ?? ''));
-    $optionA = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['optionA'] ?? ''));
-    $optionB = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['optionB'] ?? ''));
-    $optionC = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['optionC'] ?? ''));
-    $optionD = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['optionD'] ?? ''));
-    $optionE = mysqli_real_escape_string($connection, dlhsEncodeHtmlForStorage($q['optionE'] ?? ''));
-    $correctOption = mysqli_real_escape_string($connection, $q['correctOption'] ?? 'A');
-    $mark = mysqli_real_escape_string($connection, $q['mark'] ?? '1');
+$connection->begin_transaction();
 
-    $query = "
+try {
+    $stmt = $connection->prepare("
         INSERT INTO {$questionsTableSql}
             (question, optionA, optionB, optionC, optionD, optionE, correctOption, markForQuestion, solvedSolution, questionSeriaNo)
         VALUES
-            ('{$questionText}', '{$optionA}', '{$optionB}', '{$optionC}', '{$optionD}', '{$optionE}', '{$correctOption}', '{$mark}', '', 0)
-    ";
+            (?, ?, ?, ?, ?, ?, ?, ?, '', 0)
+    ");
 
-    if ($connection->query($query)) {
-        $successCount++;
-    } else {
-        $failCount++;
+    if (!$stmt) {
+        throw new Exception("Database prepare statement failed: " . $connection->error);
     }
+
+    $qText = '';
+    $optA = '';
+    $optB = '';
+    $optC = '';
+    $optD = '';
+    $optE = '';
+    $corr = 'A';
+    $mark = '1';
+
+    $stmt->bind_param("ssssssss", $qText, $optA, $optB, $optC, $optD, $optE, $corr, $mark);
+
+    foreach ($questions as $q) {
+        $qText = dlhsEncodeHtmlForStorage($q['question'] ?? '');
+        $optA = dlhsEncodeHtmlForStorage($q['optionA'] ?? '');
+        $optB = dlhsEncodeHtmlForStorage($q['optionB'] ?? '');
+        $optC = dlhsEncodeHtmlForStorage($q['optionC'] ?? '');
+        $optD = dlhsEncodeHtmlForStorage($q['optionD'] ?? '');
+        $optE = dlhsEncodeHtmlForStorage($q['optionE'] ?? '');
+        $corr = strtoupper(trim((string) ($q['correctOption'] ?? 'A')));
+        $mark = trim((string) ($q['mark'] ?? '1'));
+
+        if ($stmt->execute()) {
+            $successCount++;
+        } else {
+            $failCount++;
+        }
+    }
+
+    $stmt->close();
+    $connection->commit();
+} catch (Exception $e) {
+    $connection->rollback();
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error saving questions: ' . $e->getMessage()
+    ]);
+    exit;
 }
 
 echo json_encode([
