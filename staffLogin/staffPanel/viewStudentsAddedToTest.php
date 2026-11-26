@@ -56,9 +56,9 @@ if (isset($_POST["selectedTestId"]))
 		}
 	}
 
-	// Getting the class name ONCE before the loop
+	// Getting the class name ONCE before the loop if filtering by a single class
 	$className = '';
-	if (!empty($classId)) {
+	if (!empty($classId) && $classId !== 'all') {
 		$getClassName = "SELECT className FROM classes WHERE classId='$classId' LIMIT 1";
 		$result4 = $connection->query($getClassName);
 		if ($result4 && $row4 = $result4->fetch_assoc()) {
@@ -83,13 +83,15 @@ if (isset($_POST["selectedTestId"]))
 		}
 	}
 
-	// Getting the records of students already added for this selected test WITH student biodata joined
-	$whereClass = !empty($classId) ? "WHERE e.studentClassId='$classId'" : "";
-	$getStudentsAlreadyAdded = "SELECT e.*, st.surname, st.firstName, st.middleName 
+	// Getting the records of students already added for this selected test WITH student biodata and arm joined
+	$whereClass = (!empty($classId) && $classId !== 'all') ? "WHERE e.studentClassId='$classId'" : "";
+	$getStudentsAlreadyAdded = "SELECT e.*, st.surname, st.firstName, st.middleName, COALESCE(c.className, c2.className, '') AS armName 
 	                            FROM `$tableNameOfToBeTested` e
 	                            LEFT JOIN studentlogin st ON e.examineeUserId = st.studentId
+	                            LEFT JOIN classes c ON e.studentClassId = c.classId
+	                            LEFT JOIN classes c2 ON st.classId = c2.classId
 	                            $whereClass
-	                            ORDER BY st.surname ASC, st.firstName ASC";
+	                            ORDER BY armName ASC, st.surname ASC, st.firstName ASC";
 	$result2 = $connection->query($getStudentsAlreadyAdded);
 	$questArrayCountCache = array();
 
@@ -145,21 +147,22 @@ if (isset($_POST["selectedTestId"]))
 			$surname    = $row2['surname'] ?? '';
 			$firstName  = $row2['firstName'] ?? '';
 			$middleName = $row2['middleName'] ?? '';
+			$studentArm = !empty($row2['armName']) ? $row2['armName'] : $className;
 			
 			$return_arr[] = array(
 				"testId"            => $testId,
-				"studentId"           => $studentId,
-				"surname"             => $surname,
-				"firstName"           => $firstName,
-				"middleName"          => $middleName,
-				"studentClass"        => $className,
-				"testDuration"        => $testDuration,
-				"remainingTime"       => $remainingTime,
-				"testStatus"          => $testStatus,
-				"testStatusText"      => $testStatusText,
-				"testAcademicYear"    => $academicYearName,
-				"questionsAnswered"   => $questionsAnswered,
-				"totalQuestions"      => $totalQuestions
+				"studentId"         => $studentId,
+				"surname"           => $surname,
+				"firstName"         => $firstName,
+				"middleName"        => $middleName,
+				"studentClass"      => $studentArm,
+				"testDuration"      => $testDuration,
+				"remainingTime"     => $remainingTime,
+				"testStatus"        => $testStatus,
+				"testStatusText"    => $testStatusText,
+				"testAcademicYear"  => $academicYearName,
+				"questionsAnswered" => $questionsAnswered,
+				"totalQuestions"    => $totalQuestions
 			);
 		}
 	}

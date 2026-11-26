@@ -35,12 +35,17 @@ session_start();
 		$result1 = $connection->query($getClass);
 		if ($result1 && ($result1->num_rows)>0)
 		{
+			$rows = array();
 			while($row1 = $result1->fetch_assoc())
 			{	
-				$classId = $row1['classId'];
-				$className = $row1['className'];
-				$return_arr[] = array("classId" => $classId,
-										"className" => $className);
+				$rows[] = array("classId" => $row1['classId'],
+								"className" => $row1['className']);
+			}
+			if (count($rows) > 1) {
+				$return_arr[] = array("classId" => "all", "className" => "★ ALL ASSIGNED ARMS (" . count($rows) . " arms)");
+			}
+			foreach ($rows as $r) {
+				$return_arr[] = $r;
 			}
 		}
 		echo json_encode($return_arr);

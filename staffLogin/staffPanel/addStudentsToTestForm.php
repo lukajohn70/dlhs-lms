@@ -60,63 +60,106 @@ session_start();
 				favorite1.push(checkboxes[i].value)
 			}
 			
-			favorite=favorite1.join(",")
+			var favorite = favorite1.join(",");
 			var testId = document.getElementById('test').value;
 			var testName2 = $("#test option:selected").text();
 			var studentClass = document.getElementById('studentClass').value;
 			var studentClassName = $("#studentClass option:selected").text();
             		
-			$('.message1').html('')
-			if (favorite=="")
+			if (favorite == "")
 			{
-				$('.message2').html('<i class="fa fa-info-circle"></i> Please check at least one student before submitting')
+				$('.message2').html('<i class="fa fa-info-circle"></i> Please check at least one student before submitting');
 			}
-			else if (testId=="")
+			else if (testId == "")
 			{
-				$('.message2').html('<i class="fa fa-info-circle"></i> Please select test')
+				$('.message2').html('<i class="fa fa-info-circle"></i> Please select test');
 			}
-			else if (studentClass=="")
+			else if (studentClass == "")
 			{
-				$('.message2').html('<i class="fa fa-info-circle"></i> Please select student\'s class')
+				$('.message2').html('<i class="fa fa-info-circle"></i> Please select student\'s class arm');
 			}
 			else
 			{
 				$('.message2').html('');
-								
-				//organize the data properly
-						var form_data = 
-						  'testId='+testId+
-						  '&checkedStudents='+favorite;
+				var enrollBtn = document.getElementById('submitSelected');
+				if (enrollBtn) {
+					enrollBtn.disabled = true;
+					enrollBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enrolling ' + favorite1.length + ' student(s)...';
+				}
 
-						$.ajax({
-							url: "addStudentsForTest.php",
-							type: "POST",     
-							data: form_data,    
-							success: function (html) {             
-																
-								if (html==0)	//If session is expired.
-								{                              
-									 window.location.replace("logout.php");
-								}
-								else if (html==1)	//If examinees successfully added to write test
-								{                              
-									$('.message2').html('');
-									var successMessage = '<i class="fa fa-check-circle"></i> The selected Student(s) from '+studentClassName+' has/have successfully been added to write '+testName2+'.';
-									if (setupFlowActive) {
-										successMessage += ' <a href="addQuestionForm.php?testId='+testId+'" class="btn btn-xs btn-primary" style="margin-left:10px;">Proceed to add questions</a>';
-									}
-									$('.message1').html(successMessage).fadeIn('slow');
-									viewAdded1(testId, studentClass)
-								}
-								else 	//If insertion is unsuccessful	
-								{                              
-									 $('.message1').html('');
-									 $('.message2').html('Could not add selected Student(s). Please try again.').fadeIn('slow');
-								}
-							}
-										
-						});
+				var form_data = 
+				  'testId='+encodeURIComponent(testId)+
+				  '&checkedStudents='+encodeURIComponent(favorite);
+
+				$.ajax({
+					url: "addStudentsForTest.php",
+					type: "POST",     
+					data: form_data,    
+					success: function (html) {             
+						if (html == 0)
+						{                              
+							 window.location.replace("logout.php");
+						}
+						else if (html == 1)
+						{                              
+							var enrolledCount = favorite1.length;
+							var proceedUrl = 'addQuestionForm.php?testId=' + encodeURIComponent(testId);
+							
+							var successCard = '<div class="alert alert-success" style="border-left: 5px solid #28a745; padding: 18px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px;">' +
+								'<h4 style="margin-top:0; color:#155724; font-weight:700;"><i class="fa fa-check-circle"></i> Enrolled Successfully!</h4>' +
+								'<p style="font-size:14px; margin-bottom:15px; color:#1e392a; line-height:1.5;">' +
+								'<strong>' + enrolledCount + ' student(s)</strong> from <strong>' + studentClassName + '</strong> have been enrolled for <strong>' + testName2 + '</strong>.' +
+								'</p>' +
+								'<div style="display:flex; flex-direction:column; gap:10px;">' +
+								'  <a href="' + proceedUrl + '" class="btn-proceed-prominent" style="justify-content:center; text-align:center;">' +
+								'    <i class="fa fa-question-circle"></i> PROCEED TO ADD QUESTIONS &nbsp;<i class="fa fa-arrow-right"></i>' +
+								'  </a>' +
+								'  <button type="button" class="btn btn-default" onclick="selectNextArm()" style="font-weight:600; font-size:14px; padding:10px; border:1px solid #ced4da; background:#fff; color:#333;">' +
+								'    <i class="fa fa-plus-circle"></i> Enroll Another Arm / Class' +
+								'  </button>' +
+								'</div>' +
+								'</div>';
+								
+							$('#result').html(successCard);
+							$('.message1').html('');
+							
+							// Reset studentClass select cleanly
+							$('#studentClass').val('').trigger('change.select2');
+							
+							// Refresh table to show ALL enrolled students across all arms
+							viewAdded1(testId, '');
+						}
+						else
+						{                              
+							 $('.message1').html('');
+							 $('.message2').html('Could not add selected Student(s). Please try again.').fadeIn('slow');
+							 if (enrollBtn) {
+								enrollBtn.disabled = false;
+								enrollBtn.innerHTML = '<i class="fa fa-user-plus"></i> Enroll Selected Students (' + favorite1.length + ')';
+							 }
+						}
+					},
+					error: function() {
+						$('.message2').html('Network error occurred while enrolling students. Please try again.');
+						if (enrollBtn) {
+							enrollBtn.disabled = false;
+							enrollBtn.innerHTML = '<i class="fa fa-user-plus"></i> Enroll Selected Students (' + favorite1.length + ')';
+						}
+					}
+				});
 			}
+		}
+
+		function selectNextArm() {
+			$('#result').html('');
+			$('.message1').html('');
+			$('.message2').html('');
+			$('#studentClass').val('').trigger('change.select2');
+			setTimeout(function() {
+				try {
+					$('#studentClass').select2('open');
+				} catch(e) {}
+			}, 100);
 		}
 		
 		function onlyNumberKey(evt) {
@@ -133,6 +176,34 @@ session_start();
 			overflow-x:hidden;
 			overflow-y:auto;
 			height:900px;
+		}
+		@keyframes pulse-proceed {
+			0% { transform: scale(1); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
+			50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(40, 167, 69, 0.65); }
+			100% { transform: scale(1); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
+		}
+		.btn-proceed-prominent {
+			background: #28a745 !important;
+			color: #ffffff !important;
+			font-size: 16px !important;
+			font-weight: 800 !important;
+			padding: 12px 24px !important;
+			border-radius: 6px !important;
+			border: 2px solid #34d058 !important;
+			text-transform: uppercase !important;
+			letter-spacing: 0.8px !important;
+			display: inline-flex !important;
+			align-items: center !important;
+			gap: 10px !important;
+			text-decoration: none !important;
+			transition: all 0.2s ease-in-out !important;
+			animation: pulse-proceed 2.5s infinite;
+		}
+		.btn-proceed-prominent:hover, .btn-proceed-prominent:focus {
+			background: #218838 !important;
+			color: #ffffff !important;
+			transform: scale(1.04) !important;
+			text-decoration: none !important;
 		}
 		/* Standard modal styles (match other pages) */
 		.modal1 {
@@ -196,6 +267,29 @@ session_start();
 				</div>
 			</div>
               
+			<!-- Prominent Test Workflow Banner -->
+			<div id="workflowHeaderCard" class="panel" style="background: linear-gradient(135deg, #1b355a 0%, #254a80 100%); color: #fff; border-radius: 8px; margin-bottom: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); padding: 18px 24px; border: none; <?php echo ($setupTestId > 0) ? '' : 'display:none;'; ?>">
+				<div class="row" style="align-items: center; display: flex; flex-wrap: wrap;">
+					<div class="col-md-7 col-sm-12" style="margin-bottom: 10px;">
+						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.85; font-weight: 600; color: #a8d5ff;">
+							<i class="fa fa-tasks"></i> Test Setup Workflow &bull; Step 2 of 3
+						</div>
+						<h3 id="bannerTestName" style="margin: 6px 0 8px 0; font-weight: 700; color: #ffffff; font-size: 22px;">
+							Manage Test Access
+						</h3>
+						<div id="bannerStats" style="font-size: 14px; opacity: 0.95;">
+							<span id="bannerEnrolledCount" class="badge" style="background: #28a745; font-size: 13px; padding: 6px 12px; margin-right: 10px; font-weight: 600;">0 Students Enrolled</span>
+							<span id="bannerHelpText" style="color: #e0e8f5;">Enroll class arms on the left, then proceed to enter test questions.</span>
+						</div>
+					</div>
+					<div class="col-md-5 col-sm-12 text-right" style="margin-bottom: 10px;">
+						<a id="btnTopProceed" href="addQuestionForm.php<?php echo $setupTestId > 0 ? '?testId='.$setupTestId : ''; ?>" class="btn-proceed-prominent">
+							<span>PROCEED TO ADD QUESTIONS</span>
+							<i class="fa fa-arrow-circle-right" style="font-size: 20px;"></i>
+						</a>
+					</div>
+				</div>
+			</div>
               
 				<div class="row">
 					<div class="col-lg-4">
@@ -211,12 +305,8 @@ session_start();
 									</div>
 									<?php } ?>
 									<div class="form-group">
-										<label class="control-label col-sm-12"><strong>View All students added to a test or add new students to a test</strong></label>
-									</div>
-									<div class="form-group">
 										<label class="control-label col-sm-12"><strong>Select Test to Assign Student(s) to:</strong></label>
 										<div class="col-sm-12">
-											<!-- Search box removed per request -->
 											<!-- Test Dropdown -->
 											<select class="form-control" name="test" id="test" required style="height: 38px;">
 												<option value="">... Select Test ...</option>
@@ -237,10 +327,10 @@ session_start();
 										</div>
 									</div>
 									<div class="form-group">
-										<label class="control-label col-sm-12"><strong>Select Class of Student(s) to add:</strong></label>
+										<label class="control-label col-sm-12"><strong>Select Class Arm to add:</strong></label>
 										<div class="col-sm-12">
-											<select class="form-control" name="studentClass" id="studentClass" required style="color:#000000;" data-placeholder="... Select class ...">
-												<option value="">... Select class ...</option>
+											<select class="form-control" name="studentClass" id="studentClass" required style="color:#000000;" data-placeholder="... Select class arm ...">
+												<option value="">... Select class arm ...</option>
 											</select>
 										</div>
 										<br>
@@ -254,15 +344,23 @@ session_start();
 					</div>
 					<div class="col-lg-8">
 						<section class="panel">
-							<header class="panel-heading">
-								View Students added to a test on the table below &nbsp; &nbsp; &nbsp;<b>Note: You cannot add time here to students of a test that has not started</b>						
+							<header class="panel-heading" style="display:flex; justify-content:space-between; align-items:center;">
+								<span><i class="fa fa-list"></i> Enrolled Students for Test &nbsp; <span id="tableEnrolledBadge" class="badge" style="background:#28a745;">0 Enrolled</span></span>
+								<small style="color:#777; font-weight:normal; font-size:11px;">Note: Time adjustments apply only to active tests</small>						
 							</header>
 							<div class="panel-body">
 								<div class='message3' style='color:green; font-size:17px;' align='center'></div>
 								<div class="table-responsive">
-								<div style="margin-bottom:10px;">
-									<button type="button" class="btn btn-danger" onclick="openDeleteSelectedStudentsModal()"><i class="fa fa-trash"></i> Delete selected students</button>
-									<button type="button" class="btn btn-danger" onclick="openRemoveAllStudentsModal()" style="margin-left:8px;"><i class="fa fa-user-times"></i> Remove all students from this test</button>
+								<div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+									<div>
+										<button type="button" class="btn btn-sm btn-danger" onclick="openDeleteSelectedStudentsModal()"><i class="fa fa-trash"></i> Delete selected</button>
+										<button type="button" class="btn btn-sm btn-danger" onclick="openRemoveAllStudentsModal()" style="margin-left:6px;"><i class="fa fa-user-times"></i> Remove all</button>
+									</div>
+									<div>
+										<a id="btnTableProceed" href="addQuestionForm.php<?php echo $setupTestId > 0 ? '?testId='.$setupTestId : ''; ?>" class="btn-proceed-prominent" style="font-size:13px !important; padding:8px 18px !important; <?php echo $setupTestId > 0 ? '' : 'display:none !important;'; ?>">
+											PROCEED TO ADD QUESTIONS &nbsp;<i class="fa fa-arrow-right"></i>
+										</a>
+									</div>
 								</div>
 									<table id="example" class="table table-striped table-bordered bulk_action" style="width:100%" width="100%">
 										<thead>
@@ -403,78 +501,98 @@ session_start();
 	</script>
 	<script>
 		$("#test").on('change', function() {
-			// Clear class dropdown and update Select2
-			$('#studentClass').html('<option value="">...Select class...</option>').trigger('change.select2');
+			var selectedTestId = $("#test option:selected").val();
+			var selectedTestName = $("#test option:selected").text();
+
+			// Clear class dropdown and reset student selection card
+			$('#studentClass').html('<option value="">... Select class arm ...</option>').trigger('change.select2');
 			$('.message1').html('');
 			$('.message2').html('');
 			$('#result').html('');
-			if ($.fn.DataTable.isDataTable('#example')) {
-				$('#example').DataTable().clear().destroy();
-			}
-			$('#example tbody').empty();
 			$("#theTimeEdit").hide();
 
-			var selectedTestId = $("#test option:selected").val();
-			if(selectedTestId == "")
+			if (!selectedTestId || selectedTestId === "")
 			{
+				$('#workflowHeaderCard').slideUp();
+				$('#btnTableProceed').hide();
+				if ($.fn.DataTable.isDataTable('#example')) {
+					$('#example').DataTable().clear().destroy();
+				}
+				$('#example tbody').empty();
 				return;
 			}
-			else
-			{
-				$.ajax({
-					url: "yearGroupClass.php",
-					type: "POST",
-					data: { selectedTestId : selectedTestId},
-					dataType : 'JSON',
-					success: function(response){
-						var len = response ? response.length : 0;
-						if(len > 0)
-						{
-							var classOpts = '<option value="">...Select class...</option>';
-							for(var i=0; i<len; i++){
-								var classId = response[i].classId;
-								var className = response[i].className;
-								classOpts += '<option value="'+classId+'">'+className+'</option>';
-							}
-							$('#studentClass').html(classOpts).trigger('change.select2');
+
+			// Update workflow header card and proceed buttons
+			$('#bannerTestName').text(selectedTestName);
+			var proceedUrl = 'addQuestionForm.php?testId=' + encodeURIComponent(selectedTestId);
+			$('#btnTopProceed').attr('href', proceedUrl);
+			$('#btnTableProceed').attr('href', proceedUrl).show();
+			$('#workflowHeaderCard').slideDown();
+
+			// Immediately load all students enrolled in this test across all arms
+			viewAdded1(selectedTestId, '');
+
+			// Fetch assigned class arms
+			$.ajax({
+				url: "yearGroupClass.php",
+				type: "POST",
+				data: { selectedTestId : selectedTestId },
+				dataType : 'JSON',
+				success: function(response){
+					var len = response ? response.length : 0;
+					if(len > 0)
+					{
+						var classOpts = '<option value="">... Select class arm ...</option>';
+						for(var i=0; i<len; i++){
+							var classId = response[i].classId;
+							var className = response[i].className;
+							classOpts += '<option value="'+classId+'">'+className+'</option>';
 						}
-						else
-						{
-							$('#studentClass').html('<option value="">...Select class...</option>').trigger('change.select2');
-							$('.message2').html('<i class="fa fa-info-circle"></i> No class(es) in selected year group');
-						}
+						$('#studentClass').html(classOpts).trigger('change.select2');
 					}
-				});
-			}
+					else
+					{
+						$('#studentClass').html('<option value="">... Select class arm ...</option>').trigger('change.select2');
+						$('.message2').html('<i class="fa fa-info-circle"></i> No assigned class(es) found for this test in your profile');
+					}
+				}
+			});
 		});
 		
-		//Fetching students of a class based on class change
+		// Fetching students of a class based on class change
 		$('#studentClass').on('change', function(){
 			$('.message1').html('');
 			$('.message2').html('');
 			
 			var selectedTestId = $("#test option:selected").val();
 			var selectedClassId = $("#studentClass option:selected").val();
-			var theClassName=$("#studentClass option:selected").text();
+			var theClassName = $("#studentClass option:selected").text();
+
+			// If empty/placeholder selected, just clear #result without showing an error
+			if (!selectedTestId || !selectedClassId || selectedClassId === "") {
+				$('#result').html('');
+				return;
+			}
 			
+			$('#result').html('<div style="padding:15px; text-align:center; color:#666;"><i class="fa fa-spinner fa-spin"></i> Loading students in ' + theClassName + '...</div>');
+
 			$.ajax({
 				url: "fetchStudents.php",
 				type: "POST",
-				data: { selectedTestId : selectedTestId, selectedClassId : selectedClassId},
+				data: { selectedTestId : selectedTestId, selectedClassId : selectedClassId },
 				dataType : 'json',
 				success: function(response){
-					
-					var len = response.length;
+					var len = response ? response.length : 0;
 					if(len > 0)
 					{
-						var html = '<div class="student-select-card" style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
-						html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
-						html += '  <strong style="color:#2c3e50;">Students in ' + theClassName + '</strong>';
-						html += '  <span id="selectedCountBadge" class="label label-info" style="font-size:12px;">0 / ' + len + ' selected</span>';
+						var html = '<div class="student-select-card" style="background:#fff; border:1px solid #dcdfe6; border-radius:8px; padding:14px; margin-bottom:15px; box-shadow:0 2px 6px rgba(0,0,0,0.06);">';
+						html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">';
+						html += '  <strong style="color:#2c3e50; font-size:14px;"><i class="fa fa-users"></i> ' + theClassName + '</strong>';
+						html += '  <span id="selectedCountBadge" class="label label-info" style="font-size:12px; padding:4px 8px;">0 / ' + len + ' selected</span>';
 						html += '</div>';
-						html += '<div style="font-size:11px; color:#7f8c8d; margin-bottom:10px;">Select all for whole-class exams, or pick specific students for elective subjects.</div>';
+						html += '<div style="font-size:11px; color:#7f8c8d; margin-bottom:10px;">Select all for whole-class exams, or check specific students for elective subjects.</div>';
 						html += '<div style="margin-bottom:10px; display:flex; gap:8px;">';
-						html += '  <button type="button" class="btn btn-xs btn-primary" onclick="selectAllStudents(true)"><i class="fa fa-check-square-o"></i> Select All (Whole Class)</button>';
+						html += '  <button type="button" class="btn btn-xs btn-primary" onclick="selectAllStudents(true)" style="font-weight:600;"><i class="fa fa-check-square-o"></i> Select All (' + len + ')</button>';
 						html += '  <button type="button" class="btn btn-xs btn-default" onclick="selectAllStudents(false)" style="margin-left:6px;"><i class="fa fa-square-o"></i> Clear</button>';
 						html += '</div>';
 						html += '<div style="max-height:280px; overflow-y:auto; border:1px solid #e8ecf1; border-radius:6px; padding:6px; background:#fafbfc;">';
@@ -483,25 +601,29 @@ session_start();
 							var surname = response[i].surname;
 							var firstName = response[i].firstName;
 							var middleName = response[i].middleName;
+							var armBadge = response[i].className ? ' <span class="label label-default" style="font-size:10px; margin-left:4px;">' + response[i].className + '</span>' : '';
 							html += '<label style="display:block; padding:5px 8px; margin-bottom:3px; font-weight:normal; cursor:pointer; border-radius:4px; background:#fff; border:1px solid #f0f2f5;" onmouseover="this.style.background=\'#e8f8f5\'" onmouseout="this.style.background=\'#fff\'">';
 							html += '<input type="checkbox" name="rowSelectCheckBox[]" value="'+studentId+'" onchange="updateSelectedCount()" style="margin-right:8px; vertical-align:middle;" /> ';
-							html += '<span style="color:#95a5a6; font-size:11px; width:22px; display:inline-block;">'+(i+1)+'.</span> ';
-							html += '<strong>'+surname+'</strong> ' + firstName + ' ' + middleName;
+							html += '<span style="color:#95a5a6; font-size:11px; width:24px; display:inline-block;">'+(i+1)+'.</span> ';
+							html += '<strong>'+surname+'</strong> ' + firstName + ' ' + middleName + armBadge;
 							html += '</label>';
 						}
 						html += '</div>';
 						html += '<div style="margin-top:12px;">';
-						html += '<button type="button" id="submitSelected" onClick="getChecked()" class="btn btn-success btn-block" style="font-weight:600;"><i class="fa fa-user-plus"></i> Enroll Selected Students (0)</button>';
+						html += '<button type="button" id="submitSelected" onClick="getChecked()" class="btn btn-success btn-block" style="font-weight:700; font-size:14px; padding:10px;"><i class="fa fa-user-plus"></i> Enroll Selected Students (0)</button>';
 						html += '</div>';
 						html += '</div>';
 						$('#result').html(html);
-						viewAdded();
 					}
 					else
 					{
 						$('#result').html('');
-						$('.message2').html('<i class="fa fa-info-circle"></i> No students in selected class');
+						$('.message2').html('<i class="fa fa-info-circle"></i> No students found in selected class arm');
 					}
+				},
+				error: function() {
+					$('#result').html('');
+					$('.message2').html('<i class="fa fa-exclamation-triangle"></i> Failed to load students. Please try again.');
 				}
 			});
 		});
@@ -553,109 +675,25 @@ session_start();
 				data:{ testId: testId },
 				success:function(html){
 					if(html==0){ window.location.replace('logout.php'); }
-					else if(html==1){ document.getElementById('removeAllStudentsMsg').innerHTML = '<i class="fa fa-check"></i> All students removed from this test.'; setTimeout(function(){ closeRemoveAllStudentsModal(); $("#studentClass").trigger('change'); }, 1200); }
-					else { document.getElementById('removeAllStudentsMsg').innerHTML = 'Could not remove students. Please try again.'; document.getElementById('btnConfirmRemoveAllStudents').disabled = false; }
+					else if(html==1){ 
+						document.getElementById('removeAllStudentsMsg').innerHTML = '<i class="fa fa-check"></i> All students removed from this test.'; 
+						setTimeout(function(){ 
+							closeRemoveAllStudentsModal(); 
+							viewAdded1(testId, ''); 
+						}, 1000); 
+					}
+					else { 
+						document.getElementById('removeAllStudentsMsg').innerHTML = 'Could not remove students. Please try again.'; 
+						document.getElementById('btnConfirmRemoveAllStudents').disabled = false; 
+					}
 				}
 			});
 		}
 		
-		//View students added to a test
-		function viewAdded()
+		// View students added to a test (delegates to unified viewAdded1)
+		function viewAdded(selectedTestId, selectedClassId)
 		{
-			$('.message2').html('');
-			$('.message6').html('');
-			$("#theTimeEdit").hide();
-			
-			if ($.fn.DataTable.isDataTable('#example')) {
-				$('#example').DataTable().clear().destroy();
-			}
-			$('#example tbody').empty();
-			
-			var selectedTestId = $("#test option:selected").val();
-			var selectedClassId = $("#studentClass option:selected").val();
-			
-			if(selectedTestId == "")
-			{
-				$('.message2').html('<i class="fa fa-info-circle"></i> Please select a test first to view added students');
-			}
-			else if(selectedClassId == "")
-			{
-				$('.message2').html('<i class="fa fa-info-circle"></i> Please select class first to view added students');
-			}
-			else
-			{
-				$.ajax({
-						url: 'viewStudentsAddedToTest.php',
-						type: 'POST',
-						data: { selectedTestId : selectedTestId, selectedClassId : selectedClassId},
-						dataType: 'JSON',
-						success: function(response)
-						{
-							if ($.fn.DataTable.isDataTable('#example')) {
-								$('#example').DataTable().clear().destroy();
-							}
-							$('#example tbody').empty();
-
-							var len = response ? response.length : 0;
-		
-							for(var i=0; i<len; i++){
-								var testId = response[i].testId;
-								var studentId = response[i].studentId;
-								var surname = response[i].surname;
-								var firstName = response[i].firstName;
-								var middleName = response[i].middleName;						
-								var studentClass = response[i].studentClass;						
-								var testDuration = response[i].testDuration;						
-								var remainingTime = response[i].remainingTime;						
-								var testStatus = response[i].testStatus;										
-								var testStatusText = response[i].testStatusText;										
-								var testAcademicYear = response[i].testAcademicYear;
-								var questionsAnswered = response[i].questionsAnswered;
-								var totalQuestions = response[i].totalQuestions;										
-								
-								var tr_str = "<tr>" +
-									"<td width='3%'><center>" + (i+1) + "</center></td>" +
-									"<td width='32%'>"+surname+' '+firstName+' '+middleName+"</td>" +
-									"<td width='15%'><center>" + studentClass + " ("+testAcademicYear+")</center></td>" +
-									"<td width='10%'><center>" + testDuration + " minutes</center></td>" +
-									"<td width='10%'><center>" + remainingTime + " minutes</center></td>" +
-									"<td width='10%'><center>" + testStatusText + "</center></td>" +
-									"<td width='15%'><center><input type='checkbox' "+callTestStatus(testStatus)+" name='rowSelectCheckBox2[]' id='rowSelectCheckBox2' value='"+studentId+"' /></center></td>" +
-									"<td align='center' width='5%'>" +
-										"<a onClick='deleteStudentFromTest(\""+testId+"\",\""+studentId+"\",\""+selectedClassId+"\")' title='Delete this student from test' style='cursor:pointer; margin-right:5px;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a>" +
-										(((testStatus == 2 || (testStatus == 1 && remainingTime <= 0)) && questionsAnswered < totalQuestions) ? "<a onClick='openRetakeModal(\""+testId+"\",\""+studentId+"\",\""+selectedClassId+"\",\""+surname+" "+firstName+" "+middleName+"\")' title='Allow student to retake test (did not answer all questions)' style='cursor:pointer;'><i class='fa fa-refresh' aria-hidden='true' style='color:green;'></i></a>" : "") +
-									"</td>" +
-									
-									"</tr>";
-
-								$("#example tbody").append(tr_str);
-							}
-							if(len > 0)
-							{
-								$("#theTimeEdit").show();
-							}
-							else
-							{
-								$("#theTimeEdit").hide();
-							}
-							$('#example').DataTable( {
-							"paging":   true,
-							"ordering": true,
-							"info":     true,
-							"responsive": true,
-							dom: 'lBfrtip',
-							buttons: [
-								'copy', 'csv', 'excel', 'pdf', 'print'
-							],
-							"responsive": true
-							});
-							
-							//Assigning testId to hidden field to be stored to enable time to be added to students of the test when test has started
-							document.getElementById("testIdToAddStudentsTime").value = selectedTestId;
-							document.getElementById("classIdToModifyTime").value = selectedClassId;
-						}
-				});
-			}
+			viewAdded1(selectedTestId, selectedClassId);
 		}
 		//calling the data table function
 		
@@ -773,7 +811,10 @@ session_start();
 						var msg = '<i class="fa fa-check"></i> Selected students deleted.';
 						msg += ' <span style="color:#888; font-size:13px;">(Essay records deleted: ' + resp.deletedEssays + ')</span>';
 						document.getElementById('deleteSelectedStudentsMsg').innerHTML = msg;
-						setTimeout(function(){ closeDeleteSelectedStudentsModal(); $("#studentClass").trigger('change'); }, 1200);
+						setTimeout(function(){ 
+							closeDeleteSelectedStudentsModal(); 
+							viewAdded1(testId, ''); 
+						}, 1000);
 					}
 					else {
 						var msg = 'Could not delete selected students. Please try again.';
@@ -786,13 +827,13 @@ session_start();
 		}
 		
 		//function to delete a student from a test
-		function deleteStudentFromTest(testId, studentId, selectedClassId)
+		function deleteStudentFromTest(testId, studentId)
 		{	
 			$('.message1').html('');
 			$('.message3').html('');
 			$('.message4').html('');
 
-			var confirmIt = confirm("Are you sure you wish to delete this student from the selected test? \n Please note that all previous attempts of this test by this students would also be deleted.");
+			var confirmIt = confirm("Are you sure you wish to delete this student from the selected test? \n Please note that all previous attempts of this test by this student would also be deleted.");
 			if(confirmIt == true)
 			{	
 				$.ajax({
@@ -807,8 +848,7 @@ session_start();
 						else if (html==1)	
 						{                              
 							 $('.message3').html('<i class="fa fa-check"></i> Student successfully deleted from selected test.').fadeIn('slow');
-							 $('#example').DataTable().clear().destroy();
-							 viewAdded1(testId, selectedClassId);
+							 viewAdded1(testId, '');
 						}
 						else if (html==2)	//If deletion is unsuccessful	
 						{                              
@@ -821,9 +861,19 @@ session_start();
 		}
 		
 		
-		//View students added to a test called after a delete of a student from a test
+		//View students added to a test
 		function viewAdded1(selectedTestId, selectedClassId)
 		{
+			if (!selectedTestId) {
+				selectedTestId = $("#test option:selected").val();
+			}
+			if (!selectedTestId || selectedTestId === "") {
+				return;
+			}
+			if (typeof selectedClassId === 'undefined' || selectedClassId === null) {
+				selectedClassId = '';
+			}
+
 			if ($.fn.DataTable.isDataTable('#example')) {
 				$('#example').DataTable().clear().destroy();
 			}
@@ -842,6 +892,11 @@ session_start();
 					$('#example tbody').empty();
 
 					var len = response ? response.length : 0;
+					
+					// Update badge counts in banner and table header
+					$('#bannerEnrolledCount').text(len + ' Student' + (len === 1 ? '' : 's') + ' Enrolled');
+					$('#tableEnrolledBadge').text(len + ' Enrolled');
+
 					for(var i=0; i<len; i++){
 						var testId = response[i].testId;
 						var studentId = response[i].studentId;
@@ -859,14 +914,14 @@ session_start();
 						
 						var tr_str = "<tr>" +
 							"<td width='3%'><center>" + (i+1) + "</center></td>" +
-							"<td width='32%'>"+surname+' '+firstName+' '+middleName+"</td>" +
-							"<td width='15%'><center>" + studentClass + " ("+testAcademicYear+")</center></td>" +
-							"<td width='10%'><center>" + testDuration + " minutes</center></td>" +
-							"<td width='10%'><center>" + remainingTime + " minutes</center></td>" +
+							"<td width='32%'><strong>" + surname + "</strong> " + firstName + " " + middleName + "</td>" +
+							"<td width='15%'><center><span class='label label-info' style='font-size:11px;'>" + studentClass + "</span> (" + testAcademicYear + ")</center></td>" +
+							"<td width='10%'><center>" + testDuration + " mins</center></td>" +
+							"<td width='10%'><center>" + remainingTime + " mins</center></td>" +
 							"<td width='10%'><center>" + testStatusText + "</center></td>" +
 							"<td width='15%'><center><input type='checkbox' name='rowSelectCheckBox2[]' "+callTestStatus(testStatus)+" id='rowSelectCheckBox2' value='"+studentId+"' /></center></td>" +
 							"<td align='center' width='5%'>" +
-								"<a onClick='deleteStudentFromTest(\""+testId+"\",\""+studentId+"\",\""+selectedClassId+"\")' title='Delete this student from test' style='cursor:pointer; margin-right:5px;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a>" +
+								"<a onClick='deleteStudentFromTest(\""+testId+"\",\""+studentId+"\")' title='Delete this student from test' style='cursor:pointer; margin-right:5px;'><i class='fa fa-trash' aria-hidden='true' style='color:red;'></i></a>" +
 								(((testStatus == 2 || (testStatus == 1 && remainingTime <= 0)) && questionsAnswered < totalQuestions) ? "<a onClick='openRetakeModal(\""+testId+"\",\""+studentId+"\",\""+selectedClassId+"\",\""+surname+" "+firstName+" "+middleName+"\")' title='Allow student to retake test (did not answer all questions)' style='cursor:pointer;'><i class='fa fa-refresh' aria-hidden='true' style='color:green;'></i></a>" : "") +
 							"</td>" +
 							
@@ -1070,8 +1125,8 @@ session_start();
 						document.getElementById('retakeTestMsg').innerHTML = message;
 						setTimeout(function() {
 							closeRetakeModal();
-							$("#studentClass").trigger('change');
-						}, 2000);
+							viewAdded1(retakeTestId, '');
+						}, 1500);
 					} else {
 						document.getElementById('retakeTestMsg').innerHTML = 'Could not reset test. Please try again.';
 						document.getElementById('btnConfirmRetakeTest').disabled = false;
