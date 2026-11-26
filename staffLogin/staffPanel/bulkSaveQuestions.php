@@ -10,7 +10,10 @@ if ((time() - $_SESSION['staffLast_login']) > $allottedTime) {
     exit;
 }
 
-if (!isset($_POST['testId']) || !isset($_POST['questions']) || !isset($_SESSION['staffId'])) {
+$isAdmin = isset($_SESSION['adminLoggedIn']);
+$staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+
+if (!isset($_POST['testId']) || !isset($_POST['questions']) || (!$isAdmin && $staffId === 0)) {
     echo json_encode(['success' => false, 'message' => 'Invalid request']);
     exit;
 }
@@ -19,7 +22,6 @@ include "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/test_workflow_helper.php";
 require_once "../../scripts/question_authoring_helper.php";
 
-$staffId = (int) $_SESSION['staffId'];
 $testId = (int) $_POST['testId'];
 $questions = json_decode($_POST['questions'], true);
 
@@ -29,7 +31,7 @@ if (!is_array($questions)) {
 }
 
 $testRow = dlhsFetchTestRowById($connection, $testId);
-if (!$testRow || (int) $testRow['staffId'] !== $staffId) {
+if (!$testRow || (!$isAdmin && (int) $testRow['staffId'] !== $staffId)) {
     echo json_encode(['success' => false, 'message' => 'Test not found or unauthorized']);
     exit;
 }

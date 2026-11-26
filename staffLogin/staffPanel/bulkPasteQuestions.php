@@ -11,32 +11,36 @@ include "../../db_connection/dlhs_db_connection.php";
 require_once "../../scripts/test_workflow_helper.php";
 
 $staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+$isAdmin = isset($_SESSION['adminLoggedIn']);
 $preselectedTestId = isset($_GET['testId']) ? (int) $_GET['testId'] : 0;
 $questionTestOptions = array();
 
-if ($staffId > 0) {
+if ($staffId > 0 && !$isAdmin) {
     $testsResult = $connection->query("SELECT * FROM tests WHERE staffId='{$staffId}' ORDER BY testName ASC");
-    if ($testsResult) {
-        while ($testRow = $testsResult->fetch_assoc()) {
-            $setupSummary = dlhsBuildTestSetupSummary($connection, $testRow);
-            $testType = dlhsNormalizeTestType(isset($testRow['testType']) ? $testRow['testType'] : '');
-            $optionLabel = $testRow['testName'];
-            if ($testType !== '') {
-                $optionLabel .= " ({$testType})";
-            }
-            if (!$setupSummary['studentsAdded']) {
-                $optionLabel .= " - add students first";
-            }
+} else {
+    $testsResult = $connection->query("SELECT * FROM tests ORDER BY testName ASC");
+}
 
-            $questionTestOptions[] = array(
-                'testId' => (int) $testRow['testId'],
-                'label' => $optionLabel,
-                'studentsAdded' => $setupSummary['studentsAdded'],
-                'setupStatus' => $setupSummary['setupStatus'],
-                'setupMessage' => $setupSummary['setupMessage'],
-                'tableName' => isset($testRow['tableName']) ? $testRow['tableName'] : ''
-            );
+if ($testsResult) {
+    while ($testRow = $testsResult->fetch_assoc()) {
+        $setupSummary = dlhsBuildTestSetupSummary($connection, $testRow);
+        $testType = dlhsNormalizeTestType(isset($testRow['testType']) ? $testRow['testType'] : '');
+        $optionLabel = $testRow['testName'];
+        if ($testType !== '') {
+            $optionLabel .= " ({$testType})";
         }
+        if (!$setupSummary['studentsAdded']) {
+            $optionLabel .= " - add students first";
+        }
+
+        $questionTestOptions[] = array(
+            'testId' => (int) $testRow['testId'],
+            'label' => $optionLabel,
+            'studentsAdded' => $setupSummary['studentsAdded'],
+            'setupStatus' => $setupSummary['setupStatus'],
+            'setupMessage' => $setupSummary['setupMessage'],
+            'tableName' => isset($testRow['tableName']) ? $testRow['tableName'] : ''
+        );
     }
 }
 ?>
@@ -235,6 +239,7 @@ if ($staffId > 0) {
                         <button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('subscript')" title="Subscript (x₂)">x₂</button>
                         <button type="button" class="btn btn-default btn-xs" onclick="formatBulkEditor('removeFormat')" title="Clear formatting"><i class="fa fa-eraser"></i> Clear Styles</button>
                         <button type="button" class="btn btn-default btn-xs" onclick="$('#csvImportFileInput').click()" style="color:#28a745; font-weight:600;" title="Import CSV File"><i class="fa fa-file-excel-o"></i> Import CSV</button>
+                        <a href="downloadQuestionTemplate.php" class="btn btn-default btn-xs" style="color:#0275d8; font-weight:600;" title="Download CSV Template"><i class="fa fa-download"></i> Template</a>
                         <input type="file" id="csvImportFileInput" accept=".csv" style="display:none;" onchange="handleCsvFileSelected(event)">
                         <button type="button" class="btn btn-default btn-xs" onclick="clearBulkPasteEditor()" style="color:#d9534f; margin-left:auto;" title="Clear paste editor"><i class="fa fa-trash"></i> Clear All</button>
                     </div>
@@ -615,7 +620,22 @@ if ($staffId > 0) {
             event.target.value = '';
         }
 
+        function detectDelimiter(text) {
+            var firstLine = text.split(/\r\n|\r|\n/)[0] || '';
+            var commas = (firstLine.match(/,/g) || []).length;
+            var semis = (firstLine.match(/;/g) || []).length;
+            var tabs = (firstLine.match(/\t/g) || []).length;
+            if (semis > commas && semis > tabs) return ';';
+            if (tabs > commas && tabs > semis) return '\t';
+            return ',';
+        }
+
         function parseCSV(text) {
+            if (!text) return [];
+            // Strip UTF-8 BOM if present
+            text = text.replace(/^\uFEFF/, '');
+            var delimiter = detectDelimiter(text);
+
             let lines = [];
             let row = [""];
             let inQuotes = false;
@@ -629,7 +649,7 @@ if ($staffId > 0) {
                     } else {
                         inQuotes = !inQuotes;
                     }
-                } else if (c === ',' && !inQuotes) {
+                } else if (c === delimiter && !inQuotes) {
                     row.push("");
                 } else if ((c === '\r' || c === '\n') && !inQuotes) {
                     if (c === '\r' && next === '\n') { i++; }
@@ -639,17 +659,15 @@ if ($staffId > 0) {
                     row[row.length - 1] += c;
                 }
             }
-            if (row.length > 1 || row[0] !== "") {
+            if (row.length > 1 || (row.length === 1 && row[0] !== "")) {
                 lines.push(row);
             }
             return lines;
         }
 
         function processCSVContent(text) {
-            var testId = $('#bulkTestSelect').val();
-            if (!testId) {
-                alert("Please select a target test first from the dropdown at the top.");
-                $('#bulkTestSelect').focus();
+            if (!text || !text.trim()) {
+                alert("The CSV file is empty.");
                 return;
             }
 
@@ -659,57 +677,150 @@ if ($staffId > 0) {
                 return;
             }
 
-            var header = rows[0];
-            var expectedHeaders = ['questionserialno', 'question', 'optiona', 'optionb', 'optionc', 'optiond', 'correctoption', 'markforquestion'];
-            var headerValid = true;
-            if (header.length < 8) {
-                headerValid = false;
-            } else {
-                for (var i = 0; i < 8; i++) {
-                    var h = (header[i] || '').trim().toLowerCase();
-                    if (h !== expectedHeaders[i]) {
-                        headerValid = false;
+            // Find the header row (skip PHP notices, blank lines, or file metadata)
+            var headerRowIdx = -1;
+            for (var r = 0; r < Math.min(rows.length, 6); r++) {
+                var rowStr = rows[r].join(' ').toLowerCase();
+                if (rowStr.indexOf('php ') === 0 || rowStr.indexOf('deprecated') !== -1) continue;
+                if (rowStr.indexOf('question') !== -1 || (rowStr.indexOf('option') !== -1 && (rowStr.indexOf('correct') !== -1 || rowStr.indexOf('answer') !== -1))) {
+                    headerRowIdx = r;
+                    break;
+                }
+            }
+            // If no descriptive header found, use the first non-empty row
+            if (headerRowIdx === -1) {
+                for (var r = 0; r < rows.length; r++) {
+                    if (rows[r].length > 1 && rows[r].some(function(cell){ return cell.trim() !== ''; })) {
+                        headerRowIdx = r;
                         break;
                     }
                 }
             }
 
-            if (!headerValid) {
-                var gotHeaders = header.map(function(h) { return "'" + h.trim() + "'"; }).join(', ');
-                alert("Invalid CSV Header Structure!\nGot: [" + gotHeaders + "]\nExpected: questionSerialNo, question, optionA, optionB, optionC, optionD, correctOption, markForQuestion");
+            if (headerRowIdx === -1) {
+                alert("No readable question rows found in the CSV file.");
                 return;
             }
 
-            var parsed = [];
-            for (var r = 1; r < rows.length; r++) {
-                var row = rows[r];
-                if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) continue;
-                while (row.length < 8) row.push('');
+            var header = rows[headerRowIdx];
+            var colMap = {
+                serial: -1,
+                question: -1,
+                optA: -1,
+                optB: -1,
+                optC: -1,
+                optD: -1,
+                optE: -1,
+                correct: -1,
+                mark: -1
+            };
 
-                var qText = row[1].trim();
-                var optA = row[2].trim();
-                var optB = row[3].trim();
-                var optC = row[4].trim();
-                var optD = row[5].trim();
-                var correct = (row[6].trim() || 'A').toUpperCase();
-                var mark = row[7].trim() || '1';
-
-                if (qText) {
-                    parsed.push({
-                        question: qText,
-                        optionA: optA,
-                        optionB: optB,
-                        optionC: optC,
-                        optionD: optD,
-                        optionE: '',
-                        correctOption: correct,
-                        mark: mark
-                    });
+            for (var c = 0; c < header.length; c++) {
+                var norm = (header[c] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (norm === 'questionserialno' || norm === 'serialno' || norm === 'sno' || norm === 'sn' || norm === 'no' || norm === 'id') {
+                    colMap.serial = c;
+                } else if (norm === 'question' || norm === 'questiontext' || norm === 'quest' || norm === 'q') {
+                    colMap.question = c;
+                } else if (norm === 'optiona' || norm === 'opta' || norm === 'a') {
+                    colMap.optA = c;
+                } else if (norm === 'optionb' || norm === 'optb' || norm === 'b') {
+                    colMap.optB = c;
+                } else if (norm === 'optionc' || norm === 'optc' || norm === 'c') {
+                    colMap.optC = c;
+                } else if (norm === 'optiond' || norm === 'optd' || norm === 'd') {
+                    colMap.optD = c;
+                } else if (norm === 'optione' || norm === 'opte' || norm === 'e') {
+                    colMap.optE = c;
+                } else if (norm === 'correctoption' || norm === 'correct' || norm === 'answer' || norm === 'ans' || norm === 'key' || norm === 'correctanswer') {
+                    colMap.correct = c;
+                } else if (norm === 'markforquestion' || norm === 'mark' || norm === 'marks' || norm === 'score' || norm === 'points') {
+                    colMap.mark = c;
                 }
             }
 
+            // Fallback: If header didn't match by name, use standard positional mapping
+            if (colMap.question === -1 || colMap.optA === -1) {
+                // Check if col 0 looks like a serial number or question
+                var isFirstColSerial = false;
+                if (rows.length > headerRowIdx + 1) {
+                    var sampleVal = (rows[headerRowIdx + 1][0] || '').trim();
+                    isFirstColSerial = /^\d+$/.test(sampleVal) || sampleVal.length <= 4;
+                }
+
+                if (isFirstColSerial) {
+                    colMap.serial = 0;
+                    colMap.question = 1;
+                    colMap.optA = 2;
+                    colMap.optB = 3;
+                    colMap.optC = 4;
+                    colMap.optD = 5;
+                    if (header.length >= 9) {
+                        colMap.optE = 6;
+                        colMap.correct = 7;
+                        colMap.mark = 8;
+                    } else {
+                        colMap.correct = 6;
+                        colMap.mark = 7;
+                    }
+                } else {
+                    colMap.question = 0;
+                    colMap.optA = 1;
+                    colMap.optB = 2;
+                    colMap.optC = 3;
+                    colMap.optD = 4;
+                    if (header.length >= 8) {
+                        colMap.optE = 5;
+                        colMap.correct = 6;
+                        colMap.mark = 7;
+                    } else {
+                        colMap.correct = 5;
+                        colMap.mark = 6;
+                    }
+                }
+            }
+
+            var parsed = [];
+            for (var r = headerRowIdx + 1; r < rows.length; r++) {
+                var row = rows[r];
+                if (!row || row.length === 0) continue;
+                var allEmpty = row.every(function(cell) { return (cell || '').trim() === ''; });
+                if (allEmpty) continue;
+
+                var qText = (colMap.question !== -1 && row[colMap.question]) ? row[colMap.question].trim() : '';
+                // If question is empty, skip
+                if (!qText) continue;
+
+                var optA = (colMap.optA !== -1 && row[colMap.optA]) ? row[colMap.optA].trim() : '';
+                var optB = (colMap.optB !== -1 && row[colMap.optB]) ? row[colMap.optB].trim() : '';
+                var optC = (colMap.optC !== -1 && row[colMap.optC]) ? row[colMap.optC].trim() : '';
+                var optD = (colMap.optD !== -1 && row[colMap.optD]) ? row[colMap.optD].trim() : '';
+                var optE = (colMap.optE !== -1 && row[colMap.optE]) ? row[colMap.optE].trim() : '';
+                var correct = (colMap.correct !== -1 && row[colMap.correct]) ? row[colMap.correct].trim().toUpperCase() : 'A';
+                // Clean correct option in case user wrote "Option A" or "A."
+                var matchCorr = correct.match(/^[A-E]/i);
+                if (matchCorr) {
+                    correct = matchCorr[0].toUpperCase();
+                } else {
+                    correct = 'A';
+                }
+
+                var mark = (colMap.mark !== -1 && row[colMap.mark]) ? row[colMap.mark].trim() : '1';
+                if (!mark || isNaN(mark)) mark = '1';
+
+                parsed.push({
+                    question: qText,
+                    optionA: optA,
+                    optionB: optB,
+                    optionC: optC,
+                    optionD: optD,
+                    optionE: optE,
+                    correctOption: correct,
+                    mark: mark
+                });
+            }
+
             if (parsed.length === 0) {
-                alert("No valid question rows found in CSV.");
+                alert("No valid question rows found in CSV. Please verify that your CSV has questions and options filled in.");
                 return;
             }
 
@@ -718,6 +829,12 @@ if ($staffId > 0) {
             renderBulkPreview(1);
             $('#bulkPasteInputArea').hide();
             $('#bulkPastePreviewArea').show();
+
+            var testId = $('#bulkTestSelect').val();
+            if (!testId) {
+                $('#bulkTestSelect').focus();
+            }
+
             $('html, body').animate({ scrollTop: $('#bulkPastePreviewArea').offset().top - 80 }, 300);
         }
 

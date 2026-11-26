@@ -61,31 +61,35 @@ session_start();
 		}
 
 		$staffId = isset($_SESSION['staffId']) ? (int) $_SESSION['staffId'] : 0;
+		$isAdmin = isset($_SESSION['adminLoggedIn']);
 		$preselectedTestId = isset($_GET['testId']) ? (int) $_GET['testId'] : 0;
 		$questionTestOptions = array();
 
-		if ($staffId > 0) {
+		if ($staffId > 0 && !$isAdmin) {
 			$testsResult = $connection->query("SELECT * FROM tests WHERE staffId='{$staffId}' ORDER BY testName ASC");
-			if ($testsResult) {
-				while ($testRow = $testsResult->fetch_assoc()) {
-					$setupSummary = dlhsBuildTestSetupSummary($connection, $testRow);
-					$testType = dlhsNormalizeTestType(isset($testRow['testType']) ? $testRow['testType'] : '');
-					$optionLabel = $testRow['testName'];
-					if ($testType !== '') {
-						$optionLabel .= " ({$testType})";
-					}
-					if (!$setupSummary['studentsAdded']) {
-						$optionLabel .= " - add students first";
-					}
+		} else {
+			$testsResult = $connection->query("SELECT * FROM tests ORDER BY testName ASC");
+		}
 
-					$questionTestOptions[] = array(
-						'testId' => (int) $testRow['testId'],
-						'label' => $optionLabel,
-						'studentsAdded' => $setupSummary['studentsAdded'],
-						'setupStatus' => $setupSummary['setupStatus'],
-						'setupMessage' => $setupSummary['setupMessage']
-					);
+		if ($testsResult) {
+			while ($testRow = $testsResult->fetch_assoc()) {
+				$setupSummary = dlhsBuildTestSetupSummary($connection, $testRow);
+				$testType = dlhsNormalizeTestType(isset($testRow['testType']) ? $testRow['testType'] : '');
+				$optionLabel = $testRow['testName'];
+				if ($testType !== '') {
+					$optionLabel .= " ({$testType})";
 				}
+				if (!$setupSummary['studentsAdded']) {
+					$optionLabel .= " - add students first";
+				}
+
+				$questionTestOptions[] = array(
+					'testId' => (int) $testRow['testId'],
+					'label' => $optionLabel,
+					'studentsAdded' => $setupSummary['studentsAdded'],
+					'setupStatus' => $setupSummary['setupStatus'],
+					'setupMessage' => $setupSummary['setupMessage']
+				);
 			}
 		}
 	}
@@ -431,9 +435,11 @@ session_start();
 													<div class="import-card">
 														<h5>CSV Questions</h5>
 														<input type="file" name="file" id="csvFileInput" accept=".csv" class="form-control" required>
-														<div class="import-actions">
-															<button type="button" class="btn btn-primary" id="submitUpload" onclick="triggerCSVPreview()"><i class="fa fa-upload"></i> Submit CSV</button>
-															<a href="downloadQuestionTemplate.php" class="btn btn-default"><i class="fa fa-download"></i> Download template</a>
+														<div class="import-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+															<button type="button" class="btn btn-primary" id="submitUpload" onclick="triggerCSVPreview()" title="Preview and edit questions before saving"><i class="fa fa-eye"></i> Preview in Bulk Editor</button>
+															<button type="submit" class="btn btn-success" id="submitDirectUpload" title="Upload directly to test"><i class="fa fa-upload"></i> Direct Upload</button>
+															<a href="downloadQuestionTemplate.php" class="btn btn-default" title="Download standard CSV template (A-D)"><i class="fa fa-download"></i> Template (4 opts)</a>
+															<a href="downloadQuestionTemplate.php?options=5" class="btn btn-default" title="Download 5-option CSV template (A-E)"><i class="fa fa-download"></i> Template (5 opts)</a>
 														</div>
 													</div>
 													<div class="import-card">

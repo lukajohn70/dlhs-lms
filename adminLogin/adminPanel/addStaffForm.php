@@ -422,7 +422,7 @@ session_start();
 					<div class="col-lg-12" id="tableColumn">
 						<section class="panel">
 							<header class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-								<span>View | Edit | Delete Staff &nbsp; &nbsp; &nbsp;<a onclick="openUploadCsvModal()" style="cursor:pointer;">Click to upload CSV of staff's records</a></span>
+								<span>View | Edit | Delete Staff &nbsp; &nbsp; &nbsp;<a onclick="openUploadCsvModal()" style="cursor:pointer;">Click to upload CSV of staff's records</a> | <a onclick="downloadStaffCsvTemplate()" style="cursor:pointer; color:#28a745;"><i class="fa fa-download"></i> Download CSV Template</a></span>
 								<button class="btn btn-success btn-sm" id="toggleFormBtn" onclick="dlhsToggleCreateForm()" style="font-weight: 700; border-radius: 6px; padding: 6px 12px;"><i class="fa fa-plus"></i> Add New Staff</button>
 								<div class="message8" style="color:green; font-size:17px;" align="center"></div>
 							</header>
@@ -590,7 +590,7 @@ session_start();
 							
 							<div class="item form-group">
 								<div class="col-md-12">
-									<label><span style="color:#000000;">Select CSV file of staff records</span> <span style="color:red; font-size:18px;">*</span></label><br>
+									<label><span style="color:#000000;">Select CSV file of staff records</span> <span style="color:red; font-size:18px;">*</span></label> &nbsp; <a onclick="downloadStaffCsvTemplate()" style="cursor:pointer; color:#009999; font-weight:600;"><i class="fa fa-download"></i> Download Template</a><br>
 									
 									<input type="file" name="file4" id="file4" accept=".xlsx, .xls, .csv" class="form-control" required>
 								</div>
@@ -938,6 +938,20 @@ session_start();
             if (event.target == modal4) {
                 modal4.style.display = "none";
             }
+        }
+        // Download CSV template for bulk staff upload
+        function downloadStaffCsvTemplate() {
+            var csvContent = "surname,firstName,middleName,gender,staffEmail,password\n";
+            csvContent += "Adeyemi,Oluwaseun,David,Male,oluwaseun.adeyemi@dlhs.edu.ng,staffpass123\n";
+            csvContent += "Okonkwo,Ngozi,Grace,Female,ngozi.okonkwo@dlhs.edu.ng,staffpass456\n";
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "staff_upload_template.csv";
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 	</script>
   </body>
